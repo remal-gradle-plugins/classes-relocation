@@ -1,4 +1,4 @@
-package name.remal.gradle_plugins.template;
+package name.remal.gradle_plugins.classes_relocation;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
