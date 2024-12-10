@@ -4,7 +4,7 @@ includes:
 - '.mergify/*'
 - '.gitattributes'
 - '.gitignore'
-- '2.editorconfig'
+- '.editorconfig'
 - 'LICENSE'
 - 'retry-connection-timeouts'
 - '*-retry-connection-timeouts'

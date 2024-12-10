@@ -13,8 +13,12 @@ public class RelocationAnnotationsClassVisitor extends ClassVisitor {
     private static final String GENERATED_DESCRIPTOR = getDescriptor(Generated.class);
     private static final String RELOCATED_CLASS_DESCRIPTOR = getDescriptor(RelocatedClass.class);
 
-    public RelocationAnnotationsClassVisitor(ClassVisitor classVisitor) {
+    @Nullable
+    private final String relocationSource;
+
+    public RelocationAnnotationsClassVisitor(ClassVisitor classVisitor, @Nullable String relocationSource) {
         super(getLatestAsmApi(), classVisitor);
+        this.relocationSource = relocationSource;
     }
 
     @Override
@@ -29,16 +33,19 @@ public class RelocationAnnotationsClassVisitor extends ClassVisitor {
         super.visit(version, access, name, signature, superName, interfaces);
 
         {
-            val an = cv.visitAnnotation(GENERATED_DESCRIPTOR, false);
-            if (an != null) {
-                an.visitEnd();
+            val av = super.visitAnnotation(GENERATED_DESCRIPTOR, false);
+            if (av != null) {
+                av.visitEnd();
             }
         }
 
         {
-            val an = cv.visitAnnotation(RELOCATED_CLASS_DESCRIPTOR, false);
-            if (an != null) {
-                an.visitEnd();
+            val av = super.visitAnnotation(RELOCATED_CLASS_DESCRIPTOR, false);
+            if (av != null) {
+                if (relocationSource != null && !relocationSource.isEmpty()) {
+                    av.visit("source", relocationSource);
+                }
+                av.visitEnd();
             }
         }
     }

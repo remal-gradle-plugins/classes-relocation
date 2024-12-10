@@ -51,7 +51,7 @@ class ClasspathElementDir extends ClasspathElementBase {
 
         @Nullable
         @Override
-        public ClasspathElement getElement() {
+        public ClasspathElement getClasspathElement() {
             return ClasspathElementDir.this;
         }
 
@@ -64,11 +64,6 @@ class ClasspathElementDir extends ClasspathElementBase {
         @Override
         public InputStream open() throws IOException {
             return newInputStream(path);
-        }
-
-        @Override
-        public String toString() {
-            return getPath().toString() + '[' + getName() + ']';
         }
 
     }

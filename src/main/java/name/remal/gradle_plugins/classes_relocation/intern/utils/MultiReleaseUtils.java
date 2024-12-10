@@ -8,16 +8,25 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import lombok.NoArgsConstructor;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
 
 @NoArgsConstructor(access = PRIVATE)
 public abstract class MultiReleaseUtils {
 
-    public static final Name MULTI_RELEASE_NAME = new Name("Multi-Release");
+    public static final Name MULTI_RELEASE = new Name("Multi-Release");
 
 
     private static final Pattern MULTI_RELEASE_RESOURCE_NAME = Pattern.compile(
         "^META-INF/versions/(\\d+)/(.+)$"
     );
+
+    public static boolean isMultiRelease(String resourceName) {
+        return MULTI_RELEASE_RESOURCE_NAME.matcher(resourceName).matches();
+    }
+
+    public static boolean isMultiRelease(Resource resource) {
+        return isMultiRelease(resource.getName());
+    }
 
     @Nullable
     public static Integer getMultiReleaseVersion(String resourceName) {

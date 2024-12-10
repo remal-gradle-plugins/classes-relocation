@@ -70,6 +70,11 @@ abstract class ClasspathElementBase extends WithResourcesBase implements Classpa
         throw new IllegalStateException("Can't get module name for " + this);
     });
 
+    @Override
+    public String getModuleName() {
+        return moduleName.get();
+    }
+
 
     @Override
     public final String toString() {

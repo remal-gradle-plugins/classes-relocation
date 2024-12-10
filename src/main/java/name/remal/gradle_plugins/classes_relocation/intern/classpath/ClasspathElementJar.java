@@ -4,7 +4,7 @@ import static java.lang.Boolean.parseBoolean;
 import static java.util.Collections.list;
 import static java.util.jar.JarFile.MANIFEST_NAME;
 import static java.util.stream.Collectors.toList;
-import static name.remal.gradle_plugins.classes_relocation.intern.utils.MultiReleaseUtils.MULTI_RELEASE_NAME;
+import static name.remal.gradle_plugins.classes_relocation.intern.utils.MultiReleaseUtils.MULTI_RELEASE;
 import static name.remal.gradle_plugins.toolkit.LazyValue.lazyValue;
 
 import java.io.IOException;
@@ -42,7 +42,7 @@ class ClasspathElementJar extends ClasspathElementBase {
                 manifest.read(in);
             }
 
-            return parseBoolean(manifest.getMainAttributes().getValue(MULTI_RELEASE_NAME));
+            return parseBoolean(manifest.getMainAttributes().getValue(MULTI_RELEASE));
         });
     }
 
@@ -72,7 +72,7 @@ class ClasspathElementJar extends ClasspathElementBase {
 
         @Nullable
         @Override
-        public ClasspathElement getElement() {
+        public ClasspathElement getClasspathElement() {
             return ClasspathElementJar.this;
         }
 
@@ -84,11 +84,6 @@ class ClasspathElementJar extends ClasspathElementBase {
         @Override
         public InputStream open() throws IOException {
             return zipFile.get().getInputStream(zipEntry);
-        }
-
-        @Override
-        public String toString() {
-            return getPath().toString() + '[' + getName() + ']';
         }
 
     }

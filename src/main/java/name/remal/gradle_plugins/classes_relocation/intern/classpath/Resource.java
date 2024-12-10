@@ -8,7 +8,7 @@ import javax.annotation.Nullable;
 public interface Resource {
 
     @Nullable
-    ClasspathElement getElement();
+    ClasspathElement getClasspathElement();
 
     String getName();
 
