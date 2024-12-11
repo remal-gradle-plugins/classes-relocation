@@ -85,7 +85,7 @@ public abstract class ClassesRelocatorTestBase {
             .distinct()
             .map(UrlUtils::toUrl)
             .toArray(URL[]::new);
-        try (val classLoader = new URLClassLoader(classLoaderUrls, TEST_LOGIC_CLASS_LOADER)) {
+        try (val classLoader = new TestLogicClassLoader(classLoaderUrls)) {
             val relocatedTestLogicClass = classLoader.loadClass(logicClass.getName());
             val relocatedTestLogicCtor = makeAccessible(relocatedTestLogicClass.getDeclaredConstructor());
             val relocatedTestLogic = (ClassesRelocatorTestLogic) relocatedTestLogicCtor.newInstance();
@@ -158,7 +158,29 @@ public abstract class ClassesRelocatorTestBase {
         .map(Class::getName)
         .collect(toImmutableSet());
 
-    private static final ClassLoader TEST_LOGIC_CLASS_LOADER = new ClassLoader() {
+    private static final ClassLoader TEST_LOGIC_BASE_CLASS_LOADER = new ClassLoader() {
+        @Override
+        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            Class<?> clazz = findLoadedClass(name);
+
+            if (clazz == null) {
+                try {
+                    clazz = findClass(name);
+                } catch (ClassNotFoundException ignored) {
+                    // do nothing
+                }
+            }
+
+            if (clazz != null) {
+                if (resolve) {
+                    resolveClass(clazz);
+                }
+                return clazz;
+            }
+
+            return super.loadClass(name, resolve);
+        }
+
         @Override
         protected Class<?> findClass(String name) throws ClassNotFoundException {
             if (TEST_LOGIC_CLASS_NAMES.contains(name)) {
@@ -169,5 +191,39 @@ public abstract class ClassesRelocatorTestBase {
             throw new ClassNotFoundException(name);
         }
     };
+
+    private static class TestLogicClassLoader extends URLClassLoader {
+
+        public TestLogicClassLoader(URL[] urls) {
+            super(urls, TEST_LOGIC_BASE_CLASS_LOADER);
+        }
+
+        @Override
+        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            Class<?> clazz = findLoadedClass(name);
+
+            if (clazz == null) {
+                try {
+                    clazz = findClass(name);
+                } catch (ClassNotFoundException ignored) {
+                    // do nothing
+                }
+            }
+
+            if (clazz != null) {
+                if (resolve) {
+                    resolveClass(clazz);
+                }
+                return clazz;
+            }
+
+            return super.loadClass(name, resolve);
+        }
+
+        static {
+            registerAsParallelCapable();
+        }
+
+    }
 
 }
