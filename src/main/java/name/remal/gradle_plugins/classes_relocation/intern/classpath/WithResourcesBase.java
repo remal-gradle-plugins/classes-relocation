@@ -1,8 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation.intern.classpath;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
-import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyListProxy;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazySetProxy;
 import static name.remal.gradle_plugins.toolkit.NumbersAwareStringComparator.numbersAwareStringComparator;
 import static name.remal.gradle_plugins.toolkit.StringUtils.substringBeforeLast;
@@ -34,10 +32,11 @@ abstract class WithResourcesBase extends WithIdentityEqualsHashCode implements W
 
 
     @Unmodifiable
-    private final Collection<Resource> resources = asLazyListProxy(() ->
+    private final Collection<Resource> resources = asLazySetProxy(() ->
+        //TODO: replace with asLazyCollectionProxy
         readResources().stream()
             .sorted(RESOURCE_COMPARATOR)
-            .collect(toImmutableList())
+            .collect(toImmutableSet())
     );
 
     private static final Comparator<Resource> RESOURCE_COMPARATOR = numbersAwareStringComparator(Resource::getName);

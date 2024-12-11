@@ -51,7 +51,7 @@ public class ResourcesFilter {
     private static void addPackages(Set<String> patterns, Iterable<String> packageNames) {
         StreamSupport.stream(packageNames.spliterator(), false)
             .filter(Objects::nonNull)
-            .map(name -> toClassInternalName(name) + "/*.class")
+            .map(name -> toClassInternalName(name) + "/*")
             .forEach(patterns::add);
     }
 

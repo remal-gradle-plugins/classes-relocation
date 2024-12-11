@@ -1,6 +1,8 @@
 package name.remal.gradle_plugins.classes_relocation.intern.asm;
 
-public class UnsupportedAnnotationException extends RuntimeException {
+import name.remal.gradle_plugins.classes_relocation.ClassesRelocationException;
+
+public class UnsupportedAnnotationException extends ClassesRelocationException {
 
     UnsupportedAnnotationException(String message) {
         super(message);

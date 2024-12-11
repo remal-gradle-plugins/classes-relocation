@@ -4,7 +4,10 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 
 import java.io.Closeable;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Set;
+import java.util.stream.Stream;
+import lombok.val;
 import org.jetbrains.annotations.Unmodifiable;
 
 interface WithResources extends Closeable {
@@ -18,6 +21,22 @@ interface WithResources extends Closeable {
             .filter(resource -> resource.getName().equals(name))
             .collect(toImmutableList());
     }
+
+
+    @Unmodifiable
+    default Stream<Resource> streamResourcesWithUniqueNames() {
+        val foundResourcesNames = new LinkedHashSet<String>();
+        return getResources().stream()
+            .filter(resource -> foundResourcesNames.add(resource.getName()));
+    }
+
+    @Unmodifiable
+    default Stream<Resource> streamResourcesWithUniqueNames(String name) {
+        val foundResourcesNames = new LinkedHashSet<String>();
+        return getResources(name).stream()
+            .filter(resource -> foundResourcesNames.add(resource.getName()));
+    }
+
 
     @Unmodifiable
     Set<String> getClassNames();

@@ -56,6 +56,13 @@ public abstract class ClassesRelocatorTestBase {
     }
 
 
+    private static final List<String> ALWAYS_AVAILABLE_LIBRARIES = ImmutableList.of(
+        "junit-jupiter-api",
+        "assertj-core",
+        "asm"
+    );
+
+
     @SneakyThrows
     protected void assertTestLogic(
         Class<? extends ClassesRelocatorTestLogic> logicClass,
@@ -77,7 +84,7 @@ public abstract class ClassesRelocatorTestBase {
             val relocator = ClassesRelocator.builder()
                 .sourceJarPath(sourceJarPath)
                 .relocationClasspathPaths(stream(relocationLibraries)
-                    .map(ClassesRelocatorTestBase::getRelocationLibraryFilePaths)
+                    .map(ClassesRelocatorTestBase::getLibraryFilePaths)
                     .flatMap(Collection::stream)
                     .collect(toList())
                 )
@@ -88,12 +95,12 @@ public abstract class ClassesRelocatorTestBase {
             relocator.relocate();
         }
 
-        val classLoaderUrls = Stream.of(
-                ImmutableList.of(targetJarPath),
-                getRelocationLibraryFilePaths("junit-jupiter-api"),
-                getRelocationLibraryFilePaths("assertj-core")
+        val classLoaderUrls = Stream.concat(
+                Stream.of(targetJarPath),
+                ALWAYS_AVAILABLE_LIBRARIES.stream()
+                    .map(ClassesRelocatorTestBase::getLibraryFilePaths)
+                    .flatMap(Collection::stream)
             )
-            .flatMap(Collection::stream)
             .distinct()
             .map(UrlUtils::toUrl)
             .toArray(URL[]::new);
@@ -161,7 +168,7 @@ public abstract class ClassesRelocatorTestBase {
         return Paths.get(path);
     }
 
-    private static Collection<Path> getRelocationLibraryFilePaths(String libraryName) {
+    private static Collection<Path> getLibraryFilePaths(String libraryName) {
         val classpathString = System.getProperty(libraryName + "-classpath");
         if (classpathString == null) {
             throw new IllegalStateException("Unknown library: " + libraryName);

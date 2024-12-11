@@ -32,6 +32,7 @@ dependencies {
 
     optional 'org.ow2.asm:asm-util'
 
+    implementation 'org.ow2.asm:asm'
     implementation 'org.ow2.asm:asm-tree'
     implementation 'org.ow2.asm:asm-commons'
 
@@ -55,10 +56,20 @@ gradlePlugin {
 
 SourceSet componentTestSourceSet = testSourceSets.create('componentTest')
 
+dependencies {
+    componentTestImplementation platform('com.fasterxml.jackson:jackson-bom:2.18.2')
+    componentTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
+    componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+}
+
 Map<String, String> componentTestRelocationNotations = [
+    'guava': 'com.google.guava:guava',
+    'jackson-databind': 'com.fasterxml.jackson.core:jackson-databind',
+    'jackson-datatype-jsr310': 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310',
+
     'junit-jupiter-api': 'org.junit.jupiter:junit-jupiter-api',
     'assertj-core': 'org.assertj:assertj-core',
-    'guava': 'com.google.guava:guava',
+    'asm': 'org.ow2.asm:asm',
 ]
 
 if (!tasks.names.contains(componentTestSourceSet.jarTaskName)) {
@@ -84,7 +95,7 @@ tasks.named(componentTestSourceSet.name, Test) {
                 .getFirstLevelModuleDependencies()
                 .find { "${it.moduleGroup}:${it.moduleName}" == notation }
             if (resolvedDep == null) {
-                throw new GradleException("Resolved dependency with notation `notation` can't be found in $conf")
+                throw new GradleException("Resolved dependency with notation `$notation` can't be found in $conf")
             }
             Collection<File> files = resolvedDep.allModuleArtifacts.collect { it.file }
             systemProperty("$library-classpath", files.join(File.pathSeparator))

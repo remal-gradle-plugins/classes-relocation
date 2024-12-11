@@ -15,6 +15,7 @@ import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
+import javax.annotation.WillNotClose;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
@@ -94,7 +95,7 @@ class RelocationOutputImpl implements RelocationOutput {
     public synchronized void copy(
         String path,
         @Nullable Long lastModifiedMillis,
-        InputStream inputStream
+        @WillNotClose InputStream inputStream
     ) {
         checkPath(path);
         val archiveEntry = new ZipArchiveEntry(path);

@@ -4,6 +4,7 @@ import java.io.Closeable;
 import java.io.InputStream;
 import java.util.Set;
 import javax.annotation.Nullable;
+import javax.annotation.WillNotClose;
 import org.jetbrains.annotations.Unmodifiable;
 
 interface RelocationOutput extends Closeable {
@@ -20,7 +21,7 @@ interface RelocationOutput extends Closeable {
     void copy(
         String resourceName,
         @Nullable Long lastModifiedMillis,
-        InputStream inputStream
+        @WillNotClose InputStream inputStream
     );
 
 }
