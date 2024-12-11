@@ -4,6 +4,7 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.io.ByteStreams.copy;
 import static java.io.File.pathSeparator;
+import static java.lang.ClassLoader.getSystemClassLoader;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.createTempDirectory;
 import static java.util.Arrays.stream;
@@ -19,6 +20,7 @@ import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.makeAccessible;
 import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.packageNameOf;
 import static org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.DEFLATED;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
@@ -59,6 +61,16 @@ public abstract class ClassesRelocatorTestBase {
         Class<? extends ClassesRelocatorTestLogic> logicClass,
         String... relocationLibraries
     ) {
+        val classThatShouldNotBeAvailableInTestClassLoader = ImmutableList.class;
+        Class.forName(classThatShouldNotBeAvailableInTestClassLoader.getName()); // check that available here
+
+        {
+            // the test logic works without relocation
+            val testLogicCtor = makeAccessible(logicClass.getDeclaredConstructor());
+            val testLogic = (ClassesRelocatorTestLogic) testLogicCtor.newInstance();
+            testLogic.assertTestLogic();
+        }
+
         val sourceJarPath = createSourceJar(logicClass);
         val targetJarPath = createParentDirectories(tempDirPath.resolve("target.jar"));
         try (
@@ -86,6 +98,13 @@ public abstract class ClassesRelocatorTestBase {
             .map(UrlUtils::toUrl)
             .toArray(URL[]::new);
         try (val classLoader = new TestLogicClassLoader(classLoaderUrls)) {
+            try {
+                classLoader.loadClass(classThatShouldNotBeAvailableInTestClassLoader.getName());
+                fail("Should not be available: " + classThatShouldNotBeAvailableInTestClassLoader);
+            } catch (ClassNotFoundException ignored) {
+                // OK
+            }
+
             val relocatedTestLogicClass = classLoader.loadClass(logicClass.getName());
             val relocatedTestLogicCtor = makeAccessible(relocatedTestLogicClass.getDeclaredConstructor());
             val relocatedTestLogic = (ClassesRelocatorTestLogic) relocatedTestLogicCtor.newInstance();
@@ -158,7 +177,10 @@ public abstract class ClassesRelocatorTestBase {
         .map(Class::getName)
         .collect(toImmutableSet());
 
-    private static final ClassLoader TEST_LOGIC_BASE_CLASS_LOADER = new ClassLoader() {
+    private static final ClassLoader TEST_LOGIC_BASE_CLASS_LOADER_DELEGATE =
+        defaultValue(ClassesRelocatorTestBase.class.getClassLoader(), getSystemClassLoader());
+
+    private static final ClassLoader TEST_LOGIC_BASE_CLASS_LOADER = new ClassLoader(null) {
         @Override
         protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
             Class<?> clazz = findLoadedClass(name);
@@ -184,8 +206,7 @@ public abstract class ClassesRelocatorTestBase {
         @Override
         protected Class<?> findClass(String name) throws ClassNotFoundException {
             if (TEST_LOGIC_CLASS_NAMES.contains(name)) {
-                val classLoader = defaultValue(ClassesRelocatorTestBase.class.getClassLoader(), getSystemClassLoader());
-                return classLoader.loadClass(name);
+                return TEST_LOGIC_BASE_CLASS_LOADER_DELEGATE.loadClass(name);
             }
 
             throw new ClassNotFoundException(name);

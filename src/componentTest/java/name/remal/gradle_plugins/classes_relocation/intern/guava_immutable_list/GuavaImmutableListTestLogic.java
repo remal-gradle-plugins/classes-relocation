@@ -1,11 +1,11 @@
-package name.remal.gradle_plugins.classes_relocation.intern.guava;
+package name.remal.gradle_plugins.classes_relocation.intern.guava_immutable_list;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableList;
 import name.remal.gradle_plugins.classes_relocation.intern.ClassesRelocatorTestLogic;
 
-public class GuavaTestLogic implements ClassesRelocatorTestLogic {
+public class GuavaImmutableListTestLogic implements ClassesRelocatorTestLogic {
 
     @Override
     public void assertTestLogic() {
