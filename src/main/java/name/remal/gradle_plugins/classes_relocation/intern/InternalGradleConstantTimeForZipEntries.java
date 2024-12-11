@@ -25,17 +25,30 @@ abstract class InternalGradleConstantTimeForZipEntries {
     @SneakyThrows
     @ReliesOnInternalGradleApi
     static Long getInternalGradleConstantTimeForZipEntriesMillis(boolean rethrowExceptions) {
+        Throwable exception;
+
         try {
             val constantsClass = Class.forName("org.gradle.api.internal.file.archive.ZipEntryConstants");
             val timeField = constantsClass.getField("CONSTANT_TIME_FOR_ZIP_ENTRIES");
             return timeField.getLong(constantsClass);
-
         } catch (Exception e) {
-            if (rethrowExceptions) {
-                throw e;
-            }
-            return null;
+            exception = e;
         }
+
+        try {
+            val constantsClass = Class.forName("org.gradle.api.internal.file.archive.ZipCopyAction");
+            val timeField = constantsClass.getField("CONSTANT_TIME_FOR_ZIP_ENTRIES");
+            return timeField.getLong(constantsClass);
+        } catch (Exception e) {
+            e.addSuppressed(exception);
+            exception = e;
+        }
+
+        if (rethrowExceptions) {
+            throw exception;
+        }
+        return null;
     }
+
 
 }
