@@ -42,9 +42,9 @@ dependencies {
 gradlePlugin {
     plugins {
         'name.remal.classes-relocation' {
-            id = 'name.remal.classes-state'
+            id = 'name.remal.classes-relocation'
             implementationClass = 'name.remal.gradle_plugins.classes_relocation.ClassesRelocationPlugin'
-            displayName = 'Classes state'
+            displayName = 'Classes relocation'
             description = property('repository-description')
         }
     }

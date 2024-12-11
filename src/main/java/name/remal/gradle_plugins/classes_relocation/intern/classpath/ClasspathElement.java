@@ -17,6 +17,7 @@ public interface ClasspathElement extends WithResources, Closeable {
     boolean isMultiRelease();
 
     @Unmodifiable
+    @Override
     default Collection<Resource> getResources(String name) {
         if (isMultiRelease()) {
             return getResources().stream()

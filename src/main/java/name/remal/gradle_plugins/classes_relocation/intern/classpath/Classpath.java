@@ -16,6 +16,7 @@ import org.jetbrains.annotations.Unmodifiable;
 public interface Classpath extends WithResources, Closeable {
 
     @SafeVarargs
+    @SuppressWarnings("varargs")
     static Classpath newClasspathForPaths(Iterable<Path>... paths) {
         val combinedPaths = stream(paths)
             .flatMap(it -> StreamSupport.stream(it.spliterator(), false))
@@ -28,6 +29,7 @@ public interface Classpath extends WithResources, Closeable {
     List<ClasspathElement> getElements();
 
     @Unmodifiable
+    @Override
     default Collection<Resource> getResources(String name) {
         return getElements().stream()
             .flatMap(element -> element.getResources(name).stream())

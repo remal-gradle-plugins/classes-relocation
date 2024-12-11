@@ -83,6 +83,7 @@ public abstract class RelocateJar extends DefaultTask implements ClassesRelocati
 
 
     @Getter
+    @Nested
     private final ClassRelocationForkOptions forkOptions = getObjects().newInstance(ClassRelocationForkOptions.class);
 
     @org.gradle.api.tasks.Optional

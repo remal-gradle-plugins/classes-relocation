@@ -50,7 +50,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         );
 
         val confProvider = project.getConfigurations().register(
-            CLASSES_RELOCATION_CONFIGURATION_NAME,
+            CLASSES_RELOCATION_CLASSPATH_CONFIGURATION_NAME,
             conf -> {
                 conf.setCanBeConsumed(true);
                 conf.setCanBeResolved(true);

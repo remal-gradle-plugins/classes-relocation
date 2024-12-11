@@ -28,7 +28,7 @@ public abstract class AsmUtils {
             )
             .max(comparingInt(field -> {
                 val matcher = ASM_API_FIELD_NAME.matcher(field.getName());
-                if (matcher.matches()) {
+                if (!matcher.matches()) {
                     throw new AssertionError("unreachable");
                 }
 

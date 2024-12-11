@@ -2,13 +2,11 @@ package name.remal.gradle_plugins.classes_relocation.intern;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.lang.String.format;
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 import static java.util.Locale.ENGLISH;
 import static java.util.jar.Attributes.Name.MANIFEST_VERSION;
 import static java.util.jar.Attributes.Name.SIGNATURE_VERSION;
 import static java.util.jar.JarFile.MANIFEST_NAME;
-import static lombok.AccessLevel.PRIVATE;
 import static name.remal.gradle_plugins.classes_relocation.intern.classpath.Classpath.newClasspathForPaths;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmTestUtils.wrapWithTestClassVisitors;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils.toClassInternalName;
@@ -22,27 +20,21 @@ import static org.objectweb.asm.ClassWriter.COMPUTE_FRAMES;
 import static org.objectweb.asm.ClassWriter.COMPUTE_MAXS;
 import static org.objectweb.asm.Type.getDescriptor;
 
+import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
 import java.io.Closeable;
-import java.net.URI;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import lombok.Builder;
-import lombok.Builder.Default;
 import lombok.CustomLog;
-import lombok.RequiredArgsConstructor;
-import lombok.Singular;
 import lombok.SneakyThrows;
+import lombok.experimental.SuperBuilder;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.api.RelocateClasses;
 import name.remal.gradle_plugins.classes_relocation.intern.asm.NameClassVisitor;
@@ -53,54 +45,35 @@ import name.remal.gradle_plugins.classes_relocation.intern.classpath.ClasspathEl
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils;
 import name.remal.gradle_plugins.classes_relocation.intern.utils.MultiReleaseUtils;
-import name.remal.gradle_plugins.toolkit.AbstractClosablesContainer;
+import name.remal.gradle_plugins.toolkit.ClosablesContainer;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 
-@Builder
-@RequiredArgsConstructor(access = PRIVATE)
+@SuperBuilder
 @CustomLog
-public class ClassesRelocator extends AbstractClosablesContainer implements Closeable {
-
-    public static final Charset DEFAULT_METADATA_CHARSET = UTF_8;
+public class ClassesRelocator extends ClassesRelocatorParams implements Closeable {
 
     private static final boolean IN_TEST = isInTest();
 
 
-    private final Path sourceJarPath;
+    private final ClosablesContainer closables = new ClosablesContainer();
 
-    @Singular
-    private final List<Path> relocationClasspathPaths;
-
-    @Singular
-    private final List<Path> runtimeClasspathPaths;
-
-    @Singular
-    private final List<Path> compileClasspathPaths;
-
-    @Singular
-    private final Map<URI, String> moduleIdentifiers;
-
-
-    private final Path targetJarPath;
-
-    private final String basePackageForRelocatedClasses;
-
-    @Default
-    private final Charset metadataCharset = DEFAULT_METADATA_CHARSET;
-
-    private final boolean preserveFileTimestamps;
+    @Override
+    @OverridingMethodsMustInvokeSuper
+    public void close() {
+        closables.close();
+    }
 
 
     private final Classpath pureSourceClasspath = asLazyProxy(Classpath.class, () ->
-        registerCloseable(newClasspathForPaths(singletonList(sourceJarPath)))
+        closables.registerCloseable(newClasspathForPaths(singletonList(sourceJarPath)))
     );
 
     private final Classpath pureRelocationClasspath = asLazyProxy(Classpath.class, () ->
-        registerCloseable(newClasspathForPaths(relocationClasspathPaths))
+        closables.registerCloseable(newClasspathForPaths(relocationClasspathPaths))
     );
 
     private final Classpath sourceClasspath = asLazyProxy(Classpath.class, () ->
@@ -135,11 +108,11 @@ public class ClassesRelocator extends AbstractClosablesContainer implements Clos
     );
 
     private final RelocationOutput output = asLazyProxy(RelocationOutput.class, () ->
-        registerCloseable(new RelocationOutputImpl(targetJarPath, metadataCharset, preserveFileTimestamps))
+        closables.registerCloseable(new RelocationOutputImpl(targetJarPath, metadataCharset, preserveFileTimestamps))
     );
 
     private final Classpath classpath = asLazyProxy(Classpath.class, () ->
-        registerCloseable(newClasspathForPaths(
+        closables.registerCloseable(newClasspathForPaths(
             runtimeClasspathPaths,
             compileClasspathPaths
         ))

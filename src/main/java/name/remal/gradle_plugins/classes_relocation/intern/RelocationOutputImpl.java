@@ -51,7 +51,7 @@ class RelocationOutputImpl implements RelocationOutput {
         this.preserveFileTimestamps = preserveFileTimestamps;
     }
 
-    private void checkPath(String path) {
+    private synchronized void checkPath(String path) {
         if (!addedResourceNames.add(path)) {
             throw new IllegalStateException("Duplicate path: " + path);
         }
