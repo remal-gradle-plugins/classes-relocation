@@ -5,9 +5,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import lombok.Builder.Default;
+import lombok.NonNull;
 import lombok.Singular;
 import lombok.experimental.SuperBuilder;
 
@@ -18,23 +19,26 @@ public abstract class ClassesRelocatorParams {
     public static final Charset DEFAULT_METADATA_CHARSET = UTF_8;
 
 
+    @NonNull
     protected final Path sourceJarPath;
 
     @Singular
-    protected final List<Path> relocationClasspathPaths;
+    protected final Set<Path> relocationClasspathPaths;
 
     @Singular
-    protected final List<Path> runtimeClasspathPaths;
+    protected final Set<Path> runtimeClasspathPaths;
 
     @Singular
-    protected final List<Path> compileClasspathPaths;
+    protected final Set<Path> compileClasspathPaths;
 
     @Singular
     protected final Map<URI, String> moduleIdentifiers;
 
 
+    @NonNull
     protected final Path targetJarPath;
 
+    @NonNull
     protected final String basePackageForRelocatedClasses;
 
     @Default

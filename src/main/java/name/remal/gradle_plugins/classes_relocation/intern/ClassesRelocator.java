@@ -16,8 +16,6 @@ import static name.remal.gradle_plugins.toolkit.InTestFlags.isInTest;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyProxy;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazySetProxy;
 import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
-import static org.objectweb.asm.ClassWriter.COMPUTE_FRAMES;
-import static org.objectweb.asm.ClassWriter.COMPUTE_MAXS;
 import static org.objectweb.asm.Type.getDescriptor;
 
 import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
@@ -46,6 +44,7 @@ import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils;
 import name.remal.gradle_plugins.classes_relocation.intern.utils.MultiReleaseUtils;
 import name.remal.gradle_plugins.toolkit.ClosablesContainer;
+import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
@@ -166,7 +165,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         processedResources.add(resource);
 
         ClassVisitor classVisitor;
-        val classWriter = (ClassWriter) (classVisitor = new ClassWriter(COMPUTE_MAXS | COMPUTE_FRAMES));
+        val classWriter = (ClassWriter) (classVisitor = new ClassWriter(0));
 
         if (IN_TEST) {
             classVisitor = wrapWithTestClassVisitors(classVisitor);
@@ -320,6 +319,15 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
                 mainAttrs.put(MULTI_RELEASE, "true");
             }
         }
+
+        val out = new ByteArrayOutputStream();
+        manifest.write(out);
+        val bytes = out.toByteArray();
+        output.write(
+            MANIFEST_NAME,
+            manifestResource != null ? manifestResource.getLastModifiedMillis() : null,
+            bytes
+        );
     }
 
 }

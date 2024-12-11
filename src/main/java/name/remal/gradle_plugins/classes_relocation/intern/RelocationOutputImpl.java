@@ -86,6 +86,7 @@ class RelocationOutputImpl implements RelocationOutput {
         archiveEntry.setTime(canonizeLastModified(lastModifiedMillis));
         zipOutputStream.putArchiveEntry(archiveEntry);
         zipOutputStream.write(bytes);
+        zipOutputStream.closeArchiveEntry();
     }
 
     @Override
@@ -100,6 +101,7 @@ class RelocationOutputImpl implements RelocationOutput {
         archiveEntry.setTime(canonizeLastModified(lastModifiedMillis));
         zipOutputStream.putArchiveEntry(archiveEntry);
         ByteStreams.copy(inputStream, zipOutputStream);
+        zipOutputStream.closeArchiveEntry();
     }
 
     @Override

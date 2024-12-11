@@ -6,6 +6,7 @@ import static java.util.jar.JarFile.MANIFEST_NAME;
 import static java.util.stream.Collectors.toList;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.MultiReleaseUtils.MULTI_RELEASE;
 import static name.remal.gradle_plugins.toolkit.LazyValue.lazyValue;
+import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,6 +55,7 @@ class ClasspathElementJar extends ClasspathElementBase {
     @Override
     protected Collection<Resource> readClasspathElementResources() {
         return list(zipFile.get().getEntries()).stream()
+            .filter(not(ZipArchiveEntry::isDirectory))
             .map(ResourceJar::new)
             .collect(toList());
     }
