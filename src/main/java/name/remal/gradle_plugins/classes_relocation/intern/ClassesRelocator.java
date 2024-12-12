@@ -340,6 +340,12 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
             public Object mapValue(Object value) {
                 if (value instanceof String) {
                     val string = (String) value;
+                    if (string.equals(MANIFEST_NAME)) {
+                        return string;
+                    }
+
+                    // TODO: handle resources
+
                     if (string.contains(".")) {
                         val internalName = toClassInternalName(string);
                         if (relocationInternalClassNames.contains(internalName)) {
@@ -368,11 +374,6 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
                             }
                         }
                     }
-
-                    if (string.equals(MANIFEST_NAME)) {
-                        return string;
-                    }
-                    // TODO: handle resources
                 }
 
                 return super.mapValue(value);
