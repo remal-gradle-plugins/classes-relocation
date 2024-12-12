@@ -59,13 +59,15 @@ SourceSet componentTestSourceSet = testSourceSets.create('componentTest')
 dependencies {
     componentTestImplementation platform('com.fasterxml.jackson:jackson-bom:2.18.2')
     componentTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
+    componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
     componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 }
 
 Map<String, String> componentTestRelocationNotations = [
     'guava': 'com.google.guava:guava',
     'jackson-databind': 'com.fasterxml.jackson.core:jackson-databind',
-    'jackson-datatype-jsr310': 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310',
+    'jackson-guava': 'com.fasterxml.jackson.datatype:jackson-datatype-guava',
+    'jackson-jsr310': 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310',
 
     'junit-jupiter-api': 'org.junit.jupiter:junit-jupiter-api',
     'assertj-core': 'org.assertj:assertj-core',
@@ -82,6 +84,8 @@ if (!tasks.names.contains(componentTestSourceSet.jarTaskName)) {
 }
 
 tasks.named(componentTestSourceSet.name, Test) {
+    inputs.property('componentTestRelocationNotations', componentTestRelocationNotations)
+
     TaskProvider componentTestJar = tasks.named(componentTestSourceSet.jarTaskName, Jar)
     dependsOn(componentTestJar)
     inputs.file(componentTestJar.flatMap { it.archiveFile })

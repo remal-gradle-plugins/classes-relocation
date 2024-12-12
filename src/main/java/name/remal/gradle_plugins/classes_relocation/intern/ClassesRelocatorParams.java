@@ -5,12 +5,14 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import lombok.Builder.Default;
 import lombok.NonNull;
 import lombok.Singular;
 import lombok.experimental.SuperBuilder;
+import name.remal.gradle_plugins.classes_relocation.intern.resource_handler.ResourceProcessor;
+import name.remal.gradle_plugins.classes_relocation.intern.resource_handler.ResourcesMerger;
 
 @SuperBuilder
 @SuppressWarnings({"cast", "java:S1170"})
@@ -23,13 +25,19 @@ public abstract class ClassesRelocatorParams {
     protected final Path sourceJarPath;
 
     @Singular
-    protected final Set<Path> relocationClasspathPaths;
+    protected final List<Path> relocationClasspathPaths;
 
     @Singular
-    protected final Set<Path> runtimeClasspathPaths;
+    protected final List<ResourcesMerger> resourcesMergers;
 
     @Singular
-    protected final Set<Path> compileClasspathPaths;
+    protected final List<ResourceProcessor> resourceProcessors;
+
+    @Singular
+    protected final List<Path> runtimeClasspathPaths;
+
+    @Singular
+    protected final List<Path> compileClasspathPaths;
 
     @Singular
     protected final Map<URI, String> moduleIdentifiers;

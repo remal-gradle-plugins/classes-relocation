@@ -13,6 +13,7 @@ import lombok.CustomLog;
 import lombok.NoArgsConstructor;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.intern.ClassesRelocator;
+import org.gradle.api.model.ObjectFactory;
 import org.gradle.workers.WorkAction;
 
 @NoArgsConstructor(onConstructor_ = {@Inject})
@@ -54,5 +55,9 @@ abstract class RelocateJarAction implements WorkAction<RelocateJarActionParams> 
             relocator.relocate();
         }
     }
+
+
+    @Inject
+    protected abstract ObjectFactory getObjects();
 
 }

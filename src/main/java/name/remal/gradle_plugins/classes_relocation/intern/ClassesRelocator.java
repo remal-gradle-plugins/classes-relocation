@@ -1,10 +1,12 @@
 package name.remal.gradle_plugins.classes_relocation.intern;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.lang.String.format;
 import static java.util.Arrays.binarySearch;
 import static java.util.Arrays.sort;
 import static java.util.Collections.singletonList;
+import static java.util.Comparator.comparingInt;
 import static java.util.Locale.ENGLISH;
 import static java.util.Objects.requireNonNull;
 import static java.util.jar.Attributes.Name.MANIFEST_VERSION;
@@ -12,25 +14,33 @@ import static java.util.jar.Attributes.Name.SIGNATURE_VERSION;
 import static java.util.jar.JarFile.MANIFEST_NAME;
 import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.regex.Pattern.compile;
+import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
 import static name.remal.gradle_plugins.classes_relocation.intern.classpath.Classpath.newClasspathForPaths;
+import static name.remal.gradle_plugins.classes_relocation.intern.classpath.MergedResource.newMergedResource;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmTestUtils.wrapWithTestClassVisitors;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils.toClassInternalName;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils.toClassName;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.MultiReleaseUtils.MULTI_RELEASE;
 import static name.remal.gradle_plugins.toolkit.InTestFlags.isInTest;
+import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyListProxy;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyProxy;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazySetProxy;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.isNotEmpty;
+import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
+import static name.remal.gradle_plugins.toolkit.SneakyThrowUtils.sneakyThrowsFunction;
 import static org.objectweb.asm.Type.getDescriptor;
 
 import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
 import java.io.Closeable;
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.jar.Attributes;
@@ -39,7 +49,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import lombok.CustomLog;
+import lombok.Getter;
 import lombok.SneakyThrows;
+import lombok.Value;
 import lombok.experimental.SuperBuilder;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.api.RelocateClasses;
@@ -48,6 +60,9 @@ import name.remal.gradle_plugins.classes_relocation.intern.asm.RelocationAnnotat
 import name.remal.gradle_plugins.classes_relocation.intern.asm.UnsupportedAnnotationsClassVisitor;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Classpath;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
+import name.remal.gradle_plugins.classes_relocation.intern.resource_handler.ResourceProcessingContext;
+import name.remal.gradle_plugins.classes_relocation.intern.resource_handler.ResourceProcessor;
+import name.remal.gradle_plugins.classes_relocation.intern.resource_handler.ResourcesMerger;
 import name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils;
 import name.remal.gradle_plugins.classes_relocation.intern.utils.MultiReleaseUtils;
 import name.remal.gradle_plugins.toolkit.ClosablesContainer;
@@ -60,7 +75,7 @@ import org.objectweb.asm.commons.Remapper;
 
 @SuperBuilder
 @CustomLog
-public class ClassesRelocator extends ClassesRelocatorParams implements Closeable {
+public class ClassesRelocator extends ClassesRelocatorParams implements ResourceProcessingContext, Closeable {
 
     private static final boolean IN_TEST = isInTest();
 
@@ -86,6 +101,12 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         sourceClasspath.plus(relocationClasspath)
     );
 
+    private final Set<String> sourceAndRelocationClasspathResourceNames = asLazySetProxy(() ->
+        sourceAndRelocationClasspath.getResources().stream()
+            .map(Resource::getName)
+            .collect(toImmutableSet())
+    );
+
     private final Set<String> sourceInternalClassNames = asLazySetProxy(() ->
         sourceClasspath.getClassNames().stream()
             .map(AsmUtils::toClassInternalName)
@@ -98,8 +119,32 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
             .collect(toImmutableSet())
     );
 
-    private final RelocationOutput output = asLazyProxy(RelocationOutput.class, () ->
-        closables.registerCloseable(new RelocationOutputImpl(targetJarPath, metadataCharset, preserveFileTimestamps))
+    private final List<ResourcesMergerWithCompiledPatterns> compiledResourcesMergers = asLazyListProxy(() ->
+        Stream.of(
+                resourcesMergers,
+                ImmutableList.copyOf(ServiceLoader.load(
+                    ResourcesMerger.class,
+                    ClassesRelocator.class.getClassLoader()
+                ))
+            )
+            .flatMap(Collection::stream)
+            .sorted(comparingInt(ResourcesMerger::getPriority))
+            .map(ResourcesMergerWithCompiledPatterns::new)
+            .collect(toImmutableList())
+    );
+
+    private final List<ResourceProcessorWithCompiledPatterns> compiledResourceProcessors = asLazyListProxy(() ->
+        Stream.of(
+                resourceProcessors,
+                ImmutableList.copyOf(ServiceLoader.load(
+                    ResourceProcessor.class,
+                    ClassesRelocator.class.getClassLoader()
+                ))
+            )
+            .flatMap(Collection::stream)
+            .sorted(comparingInt(ResourceProcessor::getPriority))
+            .map(ResourceProcessorWithCompiledPatterns::new)
+            .collect(toImmutableList())
     );
 
     private final Classpath classpath = asLazyProxy(Classpath.class, () ->
@@ -109,10 +154,24 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         ))
     );
 
+    @Getter
+    private final String relocatedClassNamePrefix = basePackageForRelocatedClasses + '.';
+
+    @Getter
+    private final String relocatedClassInternalNamePrefix = toClassInternalName(relocatedClassNamePrefix);
+
+    private final RelocationOutput output = asLazyProxy(RelocationOutput.class, () ->
+        closables.registerCloseable(new RelocationOutputImpl(targetJarPath, metadataCharset, preserveFileTimestamps))
+    );
+
+
+    private final Set<Resource> processedResources = new LinkedHashSet<>();
+
+    private final Deque<ResourceRelocation> resourceRelocations = new ArrayDeque<>();
+    private final Set<String> processedResourceNames = new LinkedHashSet<>();
 
     private final Deque<String> internalClassNamesToProcess = new ArrayDeque<>();
     private final Set<String> processedInternalClassNames = new LinkedHashSet<>();
-    private final Set<Resource> processedResources = new LinkedHashSet<>();
 
     @SneakyThrows
     public void relocate() {
@@ -133,17 +192,90 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         processedInternalClassNames.addAll(internalClassNamesToProcess);
 
         while (true) {
-            val internalClassNameToProcess = internalClassNamesToProcess.pollFirst();
-            if (internalClassNameToProcess == null) {
-                break;
+            val resourceRelocation = resourceRelocations.pollFirst();
+            if (resourceRelocation != null) {
+                processResource(resourceRelocation);
+                continue;
             }
 
-            processClass(internalClassNameToProcess);
+            val internalClassNameToProcess = internalClassNamesToProcess.pollFirst();
+            if (internalClassNameToProcess != null) {
+                processClass(internalClassNameToProcess);
+                continue;
+            }
+
+            break;
         }
+
 
         copyLicensesOfRelocatedResources();
         processManifest();
         copyNotProcessedSourceResources();
+    }
+
+
+    @Override
+    public void handleResourceName(String resourceName, String relocatedResourceName) {
+        if (!sourceAndRelocationClasspathResourceNames.contains(resourceName)) {
+            return;
+        }
+
+        if (processedResourceNames.add(resourceName)) {
+            resourceRelocations.addLast(new ResourceRelocation(resourceName, relocatedResourceName));
+        }
+    }
+
+    @SneakyThrows
+    private void processResource(ResourceRelocation resourceRelocation) {
+        val resourceName = resourceRelocation.getResourceName();
+        val resourcesGroupedByName = sourceAndRelocationClasspath.getResources(resourceName).stream()
+            .filter(not(processedResources::contains))
+            .collect(groupingBy(Resource::getName));
+
+        val resourcesGroupedByNameAndMerged = resourcesGroupedByName.entrySet().stream()
+            .map(sneakyThrowsFunction(entry -> mergeResources(entry.getKey(), entry.getValue())))
+            .collect(toList());
+
+        for (val resource : resourcesGroupedByNameAndMerged) {
+            val resourceProcessor = compiledResourceProcessors.stream()
+                .filter(it -> it.matches(resourceName))
+                .findFirst()
+                .orElse(null);
+            if (resourceProcessor != null) {
+                val bytes = resourceProcessor.processResource(resource, this);
+                output.write(resourceRelocation.getRelocatedResourceName(), resource.getLastModifiedMillis(), bytes);
+
+            } else {
+                try (val in = resource.open()) {
+                    output.copy(resourceRelocation.getRelocatedResourceName(), resource.getLastModifiedMillis(), in);
+                }
+            }
+        }
+    }
+
+    @SneakyThrows
+    private Resource mergeResources(String resourceName, List<Resource> resources) {
+        if (resources.size() == 1) {
+            val resource = resources.get(0);
+            processedResources.add(resource);
+            return resource;
+        }
+
+        val merger = compiledResourcesMergers.stream()
+            .filter(it -> it.matches(resourceName))
+            .findFirst()
+            .orElse(null);
+        if (merger != null) {
+            processedResources.addAll(resources);
+            val mergedContent = merger.merge(resourceName, resources);
+            val resource = newMergedResource(resourceName, mergedContent);
+            processedResources.add(resource);
+            return resource;
+        }
+
+        val resource = resources.get(0);
+        processedResources.add(resource);
+        return resource;
     }
 
 
@@ -158,28 +290,12 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
     }
 
 
-    private void handleInternalClassName(String internalClassName) {
+    @Override
+    public void handleInternalClassName(String internalClassName) {
         if (processedInternalClassNames.add(internalClassName)) {
             internalClassNamesToProcess.addLast(internalClassName);
         }
     }
-
-    @Nullable
-    private String getRelocationSource(Resource resource) {
-        val classpathElement = resource.getClasspathElement();
-        if (classpathElement == null) {
-            return null;
-        }
-
-        val moduleIdentifier = moduleIdentifiers.get(classpathElement.getPath().toUri());
-        if (isNotEmpty(moduleIdentifier)) {
-            return moduleIdentifier;
-        }
-
-        return classpathElement.getModuleName();
-    }
-
-    private static final Pattern DESCRIPTOR_PATTERN = compile("^(\\[*L)([^;]+)(;)$");
 
     @SneakyThrows
     @SuppressWarnings({"java:S3776", "java:S1121", "VariableDeclarationUsageDistance"})
@@ -200,13 +316,17 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         }
 
 
-        val relocatedClassInternalNamePrefix = toClassInternalName(basePackageForRelocatedClasses + '.');
         val remapper = new Remapper() {
             @Override
             public String map(String internalName) {
                 if (relocationInternalClassNames.contains(internalName)) {
                     handleInternalClassName(internalName);
-                    return relocatedClassInternalNamePrefix + internalName;
+                    val relocatedInternalName = relocatedClassInternalNamePrefix + internalName;
+                    handleResourceName(
+                        "META-INF/services/" + internalName.replace('/', '.'),
+                        "META-INF/services/" + relocatedInternalName.replace('/', '.')
+                    );
+                    return relocatedInternalName;
                 }
 
                 return internalName;
@@ -272,6 +392,23 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         );
         val relocatedResourceName = resourceNamePrefix + relocatedNameVisitor.getClassName() + ".class";
         output.write(relocatedResourceName, resource.getLastModifiedMillis(), classWriter.toByteArray());
+    }
+
+    private static final Pattern DESCRIPTOR_PATTERN = compile("^(\\[*L)([^;]+)(;)$");
+
+    @Nullable
+    private String getRelocationSource(Resource resource) {
+        val classpathElement = resource.getClasspathElement();
+        if (classpathElement == null) {
+            return null;
+        }
+
+        val moduleIdentifier = moduleIdentifiers.get(classpathElement.getPath().toUri());
+        if (isNotEmpty(moduleIdentifier)) {
+            return moduleIdentifier;
+        }
+
+        return classpathElement.getModuleName();
     }
 
 
@@ -404,6 +541,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         );
     }
 
+
     @SneakyThrows
     private void copyNotProcessedSourceResources() {
         val resourceToCopy = sourceClasspath.streamResourcesWithUniqueNames()
@@ -414,6 +552,13 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
                 output.copy(resource.getName(), resource.getLastModifiedMillis(), in);
             }
         }
+    }
+
+
+    @Value
+    private static class ResourceRelocation {
+        String resourceName;
+        String relocatedResourceName;
     }
 
 }

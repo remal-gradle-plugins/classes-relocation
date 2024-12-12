@@ -72,10 +72,14 @@ public abstract class ClassesRelocatorTestBase {
         Class.forName(classThatShouldNotBeAvailableInTestClassLoader.getName()); // check that available here
 
         {
-            // the test logic works without relocation
+            // verify test logic without relocation
             val testLogicCtor = makeAccessible(logicClass.getDeclaredConstructor());
             val testLogic = (ClassesRelocatorTestLogic) testLogicCtor.newInstance();
-            testLogic.assertTestLogic();
+            try {
+                testLogic.assertTestLogic();
+            } catch (Throwable e) {
+                throw new AssertionError("Test logic fails even WITHOUT relocation", e);
+            }
         }
 
         val sourceJarPath = createSourceJar(logicClass);
@@ -104,7 +108,10 @@ public abstract class ClassesRelocatorTestBase {
             .distinct()
             .map(UrlUtils::toUrl)
             .toArray(URL[]::new);
+        val prevContextClassLoader = Thread.currentThread().getContextClassLoader();
         try (val classLoader = new TestLogicClassLoader(classLoaderUrls)) {
+            Thread.currentThread().setContextClassLoader(classLoader);
+
             try {
                 classLoader.loadClass(classThatShouldNotBeAvailableInTestClassLoader.getName());
                 fail("Should not be available: " + classThatShouldNotBeAvailableInTestClassLoader);
@@ -115,7 +122,14 @@ public abstract class ClassesRelocatorTestBase {
             val relocatedTestLogicClass = classLoader.loadClass(logicClass.getName());
             val relocatedTestLogicCtor = makeAccessible(relocatedTestLogicClass.getDeclaredConstructor());
             val relocatedTestLogic = (ClassesRelocatorTestLogic) relocatedTestLogicCtor.newInstance();
-            relocatedTestLogic.assertTestLogic();
+            try {
+                relocatedTestLogic.assertTestLogic();
+            } catch (Throwable e) {
+                throw new AssertionError("Test logic fails WITH relocation", e);
+            }
+
+        } finally {
+            Thread.currentThread().setContextClassLoader(prevContextClassLoader);
         }
     }
 
