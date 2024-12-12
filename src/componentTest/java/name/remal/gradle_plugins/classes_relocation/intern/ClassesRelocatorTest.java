@@ -31,9 +31,17 @@ class ClassesRelocatorTest extends ClassesRelocatorTestBase {
     }
 
     @Test
-    void metaInfServices() {
+    void metaInfServicesRelocated() {
+        assertTestLogic(JacksonGuavaTestLogic.class, "jackson-databind", "jackson-guava");
+    }
+
+    @Test
+    void metaInfServicesMerged() {
+        /*
+         * JavaTime will be the last library on the relocation classpath.
+         * This test will succeed only if META-INF/services are merged.
+         */
         assertTestLogic(JacksonJavaTimeTestLogic.class, "jackson-databind", "jackson-guava", "jackson-jsr310");
-        assertTestLogic(JacksonGuavaTestLogic.class, "jackson-databind", "jackson-guava", "jackson-jsr310");
     }
 
 }

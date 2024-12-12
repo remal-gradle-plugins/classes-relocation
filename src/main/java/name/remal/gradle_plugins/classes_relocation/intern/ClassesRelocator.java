@@ -16,8 +16,8 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.regex.Pattern.compile;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.toList;
+import static name.remal.gradle_plugins.classes_relocation.intern.MergedResource.newMergedResource;
 import static name.remal.gradle_plugins.classes_relocation.intern.classpath.Classpath.newClasspathForPaths;
-import static name.remal.gradle_plugins.classes_relocation.intern.classpath.MergedResource.newMergedResource;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmTestUtils.wrapWithTestClassVisitors;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils.toClassInternalName;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils.toClassName;
@@ -267,8 +267,12 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
             .orElse(null);
         if (merger != null) {
             processedResources.addAll(resources);
+            val lastModifiedMillis = resources.stream()
+                .map(Resource::getLastModifiedMillis)
+                .max(Long::compareTo)
+                .orElse(null);
             val mergedContent = merger.merge(resourceName, resources);
-            val resource = newMergedResource(resourceName, mergedContent);
+            val resource = newMergedResource(resourceName, lastModifiedMillis, mergedContent);
             processedResources.add(resource);
             return resource;
         }

@@ -7,21 +7,19 @@ import java.io.InputStream;
 import javax.annotation.Nullable;
 import lombok.Getter;
 
-public class MergedResource extends ResourceBase {
-
-    public static Resource newMergedResource(String name, byte[] content) {
-        return new MergedResource(name, content);
-    }
-
-
-    @Getter
-    private final long lastModifiedMillis = currentTimeMillis();
+public abstract class GeneratedResource extends ResourceBase {
 
     private final byte[] content;
 
-    private MergedResource(String name, byte[] content) {
+    @Getter
+    private final long lastModifiedMillis;
+
+    protected GeneratedResource(String name, @Nullable Long lastModifiedMillis, byte[] content) {
         super(name);
         this.content = content.clone();
+        this.lastModifiedMillis = lastModifiedMillis != null && lastModifiedMillis >= 0
+            ? lastModifiedMillis
+            : currentTimeMillis();
     }
 
     @Override
