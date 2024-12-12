@@ -350,8 +350,9 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
                                 return toClassName(relocatedInternalName);
                             }
                         }
+                    }
 
-                    } else if (string.contains("/")) {
+                    if (string.contains("/")) {
                         if (relocationInternalClassNames.contains(string)) {
                             handleInternalClassName(string);
                             return relocatedClassInternalNamePrefix + string;
@@ -368,6 +369,9 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
                         }
                     }
 
+                    if (string.equals(MANIFEST_NAME)) {
+                        return string;
+                    }
                     // TODO: handle resources
                 }
 
