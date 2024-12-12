@@ -54,4 +54,6 @@ public abstract class ClassesRelocatorParams {
 
     protected final boolean preserveFileTimestamps;
 
+    protected final boolean relocateResources;
+
 }

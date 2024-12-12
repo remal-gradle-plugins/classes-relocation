@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.ServiceLoader;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.regex.Pattern;
@@ -70,6 +69,7 @@ import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;
+import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.Remapper;
 
@@ -95,6 +95,12 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
 
     private final Classpath relocationClasspath = asLazyProxy(Classpath.class, () ->
         closables.registerCloseable(newClasspathForPaths(relocationClasspathPaths))
+    );
+
+    private final Set<String> relocationClasspathResourceNames = asLazySetProxy(() ->
+        relocationClasspath.getResources().stream()
+            .map(Resource::getName)
+            .collect(toImmutableSet())
     );
 
     private final Classpath sourceAndRelocationClasspath = asLazyProxy(Classpath.class, () ->
@@ -211,6 +217,9 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
         copyLicensesOfRelocatedResources();
         processManifest();
         copyNotProcessedSourceResources();
+
+
+        // TODO: process module-info
     }
 
 
@@ -304,6 +313,9 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
     @SneakyThrows
     @SuppressWarnings({"java:S3776", "java:S1121", "VariableDeclarationUsageDistance"})
     private void processClassAndResource(String internalClassNameToProcess, Resource resource) {
+        val relocationSource = getRelocationSource(resource);
+
+
         ClassVisitor classVisitor;
         val classWriter = (ClassWriter) (classVisitor = new ClassWriter(0));
 
@@ -315,7 +327,6 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
 
         val isSourceClass = sourceInternalClassNames.contains(internalClassNameToProcess);
         if (!isSourceClass) {
-            val relocationSource = getRelocationSource(resource);
             classVisitor = new RelocationAnnotationsClassVisitor(classVisitor, relocationSource);
         }
 
@@ -325,27 +336,17 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
             public String map(String internalName) {
                 if (relocationInternalClassNames.contains(internalName)) {
                     handleInternalClassName(internalName);
-                    val relocatedInternalName = relocatedClassInternalNamePrefix + internalName;
-                    handleResourceName(
-                        "META-INF/services/" + internalName.replace('/', '.'),
-                        "META-INF/services/" + relocatedInternalName.replace('/', '.')
-                    );
-                    return relocatedInternalName;
+                    return relocatedClassInternalNamePrefix + internalName;
                 }
 
                 return internalName;
             }
 
             @Override
+            @SuppressWarnings("java:S6541")
             public Object mapValue(Object value) {
                 if (value instanceof String) {
                     val string = (String) value;
-                    if (string.equals(MANIFEST_NAME)) {
-                        return string;
-                    }
-
-                    // TODO: handle resources
-
                     if (string.contains(".")) {
                         val internalName = toClassInternalName(string);
                         if (relocationInternalClassNames.contains(internalName)) {
@@ -374,12 +375,74 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
                             }
                         }
                     }
+
+                    if (relocateResources) {
+                        String resourcePath = string;
+                        if (resourcePath.startsWith("/")) {
+                            resourcePath = resourcePath.substring(1);
+                        }
+                        if (relocationClasspathResourceNames.contains(resourcePath)) {
+                            val dirDelimPos = resourcePath.lastIndexOf('/');
+                            val resourceDir = dirDelimPos >= 0
+                                ? resourcePath.substring(0, dirDelimPos + 1)
+                                : "";
+
+                            val resourceName = resourcePath.substring(resourceDir.length());
+
+                            val relocatedName = escapeResourceFileName(requireNonNull(relocationSource))
+                                + '-'
+                                + resourceName;
+                            String relocatedPath = resourceDir + relocatedName;
+                            handleResourceName(resourcePath, relocatedPath);
+
+                            if (string.startsWith("/")) {
+                                relocatedPath = '/' + relocatedPath;
+                            }
+
+                            return relocatedPath;
+                        }
+                    }
+
+                    if (relocateResources && !string.startsWith("/")) {
+                        val resourcePath = string;
+                        val resourceFullPath = internalClassNameToProcess + '/' + string;
+                        if (relocationClasspathResourceNames.contains(resourceFullPath)) {
+                            val dirDelimPos = resourcePath.lastIndexOf('/');
+                            val resourceDir = dirDelimPos >= 0
+                                ? resourcePath.substring(0, dirDelimPos + 1)
+                                : "";
+
+                            val resourceName = resourcePath.substring(resourceDir.length());
+
+                            val relocatedName = escapeResourceFileName(requireNonNull(relocationSource))
+                                + '-'
+                                + resourceName;
+                            String relocatedPath = resourceDir + relocatedName;
+                            handleResourceName(resourceFullPath, internalClassNameToProcess + '/' + relocatedPath);
+
+                            return relocatedPath;
+                        }
+                    }
+                }
+
+                if (value instanceof Type) {
+                    val type = (Type) value;
+                    if (type.getSort() == Type.OBJECT) {
+                        val internalName = type.getInternalName();
+                        val relocatedInternalName = relocatedClassInternalNamePrefix + internalName;
+                        handleResourceName(
+                            "META-INF/services/" + internalName.replace('/', '.'),
+                            "META-INF/services/" + relocatedInternalName.replace('/', '.')
+                        );
+                    }
                 }
 
                 return super.mapValue(value);
             }
         };
         classVisitor = new ClassRemapper(classVisitor, remapper);
+
+        // TODO: report native methods
 
 
         if (isSourceClass) {
@@ -422,7 +485,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
 
 
     private static final Pattern LICENSE_RESOURCE_NAME_PATTERN = Pattern.compile(
-        "^(.*/)?[^/]*\\blicense\\b[^/]*$",
+        "^(.*/)?[^/]*\\b((license)|(notice))\\b[^/]*$",
         CASE_INSENSITIVE
     );
 
@@ -443,25 +506,6 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
             return;
         }
 
-        val forbiddenNameChars = "\\/:<>\"'|?*${}()&[]^".toCharArray();
-        sort(forbiddenNameChars);
-
-        @SuppressWarnings("java:S4276")
-        Function<String, String> escapeName = name -> {
-            val result = new StringBuilder(name.length());
-            for (int index = 0; index < name.length(); index++) {
-                val ch = name.charAt(index);
-                if (binarySearch(forbiddenNameChars, ch) >= 0) {
-                    result.append('-');
-                } else if (ch < 32 || ch > 126) {
-                    result.append('-');
-                } else {
-                    result.append(ch);
-                }
-            }
-            return result.toString();
-        };
-
         for (val resource : licenseResources) {
             val fullName = resource.getName();
 
@@ -473,13 +517,34 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
             val name = fullName.substring(namePrefix.length());
 
             val relocationSource = getRelocationSource(resource);
-            val relocatedName = escapeName.apply(requireNonNull(relocationSource)) + '-' + name;
+            val relocatedName = escapeResourceFileName(requireNonNull(relocationSource)) + '-' + name;
             val relocatedFullName = namePrefix + relocatedName;
 
             try (val in = resource.open()) {
                 output.copy(relocatedFullName, resource.getLastModifiedMillis(), in);
             }
         }
+    }
+
+    private static final char[] FORBIDDEN_RESOURCE_FILE_NAME_CHARS = "\\/:<>\"'|?*${}()&[]^".toCharArray();
+
+    static {
+        sort(FORBIDDEN_RESOURCE_FILE_NAME_CHARS);
+    }
+
+    private static String escapeResourceFileName(String name) {
+        val result = new StringBuilder(name.length());
+        for (int index = 0; index < name.length(); index++) {
+            val ch = name.charAt(index);
+            if (binarySearch(FORBIDDEN_RESOURCE_FILE_NAME_CHARS, ch) >= 0) {
+                result.append('-');
+            } else if (ch < 32 || ch > 126) {
+                result.append('-');
+            } else {
+                result.append(ch);
+            }
+        }
+        return result.toString();
     }
 
 
@@ -557,8 +622,13 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
             .filter(processedResources::add)
             .collect(toList());
         for (val resource : resourceToCopy) {
+            val resourceName = resource.getName();
+            if (resourceName.equals("META-INF/INDEX.LIST")) {
+                continue; // ignore
+            }
+
             try (val in = resource.open()) {
-                output.copy(resource.getName(), resource.getLastModifiedMillis(), in);
+                output.copy(resourceName, resource.getLastModifiedMillis(), in);
             }
         }
     }

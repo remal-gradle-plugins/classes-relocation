@@ -12,6 +12,8 @@ public class RelocationAnnotationsClassVisitor extends ClassVisitor {
 
     private static final String JETBRAINS_INTERNAL_DESCRIPTOR = "Lorg/jetbrains/annotations/ApiStatus$Internal;";
 
+    private static final String APIGUARDIAN_API_DESCRIPTOR = "Lorg/apiguardian/api/API;";
+
     private static final String GENERATED_DESCRIPTOR = getDescriptor(Generated.class);
 
     private static final String RELOCATED_CLASS_DESCRIPTOR = getDescriptor(RelocatedClass.class);
@@ -47,6 +49,14 @@ public class RelocationAnnotationsClassVisitor extends ClassVisitor {
         }
 
         {
+            val av = super.visitAnnotation(APIGUARDIAN_API_DESCRIPTOR, false);
+            if (av != null) {
+                av.visitEnum("status", "Lorg/apiguardian/api/API$Status;", "INTERNAL");
+                av.visitEnd();
+            }
+        }
+
+        {
             val av = super.visitAnnotation(GENERATED_DESCRIPTOR, false);
             if (av != null) {
                 av.visitEnd();
@@ -75,6 +85,7 @@ public class RelocationAnnotationsClassVisitor extends ClassVisitor {
     @Nullable
     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
         if (JETBRAINS_INTERNAL_DESCRIPTOR.equals(descriptor)
+            || APIGUARDIAN_API_DESCRIPTOR.equals(descriptor)
             || GENERATED_DESCRIPTOR.equals(descriptor)
             || RELOCATED_CLASS_DESCRIPTOR.equals(descriptor)
             || SUPPRESS_FB_WARNINGS_DESCRIPTOR.equals(descriptor)
