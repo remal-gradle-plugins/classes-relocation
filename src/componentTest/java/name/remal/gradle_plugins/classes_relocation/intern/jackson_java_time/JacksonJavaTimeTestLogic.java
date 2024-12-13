@@ -8,15 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.time.Instant;
-import lombok.SneakyThrows;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.intern.ClassesRelocatorTestLogic;
 
 public class JacksonJavaTimeTestLogic implements ClassesRelocatorTestLogic {
 
     @Override
-    @SneakyThrows
-    public void assertTestLogic() {
+    public void assertTestLogic() throws Throwable {
         val objectMapper = JsonMapper.builder()
             .findAndAddModules()
             .disable(ADJUST_DATES_TO_CONTEXT_TIME_ZONE)

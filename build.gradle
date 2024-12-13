@@ -6,7 +6,7 @@ buildscript {
     String rootSnapshotVersion = project.ext.rootSnapshotVersion = '2-SNAPSHOT'
     dependencies {
         //classpath("$rootGroupId:$rootArtifactId:$rootSnapshotVersion") { version { strictly(rootSnapshotVersion) } }
-        classpath 'name.remal.gradle-plugins.toolkit:build-logic:0.69.3'
+        classpath 'name.remal.gradle-plugins.toolkit:build-logic:0.69.4'
     }
     repositories {
         mavenCentral()
@@ -61,6 +61,7 @@ dependencies {
     componentTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
     componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
     componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+    componentTestImplementation 'joda-time:joda-time:2.13.0'
 }
 
 Map<String, String> componentTestRelocationNotations = [
@@ -68,6 +69,7 @@ Map<String, String> componentTestRelocationNotations = [
     'jackson-databind': 'com.fasterxml.jackson.core:jackson-databind',
     'jackson-guava': 'com.fasterxml.jackson.datatype:jackson-datatype-guava',
     'jackson-jsr310': 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310',
+    'joda-time': 'joda-time:joda-time',
 
     'junit-jupiter-api': 'org.junit.jupiter:junit-jupiter-api',
     'assertj-core': 'org.assertj:assertj-core',

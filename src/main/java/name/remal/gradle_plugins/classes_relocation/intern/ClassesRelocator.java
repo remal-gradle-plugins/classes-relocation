@@ -29,6 +29,7 @@ import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazySetProxy;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.isNotEmpty;
 import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 import static name.remal.gradle_plugins.toolkit.SneakyThrowUtils.sneakyThrowsFunction;
+import static org.apache.commons.lang3.StringUtils.countMatches;
 import static org.objectweb.asm.Type.getDescriptor;
 
 import com.google.common.collect.ImmutableList;
@@ -97,7 +98,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
         closables.registerCloseable(newClasspathForPaths(relocationClasspathPaths))
     );
 
-    private final Set<String> relocationClasspathResourceNames = asLazySetProxy(() ->
+    private final Set<String> relocationResourceNames = asLazySetProxy(() ->
         relocationClasspath.getResources().stream()
             .map(Resource::getName)
             .collect(toImmutableSet())
@@ -347,7 +348,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
             public Object mapValue(Object value) {
                 if (value instanceof String) {
                     val string = (String) value;
-                    if (string.contains(".")) {
+                    if (string.contains(".") && !string.startsWith(".")) {
                         val internalName = toClassInternalName(string);
                         if (relocationInternalClassNames.contains(internalName)) {
                             val name = toClassName(internalName);
@@ -357,9 +358,24 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
                                 return toClassName(relocatedInternalName);
                             }
                         }
+
+                        if (countMatches(string, ".") >= 2) {
+                            val internalNamePrefix = toClassInternalName(string)
+                                + (string.endsWith(".") ? "" : "/");
+                            val resourcePathsStartingWithPrefix = relocationResourceNames.stream()
+                                .map(MultiReleaseUtils::withoutMultiReleasePathPrefix)
+                                .filter(it -> it.startsWith(internalNamePrefix) && !it.endsWith(".class"))
+                                .collect(toList());
+                            if (!resourcePathsStartingWithPrefix.isEmpty()) {
+                                for (val path : resourcePathsStartingWithPrefix) {
+                                    handleResourceName(path, relocatedClassInternalNamePrefix + '/' + path);
+                                }
+                                return relocatedClassNamePrefix + string;
+                            }
+                        }
                     }
 
-                    if (string.contains("/")) {
+                    if (string.contains("/") && !string.startsWith("/")) {
                         if (relocationInternalClassNames.contains(string)) {
                             handleInternalClassName(string);
                             return relocatedClassInternalNamePrefix + string;
@@ -374,6 +390,21 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
                                 return descriptorMatcher.group(1) + relocatedInternalName + descriptorMatcher.group(3);
                             }
                         }
+
+                        if (countMatches(string, "/") >= 2) {
+                            val internalNamePrefix = string
+                                + (string.endsWith("/") ? "" : "/");
+                            val resourcePathsStartingWithPrefix = relocationResourceNames.stream()
+                                .map(MultiReleaseUtils::withoutMultiReleasePathPrefix)
+                                .filter(it -> it.startsWith(internalNamePrefix) && !it.endsWith(".class"))
+                                .collect(toList());
+                            if (!resourcePathsStartingWithPrefix.isEmpty()) {
+                                for (val path : resourcePathsStartingWithPrefix) {
+                                    handleResourceName(path, relocatedClassInternalNamePrefix + path);
+                                }
+                                return relocatedClassInternalNamePrefix + string;
+                            }
+                        }
                     }
 
                     if (relocateResources) {
@@ -381,7 +412,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
                         if (resourcePath.startsWith("/")) {
                             resourcePath = resourcePath.substring(1);
                         }
-                        if (relocationClasspathResourceNames.contains(resourcePath)) {
+                        if (relocationResourceNames.contains(resourcePath)) {
                             val dirDelimPos = resourcePath.lastIndexOf('/');
                             val resourceDir = dirDelimPos >= 0
                                 ? resourcePath.substring(0, dirDelimPos + 1)
@@ -406,7 +437,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
                     if (relocateResources && !string.startsWith("/")) {
                         val resourcePath = string;
                         val resourceFullPath = internalClassNameToProcess + '/' + string;
-                        if (relocationClasspathResourceNames.contains(resourceFullPath)) {
+                        if (relocationResourceNames.contains(resourceFullPath)) {
                             val dirDelimPos = resourcePath.lastIndexOf('/');
                             val resourceDir = dirDelimPos >= 0
                                 ? resourcePath.substring(0, dirDelimPos + 1)
@@ -418,7 +449,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Resource
                                 + '-'
                                 + resourceName;
                             String relocatedPath = resourceDir + relocatedName;
-                            handleResourceName(resourceFullPath, internalClassNameToProcess + '/' + relocatedPath);
+                            handleResourceName(resourceFullPath, internalClassNameToProcess + relocatedPath);
 
                             return relocatedPath;
                         }
