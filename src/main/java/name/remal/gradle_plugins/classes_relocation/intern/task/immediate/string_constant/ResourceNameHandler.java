@@ -3,13 +3,11 @@ package name.remal.gradle_plugins.classes_relocation.intern.task.immediate.strin
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
-import lombok.CustomLog;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.resource.RelocateResource;
 
-@CustomLog
 public class ResourceNameHandler implements ImmediateTaskHandler<String, ProcessStringConstant> {
 
     @Override
@@ -41,7 +39,6 @@ public class ResourceNameHandler implements ImmediateTaskHandler<String, Process
                 });
 
             if (matches.get()) {
-                logger.error("task={}", task);
                 return Optional.of(
                     (absolute ? "/" : "")
                         + context.getRelocatedClassInternalNamePrefix()
