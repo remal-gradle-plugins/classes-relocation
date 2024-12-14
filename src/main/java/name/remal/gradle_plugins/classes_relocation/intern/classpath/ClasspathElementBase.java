@@ -6,8 +6,6 @@ import static name.remal.gradle_plugins.toolkit.SneakyThrowUtils.sneakyThrows;
 import static name.remal.gradle_plugins.toolkit.reflection.ModuleNameParser.parseModuleName;
 
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.LinkedHashMap;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.val;
@@ -25,25 +23,6 @@ abstract class ClasspathElementBase extends WithResourcesBase implements Classpa
     protected ClasspathElementBase(Path path) {
         this.path = path;
     }
-
-    @Override
-    protected final Collection<Resource> readResources() throws Exception {
-        val map = new LinkedHashMap<String, Resource>();
-        for (val resource : readClasspathElementResources()) {
-            val name = resource.getName();
-            val previousResource = map.putIfAbsent(name, resource);
-            if (previousResource != null) {
-                logger.warn(
-                    "{} has multiple resources with name `{}`, only first resource will be processed",
-                    this,
-                    name
-                );
-            }
-        }
-        return map.values();
-    }
-
-    protected abstract Collection<Resource> readClasspathElementResources() throws Exception;
 
 
     private final LazyValue<String> moduleName = lazyValue(() -> {

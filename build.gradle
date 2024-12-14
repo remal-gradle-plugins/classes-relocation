@@ -30,10 +30,6 @@ apply plugin: 'name.remal.build-time-constants'
 apply plugin: 'java-gradle-plugin'
 
 dependencies {
-    //relocateClasses('com.google.dagger:dagger:2.53.1') { transitive = false }
-    //annotationProcessorAll 'com.google.dagger:dagger-compiler:2.53.1'
-
-
     relocateClasses 'org.apache.commons:commons-compress:1.27.1'
 
     compileOnly 'org.apiguardian:apiguardian-api:1.1.2'

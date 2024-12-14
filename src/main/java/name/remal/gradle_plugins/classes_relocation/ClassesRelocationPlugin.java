@@ -64,7 +64,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
 
         configureTaskDefaults(project, extension, confProvider);
 
-        project.getPluginManager().withPlugin("java-base", __ -> {
+        project.getPluginManager().withPlugin("java", __ -> {
             confProvider.configure(conf -> {
                 val compileClasspathConf = project.getConfigurations().getByName(COMPILE_CLASSPATH_CONFIGURATION_NAME);
                 conf.shouldResolveConsistentlyWith(compileClasspathConf);

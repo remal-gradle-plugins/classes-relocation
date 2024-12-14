@@ -6,24 +6,33 @@ import static name.remal.gradle_plugins.classes_relocation.intern.task.queued.Qu
 import static name.remal.gradle_plugins.toolkit.LateInit.lateInit;
 
 import com.google.common.collect.ImmutableList;
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTaskHandler;
+import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.string_constant.ClassDescriptorHandler;
+import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.string_constant.ClassInternalNameHandler;
+import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.string_constant.ClassNameHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskTransformer;
+import name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz.ProcessSourceClassHandler;
+import name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz.RelocateClassHandler;
+import name.remal.gradle_plugins.classes_relocation.intern.task.queued.meta_inf_services.RelocateMetaInfServicesHandler;
 import name.remal.gradle_plugins.toolkit.LateInit;
 
-public class TasksExecutor implements AutoCloseable {
+public class TasksExecutor implements Closeable {
 
     private final List<ImmediateTaskHandler<?, ?>> immediateTaskHandlers = new ArrayList<>();
 
@@ -38,8 +47,24 @@ public class TasksExecutor implements AutoCloseable {
     private final LateInit<TaskExecutionContext> executionContext = lateInit("executionContext");
 
 
+    {
+        addImmediateTaskHandlers(
+            new ClassInternalNameHandler(),
+            new ClassNameHandler(),
+            new ClassDescriptorHandler()
+        );
+
+        addQueuedTaskHandlers(
+            new ProcessSourceClassHandler(),
+            new RelocateClassHandler(),
+            new RelocateMetaInfServicesHandler()
+        );
+    }
+
+
     public void addImmediateTaskHandlers(Iterable<? extends ImmediateTaskHandler<?, ?>> handlers) {
         StreamSupport.stream(handlers.spliterator(), false)
+            .filter(Objects::nonNull)
             .map(CachedImmediateTaskHandler::new)
             .forEach(immediateTaskHandlers::add);
         sort(immediateTaskHandlers);
@@ -55,6 +80,7 @@ public class TasksExecutor implements AutoCloseable {
 
     public void addQueuedTaskTransformers(Iterable<? extends QueuedTaskTransformer> transformers) {
         StreamSupport.stream(transformers.spliterator(), false)
+            .filter(Objects::nonNull)
             .forEach(queuedTaskTransformers::add);
         sort(queuedTaskTransformers);
     }
@@ -69,6 +95,7 @@ public class TasksExecutor implements AutoCloseable {
 
     public void addQueuedTaskHandlers(Iterable<? extends QueuedTaskHandler<?>> handlers) {
         StreamSupport.stream(handlers.spliterator(), false)
+            .filter(Objects::nonNull)
             .map(CachedQueuedTaskHandler::new)
             .forEach(queuedTaskHandlers::add);
         sort(queuedTaskHandlers);
@@ -87,8 +114,19 @@ public class TasksExecutor implements AutoCloseable {
     }
 
 
-    @SuppressWarnings({"unchecked", "rawtypes"})
     public <RESULT> RESULT execute(ImmediateTask<RESULT> task) {
+        return executeImmediateTask(task, null);
+    }
+
+    public <RESULT> RESULT execute(ImmediateTask<RESULT> task, RESULT defaultResult) {
+        return executeImmediateTask(task, defaultResult);
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private <RESULT> RESULT executeImmediateTask(
+        ImmediateTask<RESULT> task,
+        @Nullable RESULT defaultResult
+    ) {
         for (ImmediateTaskHandler handler : immediateTaskHandlers) {
             if (handler.getSupportedTaskClass().isAssignableFrom(task.getClass())) {
                 val result = handler.handle(task, executionContext.get());
@@ -98,22 +136,13 @@ public class TasksExecutor implements AutoCloseable {
             }
         }
 
-        throw new NotHandledTaskException(task);
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private void execute(QueuedTask task) {
-        for (QueuedTaskHandler handler : queuedTaskHandlers) {
-            if (handler.getSupportedTaskClass().isAssignableFrom(task.getClass())) {
-                val result = handler.handle(task, executionContext.get());
-                if (result == TASK_HANDLED) {
-                    return;
-                }
-            }
+        if (defaultResult != null) {
+            return defaultResult;
         }
 
         throw new NotHandledTaskException(task);
     }
+
 
     public void queue(QueuedTask task) {
         if (!processedQueuedTasks.add(task)) {
@@ -138,9 +167,24 @@ public class TasksExecutor implements AutoCloseable {
                 break;
             }
 
-            execute(task);
+            executeQueuedTask(task);
         }
     }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private void executeQueuedTask(QueuedTask task) {
+        for (QueuedTaskHandler handler : queuedTaskHandlers) {
+            if (handler.getSupportedTaskClass().isAssignableFrom(task.getClass())) {
+                val result = handler.handle(task, executionContext.get());
+                if (result == TASK_HANDLED) {
+                    return;
+                }
+            }
+        }
+
+        throw new NotHandledTaskException(task);
+    }
+
 
     @Override
     public void close() {

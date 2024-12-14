@@ -46,6 +46,10 @@ public abstract class AsmUtils {
     }
 
 
+    public static String toClassInternalName(Class<?> clazz) {
+        return toClassInternalName(clazz.getName());
+    }
+
     public static String toClassInternalName(String classNameOrInternalName) {
         return classNameOrInternalName.replace('.', '/');
     }

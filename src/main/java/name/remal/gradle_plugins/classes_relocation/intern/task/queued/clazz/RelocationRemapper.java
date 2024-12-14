@@ -3,6 +3,7 @@ package name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.intern.task.TaskExecutionContext;
+import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.string_constant.ProcessStringConstant;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.meta_inf_services.RelocateMetaInfServices;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
@@ -24,6 +25,11 @@ class RelocationRemapper extends Remapper {
 
     @Override
     public Object mapValue(Object value) {
+        if (value instanceof String) {
+            val string = (String) value;
+            return context.execute(new ProcessStringConstant(string), string);
+        }
+
         if (value instanceof Type) {
             val type = (Type) value;
             if (type.getSort() == Type.OBJECT) {

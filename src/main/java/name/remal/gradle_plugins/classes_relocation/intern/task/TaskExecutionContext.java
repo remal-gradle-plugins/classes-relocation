@@ -29,6 +29,10 @@ public interface TaskExecutionContext extends TaskTransformContext {
         return getSourceClasspath().plus(getRelocationClasspath());
     }
 
+    default boolean isRelocationClassName(String className) {
+        return getRelocationClasspath().getClassNames().contains(className);
+    }
+
     default boolean isRelocationClassInternalName(String classInternalName) {
         return getRelocationClasspath().getClassInternalNames().contains(classInternalName);
     }
@@ -56,6 +60,8 @@ public interface TaskExecutionContext extends TaskTransformContext {
 
 
     <RESULT> RESULT execute(ImmediateTask<RESULT> task);
+
+    <RESULT> RESULT execute(ImmediateTask<RESULT> task, RESULT defaultValue);
 
     void queue(QueuedTask task);
 

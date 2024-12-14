@@ -26,7 +26,7 @@ class ClasspathElementDir extends ClasspathElementBase {
     }
 
     @Override
-    protected Collection<Resource> readClasspathElementResources() throws Exception {
+    protected Collection<Resource> readResources() throws Exception {
         val dirPath = getPath();
         try (val paths = walk(dirPath)) {
             return paths

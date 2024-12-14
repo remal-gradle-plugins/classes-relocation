@@ -26,9 +26,6 @@ import name.remal.gradle_plugins.classes_relocation.intern.task.TasksExecutor;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz.ProcessSourceClass;
-import name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz.ProcessSourceClassHandler;
-import name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz.RelocateClassHandler;
-import name.remal.gradle_plugins.classes_relocation.intern.task.queued.meta_inf_services.RelocateMetaInfServicesHandler;
 import name.remal.gradle_plugins.toolkit.ClosablesContainer;
 
 @SuperBuilder
@@ -69,21 +66,16 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
             }
         }
 
-        val tasksExecutor = new TasksExecutor();
-        tasksExecutor.addQueuedTaskHandlers(
-            new ProcessSourceClassHandler(),
-            new RelocateClassHandler(),
-            new RelocateMetaInfServicesHandler()
-        );
+        try (val tasksExecutor = new TasksExecutor()) {
+            val executionContext = new TaskExecutionContextImpl(tasksExecutor);
+            tasksExecutor.setExecutionContext(executionContext);
 
-        val executionContext = new TaskExecutionContextImpl(tasksExecutor);
-        tasksExecutor.setExecutionContext(executionContext);
+            sourceClasspath.getClassNames().stream()
+                .map(ProcessSourceClass::new)
+                .forEach(tasksExecutor::queue);
 
-        sourceClasspath.getClassNames().stream()
-            .map(ProcessSourceClass::new)
-            .forEach(tasksExecutor::queue);
-
-        tasksExecutor.executeQueuedTasks();
+            tasksExecutor.executeQueuedTasks();
+        }
     }
 
 
@@ -149,6 +141,11 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         @Override
         public <RESULT> RESULT execute(ImmediateTask<RESULT> task) {
             return tasksExecutor.execute(task);
+        }
+
+        @Override
+        public <RESULT> RESULT execute(ImmediateTask<RESULT> task, RESULT defaultValue) {
+            return tasksExecutor.execute(task, defaultValue);
         }
 
         @Override

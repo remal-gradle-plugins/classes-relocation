@@ -54,7 +54,7 @@ class ClasspathElementJar extends ClasspathElementBase {
     }
 
     @Override
-    protected Collection<Resource> readClasspathElementResources() {
+    protected Collection<Resource> readResources() {
         val processedEntryNames = new LinkedHashSet<>();
         return list(zipFile.get().getEntries()).stream()
             .filter(not(ZipArchiveEntry::isDirectory))
