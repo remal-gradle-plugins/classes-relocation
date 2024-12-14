@@ -24,16 +24,19 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.intern.classpath.Classpath;
 import name.remal.gradle_plugins.toolkit.UrlUtils;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -54,13 +57,6 @@ public abstract class ClassesRelocatorTestBase {
             tryToDeleteRecursively(tempDirPath);
         }
     }
-
-
-    private static final List<String> ALWAYS_AVAILABLE_LIBRARIES = ImmutableList.of(
-        "junit-jupiter-api",
-        "assertj-core",
-        "asm"
-    );
 
 
     @SneakyThrows
@@ -99,12 +95,7 @@ public abstract class ClassesRelocatorTestBase {
             relocator.relocate();
         }
 
-        val classLoaderUrls = Stream.concat(
-                Stream.of(targetJarPath),
-                ALWAYS_AVAILABLE_LIBRARIES.stream()
-                    .map(ClassesRelocatorTestBase::getLibraryFilePaths)
-                    .flatMap(Collection::stream)
-            )
+        val classLoaderUrls = Stream.of(targetJarPath)
             .distinct()
             .map(UrlUtils::toUrl)
             .toArray(URL[]::new);
@@ -134,9 +125,31 @@ public abstract class ClassesRelocatorTestBase {
     }
 
 
-    private static final List<Class<?>> TEST_LOGIC_CLASSES = ImmutableList.of(
-        ClassesRelocatorTestLogic.class
+    private static final List<String> ALWAYS_AVAILABLE_LIBRARIES = ImmutableList.of(
+        "junit-jupiter-api",
+        "assertj-core",
+        "asm"
     );
+
+    private static final Set<String> TEST_LOGIC_CLASS_NAMES;
+
+    static {
+        val testLogicClassNames = new LinkedHashSet<String>();
+
+        Stream.of(
+            ClassesRelocatorTestLogic.class
+        ).map(Class::getName).forEach(testLogicClassNames::add);
+
+        ALWAYS_AVAILABLE_LIBRARIES.stream()
+            .map(ClassesRelocatorTestBase::getLibraryFilePaths)
+            .map(Classpath::newClasspathForPaths)
+            .map(Classpath::getClassNames)
+            .flatMap(Collection::stream)
+            .forEach(testLogicClassNames::add);
+
+        TEST_LOGIC_CLASS_NAMES = ImmutableSet.copyOf(testLogicClassNames);
+    }
+
 
     @SneakyThrows
     private Path createSourceJar(Class<? extends ClassesRelocatorTestLogic> logicClass) {
@@ -193,10 +206,6 @@ public abstract class ClassesRelocatorTestBase {
             .map(Paths::get)
             .collect(toImmutableSet());
     }
-
-    private static final Set<String> TEST_LOGIC_CLASS_NAMES = TEST_LOGIC_CLASSES.stream()
-        .map(Class::getName)
-        .collect(toImmutableSet());
 
     private static final ClassLoader TEST_LOGIC_BASE_CLASS_LOADER_DELEGATE =
         defaultValue(ClassesRelocatorTestBase.class.getClassLoader(), getSystemClassLoader());
