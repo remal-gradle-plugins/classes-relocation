@@ -1,14 +1,15 @@
-package name.remal.gradle_plugins.classes_relocation.intern.task;
+package name.remal.gradle_plugins.classes_relocation.intern;
 
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils.toClassInternalName;
 
 import javax.annotation.Nullable;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Classpath;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
+import name.remal.gradle_plugins.classes_relocation.intern.task.TaskTransformContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTask;
 
-public interface TaskExecutionContext extends TaskTransformContext {
+public interface RelocationContext extends TaskTransformContext {
 
     String getBasePackageForRelocatedClasses();
 
@@ -29,17 +30,23 @@ public interface TaskExecutionContext extends TaskTransformContext {
         return getSourceClasspath().plus(getRelocationClasspath());
     }
 
-    default boolean isRelocationClassName(String className) {
-        return getRelocationClasspath().getClassNames().contains(className);
+    default boolean isRelocationClassName(String string) {
+        return getRelocationClasspath().getClassNames().contains(string);
     }
 
-    default boolean isRelocationClassInternalName(String classInternalName) {
-        return getRelocationClasspath().getClassInternalNames().contains(classInternalName);
+    default boolean isRelocationClassInternalName(String string) {
+        return getRelocationClasspath().getClassInternalNames().contains(string);
+    }
+
+    default boolean isRelocationResourceName(String string) {
+        return getRelocationClasspath().getResources().containsKey(string);
     }
 
     @Nullable
     String getModuleIdentifier(Resource resource);
 
+
+    boolean isResourceProcessed(Resource resource);
 
     boolean markResourceAsProcessed(Resource resource);
 

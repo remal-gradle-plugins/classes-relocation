@@ -16,6 +16,7 @@ import java.util.LinkedHashSet;
 import java.util.Set;
 import javax.annotation.Nullable;
 import javax.annotation.WillNotClose;
+import lombok.CustomLog;
 import lombok.SneakyThrows;
 import lombok.val;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
@@ -23,6 +24,7 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.jetbrains.annotations.UnmodifiableView;
 
+@CustomLog
 class RelocationOutputImpl implements RelocationOutput {
 
     private static final long CONSTANT_TIME_FOR_ZIP_ENTRIES =
@@ -52,12 +54,6 @@ class RelocationOutputImpl implements RelocationOutput {
         this.preserveFileTimestamps = preserveFileTimestamps;
     }
 
-    private synchronized void checkPath(String path) {
-        if (!addedResourceNames.add(path)) {
-            throw new IllegalStateException("Duplicate path: " + path);
-        }
-    }
-
     private long canonizeLastModified(@Nullable Long lastModifiedMillis) {
         if (lastModifiedMillis == null
             || lastModifiedMillis < CONSTANT_TIME_FOR_ZIP_ENTRIES
@@ -82,7 +78,11 @@ class RelocationOutputImpl implements RelocationOutput {
         @Nullable Long lastModifiedMillis,
         byte[] bytes
     ) {
-        checkPath(path);
+        if (!addedResourceNames.add(path)) {
+            logger.warn("A resource was already relocated, ignoring duplicated path: {}", path);
+            return;
+        }
+
         val archiveEntry = new ZipArchiveEntry(path);
         archiveEntry.setTime(canonizeLastModified(lastModifiedMillis));
         zipOutputStream.putArchiveEntry(archiveEntry);
@@ -97,7 +97,11 @@ class RelocationOutputImpl implements RelocationOutput {
         @Nullable Long lastModifiedMillis,
         @WillNotClose InputStream inputStream
     ) {
-        checkPath(path);
+        if (!addedResourceNames.add(path)) {
+            logger.warn("A resource was already relocated, ignoring duplicated path: {}", path);
+            return;
+        }
+
         val archiveEntry = new ZipArchiveEntry(path);
         archiveEntry.setTime(canonizeLastModified(lastModifiedMillis));
         zipOutputStream.putArchiveEntry(archiveEntry);

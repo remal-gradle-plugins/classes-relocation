@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import name.remal.gradle_plugins.toolkit.testkit.TaskValidations;
 import org.gradle.api.Project;
+import org.gradle.api.internal.TaskInternal;
+import org.gradle.api.internal.tasks.TaskExecutionOutcome;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -32,6 +34,12 @@ class ClassesRelocationPluginTest {
             .filter(task -> {
                 val taskClass = unwrapGeneratedSubclass(task.getClass());
                 return taskClass.getName().startsWith(taskClassNamePrefix);
+            })
+            .map(task -> {
+                task.getTaskDependencies().getDependencies(task).forEach(dependency -> {
+                    ((TaskInternal) dependency).getState().setOutcome(TaskExecutionOutcome.SKIPPED);
+                });
+                return task;
             })
             .forEach(TaskValidations::assertNoTaskPropertiesProblems);
     }

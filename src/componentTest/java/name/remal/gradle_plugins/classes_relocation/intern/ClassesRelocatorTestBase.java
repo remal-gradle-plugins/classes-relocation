@@ -96,7 +96,6 @@ public abstract class ClassesRelocatorTestBase {
         }
 
         val classLoaderUrls = Stream.of(targetJarPath)
-            .distinct()
             .map(UrlUtils::toUrl)
             .toArray(URL[]::new);
         val prevContextClassLoader = Thread.currentThread().getContextClassLoader();

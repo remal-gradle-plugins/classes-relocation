@@ -21,7 +21,6 @@ import name.remal.gradle_plugins.classes_relocation.intern.classpath.Classpath;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.ClasspathElement;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.GeneratedResource;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
-import name.remal.gradle_plugins.classes_relocation.intern.task.TaskExecutionContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.TasksExecutor;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTask;
@@ -67,7 +66,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         }
 
         try (val tasksExecutor = new TasksExecutor()) {
-            val executionContext = new TaskExecutionContextImpl(tasksExecutor);
+            val executionContext = new RelocationContextImpl(tasksExecutor);
             tasksExecutor.setExecutionContext(executionContext);
 
             sourceClasspath.getClassNames().stream()
@@ -80,7 +79,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
 
 
     @RequiredArgsConstructor
-    private class TaskExecutionContextImpl implements TaskExecutionContext {
+    private class RelocationContextImpl implements RelocationContext {
 
         private final TasksExecutor tasksExecutor;
 
@@ -110,8 +109,28 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         }
 
         @Override
+        public boolean isResourceProcessed(Resource resource) {
+            return processedResources.contains(resource);
+        }
+
+        @Override
         public boolean markResourceAsProcessed(Resource resource) {
-            return processedResources.add(resource);
+            if (!processedResources.add(resource)) {
+                return false;
+            }
+
+            if (resource instanceof GeneratedResource) {
+                boolean result = false;
+                val sourceResources = ((GeneratedResource) resource).getSourceResources();
+                for (val sourceResource : sourceResources) {
+                    if (markResourceAsProcessed(sourceResource)) {
+                        result = true;
+                    }
+                }
+                return result;
+            }
+
+            return true;
         }
 
         @Override
@@ -121,16 +140,14 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
             @Nullable String updatedResourceName,
             @Nullable byte[] updatedContent
         ) {
-            if (resource instanceof GeneratedResource) {
-                processedResources.addAll(((GeneratedResource) resource).getSourceResources());
-            }
-            processedResources.add(resource);
+            markResourceAsProcessed(resource);
 
             val resourceName = updatedResourceName != null ? updatedResourceName : resource.getName();
             val fullResourceName = withMultiReleasePathPrefix(resourceName, resource.getMultiReleaseVersion());
             val lastModifiedMillis = resource.getLastModifiedMillis();
             if (updatedContent != null) {
                 output.write(fullResourceName, lastModifiedMillis, updatedContent);
+
             } else {
                 try (val in = resource.open()) {
                     output.copy(fullResourceName, lastModifiedMillis, in);

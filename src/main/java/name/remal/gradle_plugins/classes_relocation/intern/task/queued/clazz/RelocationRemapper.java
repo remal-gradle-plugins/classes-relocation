@@ -1,8 +1,10 @@
 package name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.intern.task.TaskExecutionContext;
+import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.string_constant.ProcessStringConstant;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.meta_inf_services.RelocateMetaInfServices;
 import org.objectweb.asm.Type;
@@ -11,7 +13,9 @@ import org.objectweb.asm.commons.Remapper;
 @RequiredArgsConstructor
 class RelocationRemapper extends Remapper {
 
-    private final TaskExecutionContext context;
+    private final RelocationContext context;
+    private final String classInternalName;
+
 
     @Override
     public String map(String internalName) {
@@ -23,11 +27,18 @@ class RelocationRemapper extends Remapper {
         return internalName;
     }
 
+    private final Map<String, String> mappedStrings = new LinkedHashMap<>();
+
     @Override
     public Object mapValue(Object value) {
         if (value instanceof String) {
             val string = (String) value;
-            return context.execute(new ProcessStringConstant(string), string);
+            return mappedStrings.computeIfAbsent(string, str ->
+                context.execute(
+                    new ProcessStringConstant(classInternalName, str),
+                    str
+                )
+            );
         }
 
         if (value instanceof Type) {

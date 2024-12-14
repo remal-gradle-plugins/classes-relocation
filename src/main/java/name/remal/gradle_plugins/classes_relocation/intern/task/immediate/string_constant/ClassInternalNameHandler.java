@@ -4,14 +4,14 @@ import static name.remal.gradle_plugins.classes_relocation.intern.task.immediate
 
 import java.util.Optional;
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.intern.task.TaskExecutionContext;
+import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz.RelocateClass;
 
 public class ClassInternalNameHandler implements ImmediateTaskHandler<String, ProcessStringConstant> {
 
     @Override
-    public Optional<String> handle(ProcessStringConstant task, TaskExecutionContext context) {
+    public Optional<String> handle(ProcessStringConstant task, RelocationContext context) {
         val classInternalName = task.getString();
         if (!isClassInternalName(classInternalName)
             || !context.isRelocationClassInternalName(classInternalName)

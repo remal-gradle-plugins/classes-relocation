@@ -3,17 +3,29 @@ package name.remal.gradle_plugins.classes_relocation.intern.asm;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils.getLatestAsmApi;
 import static name.remal.gradle_plugins.toolkit.LateInit.lateInit;
 
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import name.remal.gradle_plugins.toolkit.LateInit;
 import org.objectweb.asm.ClassVisitor;
 
 public class NameClassVisitor extends ClassVisitor {
 
-    public NameClassVisitor(ClassVisitor classVisitor) {
+    private final LateInit<String> classInternalName = lateInit("classInternalName");
+
+    @Nullable
+    private final Consumer<String> classInternalNameConsumer;
+
+    public NameClassVisitor(
+        ClassVisitor classVisitor,
+        @Nullable Consumer<String> classInternalNameConsumer
+    ) {
         super(getLatestAsmApi(), classVisitor);
+        this.classInternalNameConsumer = classInternalNameConsumer;
     }
 
-    private final LateInit<String> className = lateInit("className");
+    public NameClassVisitor(ClassVisitor classVisitor) {
+        this(classVisitor, null);
+    }
 
     @Override
     public void visit(
@@ -24,12 +36,15 @@ public class NameClassVisitor extends ClassVisitor {
         @Nullable String superName,
         @Nullable String[] interfaces
     ) {
-        className.set(name);
+        classInternalName.set(name);
+        if (classInternalNameConsumer != null) {
+            classInternalNameConsumer.accept(name);
+        }
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
     public String getClassInternalName() {
-        return className.get();
+        return classInternalName.get();
     }
 
 }

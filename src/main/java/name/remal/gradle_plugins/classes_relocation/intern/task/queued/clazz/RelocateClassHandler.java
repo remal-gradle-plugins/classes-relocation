@@ -7,10 +7,10 @@ import static name.remal.gradle_plugins.toolkit.ObjectUtils.isNotEmpty;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.asm.NameClassVisitor;
 import name.remal.gradle_plugins.classes_relocation.intern.asm.RelocationAnnotationsClassVisitor;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
-import name.remal.gradle_plugins.classes_relocation.intern.task.TaskExecutionContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandlerResult;
 import org.objectweb.asm.ClassReader;
@@ -22,9 +22,10 @@ public class RelocateClassHandler implements QueuedTaskHandler<RelocateClass> {
 
     @Override
     @SneakyThrows
-    @SuppressWarnings("java:S1121")
-    public QueuedTaskHandlerResult handle(RelocateClass task, TaskExecutionContext context) {
-        val classResources = context.getRelocationClasspath().getClassResources(task.getClassInternalName());
+    @SuppressWarnings({"java:S1121", "VariableDeclarationUsageDistance"})
+    public QueuedTaskHandlerResult handle(RelocateClass task, RelocationContext context) {
+        val classInternalName = task.getClassInternalName();
+        val classResources = context.getRelocationClasspath().getClassResources(classInternalName);
         for (val resource : classResources) {
             ClassVisitor classVisitor;
             val classWriter = (ClassWriter) (classVisitor = new ClassWriter(0));
@@ -36,7 +37,7 @@ public class RelocateClassHandler implements QueuedTaskHandler<RelocateClass> {
             val relocationSource = getRelocationSource(resource, context);
             classVisitor = new RelocationAnnotationsClassVisitor(classVisitor, relocationSource);
 
-            val remapper = new RelocationRemapper(context);
+            val remapper = new RelocationRemapper(context, classInternalName);
             classVisitor = new ClassRemapper(classVisitor, remapper);
 
             try (val in = resource.open()) {
@@ -54,7 +55,7 @@ public class RelocateClassHandler implements QueuedTaskHandler<RelocateClass> {
     }
 
     @Nullable
-    private static String getRelocationSource(Resource resource, TaskExecutionContext context) {
+    private static String getRelocationSource(Resource resource, RelocationContext context) {
         val classpathElement = resource.getClasspathElement();
         if (classpathElement == null) {
             return null;

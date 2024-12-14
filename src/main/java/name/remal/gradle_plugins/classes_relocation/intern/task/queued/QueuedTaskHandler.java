@@ -3,9 +3,9 @@ package name.remal.gradle_plugins.classes_relocation.intern.task.queued;
 import com.google.common.reflect.TypeToken;
 import java.lang.reflect.ParameterizedType;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.BaseTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.BaseWithSupportedTaskClass;
-import name.remal.gradle_plugins.classes_relocation.intern.task.TaskExecutionContext;
 
 public interface QueuedTaskHandler<TASK extends QueuedTask>
     extends BaseTaskHandler, BaseWithSupportedTaskClass<TASK> {
@@ -22,9 +22,9 @@ public interface QueuedTaskHandler<TASK extends QueuedTask>
         return handlerSupportedTaskClass;
     }
 
-    QueuedTaskHandlerResult handle(TASK task, TaskExecutionContext context);
+    QueuedTaskHandlerResult handle(TASK task, RelocationContext context);
 
-    default void postProcess(TaskExecutionContext context) {
+    default void postProcess(RelocationContext context) {
         // do nothing by default
     }
 

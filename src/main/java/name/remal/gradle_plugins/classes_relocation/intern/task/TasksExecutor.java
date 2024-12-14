@@ -19,17 +19,21 @@ import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.string_constant.ClassDescriptorHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.string_constant.ClassInternalNameHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.string_constant.ClassNameHandler;
+import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.string_constant.ResourceNameHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskTransformer;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz.ProcessSourceClassHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz.RelocateClassHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.meta_inf_services.RelocateMetaInfServicesHandler;
+import name.remal.gradle_plugins.classes_relocation.intern.task.queued.resource.CopySourceResourceHandler;
+import name.remal.gradle_plugins.classes_relocation.intern.task.queued.resource.RelocateResourceHandler;
 import name.remal.gradle_plugins.toolkit.LateInit;
 
 public class TasksExecutor implements Closeable {
@@ -44,20 +48,23 @@ public class TasksExecutor implements Closeable {
 
     private final List<QueuedTaskHandler<?>> queuedTaskHandlers = new ArrayList<>();
 
-    private final LateInit<TaskExecutionContext> executionContext = lateInit("executionContext");
+    private final LateInit<RelocationContext> executionContext = lateInit("executionContext");
 
 
     {
         addImmediateTaskHandlers(
             new ClassInternalNameHandler(),
             new ClassNameHandler(),
-            new ClassDescriptorHandler()
+            new ClassDescriptorHandler(),
+            new ResourceNameHandler()
         );
 
         addQueuedTaskHandlers(
             new ProcessSourceClassHandler(),
             new RelocateClassHandler(),
-            new RelocateMetaInfServicesHandler()
+            new RelocateMetaInfServicesHandler(),
+            new CopySourceResourceHandler(),
+            new RelocateResourceHandler()
         );
     }
 
@@ -109,7 +116,7 @@ public class TasksExecutor implements Closeable {
         addQueuedTaskHandlers(ImmutableList.of(handler));
     }
 
-    public void setExecutionContext(TaskExecutionContext executionContext) {
+    public void setExecutionContext(RelocationContext executionContext) {
         this.executionContext.set(executionContext);
     }
 
@@ -159,6 +166,7 @@ public class TasksExecutor implements Closeable {
 
         queuedTasks.add(task);
     }
+
 
     public void executeQueuedTasks() {
         while (true) {

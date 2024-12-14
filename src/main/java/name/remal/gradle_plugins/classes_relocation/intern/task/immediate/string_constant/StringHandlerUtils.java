@@ -11,18 +11,27 @@ import lombok.val;
 abstract class StringHandlerUtils {
 
     public static boolean isClassName(String string) {
-        return isIdentifier(string, '.', 0, string.length());
+        return isIdentifier(string, '.');
     }
 
     public static boolean isClassInternalName(String string) {
-        return isIdentifier(string, '/', 0, string.length());
+        return isIdentifier(string, '/');
     }
 
     @SuppressWarnings("java:S3776")
-    private static boolean isIdentifier(String string, char delimiter, int startPos, int length) {
-        while (startPos <= length) {
+    private static boolean isIdentifier(String string, char delimiter) {
+        if (string.isEmpty()) {
+            return false;
+        }
+
+        if (string.charAt(string.length() - 1) == delimiter) {
+            return false;
+        }
+
+        int startPos = 0;
+        while (startPos < string.length()) {
             val delimPos = string.indexOf(delimiter, startPos);
-            val endPos = delimPos >= 0 ? delimPos : length;
+            val endPos = delimPos >= 0 ? delimPos : string.length();
             if (startPos >= endPos) {
                 return false;
             }
