@@ -1,13 +1,17 @@
 package name.remal.gradle_plugins.classes_relocation.intern;
 
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils.toClassInternalName;
+import static name.remal.gradle_plugins.toolkit.ObjectUtils.isNotEmpty;
 
+import java.util.Set;
 import javax.annotation.Nullable;
+import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Classpath;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.intern.task.TaskTransformContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTask;
+import org.jetbrains.annotations.UnmodifiableView;
 
 public interface RelocationContext extends TaskTransformContext {
 
@@ -45,8 +49,28 @@ public interface RelocationContext extends TaskTransformContext {
     @Nullable
     String getModuleIdentifier(Resource resource);
 
+    @Nullable
+    default String getRelocationSource(Resource resource) {
+        val classpathElement = resource.getClasspathElement();
+        if (classpathElement == null) {
+            return null;
+        }
 
-    boolean isResourceProcessed(Resource resource);
+        val moduleIdentifier = getModuleIdentifier(resource);
+        if (isNotEmpty(moduleIdentifier)) {
+            return moduleIdentifier;
+        }
+
+        return classpathElement.getModuleName();
+    }
+
+
+    @UnmodifiableView
+    Set<Resource> getProcessedResources();
+
+    default boolean isResourceProcessed(Resource resource) {
+        return getProcessedResources().contains(resource);
+    }
 
     boolean markResourceAsProcessed(Resource resource);
 

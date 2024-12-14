@@ -1,6 +1,8 @@
 package name.remal.gradle_plugins.classes_relocation.intern;
 
 import static java.util.Collections.singletonList;
+import static java.util.Collections.unmodifiableSet;
+import static java.util.jar.JarFile.MANIFEST_NAME;
 import static name.remal.gradle_plugins.classes_relocation.intern.classpath.Classpath.newClasspathForPaths;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.MultiReleaseUtils.withMultiReleasePathPrefix;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyProxy;
@@ -8,6 +10,7 @@ import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyProxy;
 import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
 import java.io.Closeable;
 import java.nio.file.Path;
+import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -25,7 +28,11 @@ import name.remal.gradle_plugins.classes_relocation.intern.task.TasksExecutor;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz.ProcessSourceClass;
+import name.remal.gradle_plugins.classes_relocation.intern.task.queued.license.CopyRelocationLicenses;
+import name.remal.gradle_plugins.classes_relocation.intern.task.queued.manifest.ProcessManifest;
+import name.remal.gradle_plugins.classes_relocation.intern.task.queued.resource.CopySourceResource;
 import name.remal.gradle_plugins.toolkit.ClosablesContainer;
+import org.jetbrains.annotations.UnmodifiableView;
 
 @SuperBuilder
 @CustomLog
@@ -73,6 +80,19 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
                 .map(ProcessSourceClass::new)
                 .forEach(tasksExecutor::queue);
 
+            sourceClasspath.getResources().values().stream()
+                .flatMap(Collection::stream)
+                .map(Resource::getName)
+                .filter(name -> !name.endsWith(".class")
+                    && !name.equals(MANIFEST_NAME)
+                    && !name.equals("META-INF/INDEX.LIST")
+                )
+                .map(CopySourceResource::new)
+                .forEach(tasksExecutor::queue);
+
+            tasksExecutor.queue(new CopyRelocationLicenses());
+            tasksExecutor.queue(new ProcessManifest());
+
             tasksExecutor.executeQueuedTasks();
         }
     }
@@ -108,9 +128,11 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
                 .orElse(null);
         }
 
+
         @Override
-        public boolean isResourceProcessed(Resource resource) {
-            return processedResources.contains(resource);
+        @UnmodifiableView
+        public Set<Resource> getProcessedResources() {
+            return unmodifiableSet(processedResources);
         }
 
         @Override

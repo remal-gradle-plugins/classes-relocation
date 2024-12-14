@@ -2,15 +2,12 @@ package name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz;
 
 import static name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandlerResult.TASK_HANDLED;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmTestUtils.wrapWithTestClassVisitors;
-import static name.remal.gradle_plugins.toolkit.ObjectUtils.isNotEmpty;
 
-import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.asm.NameClassVisitor;
 import name.remal.gradle_plugins.classes_relocation.intern.asm.RelocationAnnotationsClassVisitor;
-import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandlerResult;
 import org.objectweb.asm.ClassReader;
@@ -34,7 +31,7 @@ public class RelocateClassHandler implements QueuedTaskHandler<RelocateClass> {
 
             val relocatedNameVisitor = (NameClassVisitor) (classVisitor = new NameClassVisitor(classVisitor));
 
-            val relocationSource = getRelocationSource(resource, context);
+            val relocationSource = context.getRelocationSource(resource);
             classVisitor = new RelocationAnnotationsClassVisitor(classVisitor, relocationSource);
 
             val remapper = new RelocationRemapper(context, classInternalName);
@@ -52,21 +49,6 @@ public class RelocateClassHandler implements QueuedTaskHandler<RelocateClass> {
         }
 
         return TASK_HANDLED;
-    }
-
-    @Nullable
-    private static String getRelocationSource(Resource resource, RelocationContext context) {
-        val classpathElement = resource.getClasspathElement();
-        if (classpathElement == null) {
-            return null;
-        }
-
-        val moduleIdentifier = context.getModuleIdentifier(resource);
-        if (isNotEmpty(moduleIdentifier)) {
-            return moduleIdentifier;
-        }
-
-        return classpathElement.getModuleName();
     }
 
 }

@@ -31,6 +31,8 @@ import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTas
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskTransformer;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz.ProcessSourceClassHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz.RelocateClassHandler;
+import name.remal.gradle_plugins.classes_relocation.intern.task.queued.license.CopyRelocationLicensesHandler;
+import name.remal.gradle_plugins.classes_relocation.intern.task.queued.manifest.ProcessManifestHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.meta_inf_services.RelocateMetaInfServicesHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.resource.CopySourceResourceHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.resource.RelocateResourceHandler;
@@ -64,7 +66,9 @@ public class TasksExecutor implements Closeable {
             new RelocateClassHandler(),
             new RelocateMetaInfServicesHandler(),
             new CopySourceResourceHandler(),
-            new RelocateResourceHandler()
+            new RelocateResourceHandler(),
+            new CopyRelocationLicensesHandler(),
+            new ProcessManifestHandler()
         );
     }
 

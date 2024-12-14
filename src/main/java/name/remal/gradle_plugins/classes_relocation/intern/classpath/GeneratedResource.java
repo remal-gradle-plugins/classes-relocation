@@ -17,6 +17,13 @@ public class GeneratedResource extends ResourceBase {
 
     public static GeneratedResource newGeneratedResource(
         String name,
+        byte[] content
+    ) {
+        return newGeneratedResource(name, null, null, content);
+    }
+
+    public static GeneratedResource newGeneratedResource(
+        String name,
         @Nullable Integer multiReleaseVersion,
         @Nullable Long lastModifiedMillis,
         byte[] content
