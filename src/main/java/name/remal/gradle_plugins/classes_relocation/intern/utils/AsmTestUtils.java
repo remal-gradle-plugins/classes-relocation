@@ -1,6 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation.intern.utils;
 
 import static lombok.AccessLevel.PRIVATE;
+import static name.remal.gradle_plugins.toolkit.InTestFlags.isInTest;
 
 import java.io.PrintWriter;
 import lombok.NoArgsConstructor;
@@ -19,18 +20,39 @@ import org.objectweb.asm.util.TraceClassVisitor;
 @NoArgsConstructor(access = PRIVATE)
 public abstract class AsmTestUtils {
 
+    private static final boolean IN_TEST = isInTest();
+
     private static final boolean TRACE = false;
 
-    @SuppressWarnings({"java:S106", "DefaultCharset"})
+
     public static ClassVisitor wrapWithTestClassVisitors(ClassVisitor classVisitor) {
-        if (TRACE) {
-            val writer = new PrintWriter(System.out, true);
-            classVisitor = new TraceClassVisitor(classVisitor, writer);
+        if (IN_TEST) {
+            if (TRACE) {
+                classVisitor = TraceClassVisitorApplier.wrap(classVisitor);
+            }
+            classVisitor = CheckClassAdapterApplier.wrap(classVisitor);
         }
 
-        classVisitor = new CheckClassAdapter(classVisitor);
-
         return classVisitor;
+    }
+
+
+    private static class TraceClassVisitorApplier {
+
+        @SuppressWarnings({"java:S106", "DefaultCharset"})
+        public static ClassVisitor wrap(ClassVisitor classVisitor) {
+            val writer = new PrintWriter(System.out, true);
+            return new TraceClassVisitor(classVisitor, writer);
+        }
+
+    }
+
+    private static class CheckClassAdapterApplier {
+
+        public static ClassVisitor wrap(ClassVisitor classVisitor) {
+            return new CheckClassAdapter(classVisitor);
+        }
+
     }
 
 }

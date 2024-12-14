@@ -11,8 +11,6 @@ import lombok.Builder.Default;
 import lombok.NonNull;
 import lombok.Singular;
 import lombok.experimental.SuperBuilder;
-import name.remal.gradle_plugins.classes_relocation.intern.resource_handler.ResourceProcessor;
-import name.remal.gradle_plugins.classes_relocation.intern.resource_handler.ResourcesMerger;
 
 @SuperBuilder
 @SuppressWarnings({"cast", "java:S1170"})
@@ -26,12 +24,6 @@ public abstract class ClassesRelocatorParams {
 
     @Singular
     protected final List<Path> relocationClasspathPaths;
-
-    @Singular
-    protected final List<ResourcesMerger> resourcesMergers;
-
-    @Singular
-    protected final List<ResourceProcessor> resourceProcessors;
 
     @Singular
     protected final List<Path> runtimeClasspathPaths;

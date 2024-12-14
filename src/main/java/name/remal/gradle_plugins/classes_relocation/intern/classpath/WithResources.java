@@ -1,42 +1,30 @@
 package name.remal.gradle_plugins.classes_relocation.intern.classpath;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import static java.util.Collections.emptyList;
+import static name.remal.gradle_plugins.toolkit.ObjectUtils.defaultValue;
 
 import java.io.Closeable;
-import java.util.Collection;
-import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
-import lombok.val;
 import org.jetbrains.annotations.Unmodifiable;
 
 interface WithResources extends Closeable {
 
     @Unmodifiable
-    Collection<Resource> getResources();
+    Map<String, @Unmodifiable List<Resource>> getResources();
 
     @Unmodifiable
-    default Collection<Resource> getResources(String name) {
-        return getResources().stream()
-            .filter(resource -> resource.getName().equals(name))
-            .collect(toImmutableList());
-    }
-
-
-    @Unmodifiable
-    default Stream<Resource> streamResourcesWithUniqueNames() {
-        val foundResourcesNames = new LinkedHashSet<String>();
-        return getResources().stream()
-            .filter(resource -> foundResourcesNames.add(resource.getName()));
+    default List<Resource> getResources(String name) {
+        return defaultValue(getResources().get(name), emptyList());
     }
 
     @Unmodifiable
-    default Stream<Resource> streamResourcesWithUniqueNames(String name) {
-        val foundResourcesNames = new LinkedHashSet<String>();
-        return getResources(name).stream()
-            .filter(resource -> foundResourcesNames.add(resource.getName()));
-    }
+    List<Resource> getClassResources(String classNameOrInternalName);
 
+
+    @Unmodifiable
+    Set<String> getClassInternalNames();
 
     @Unmodifiable
     Set<String> getClassNames();

@@ -8,7 +8,6 @@ import static name.remal.gradle_plugins.toolkit.reflection.ModuleNameParser.pars
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashMap;
-import java.util.regex.Pattern;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.val;
@@ -18,9 +17,7 @@ import name.remal.gradle_plugins.toolkit.LazyValue;
 @CustomLog
 abstract class ClasspathElementBase extends WithResourcesBase implements ClasspathElement {
 
-    private static final Pattern MODULE_INFO_RESOURCE_NAME = Pattern.compile(
-        "^(META-INF/versions/\\d+/)?module-info\\.class$"
-    );
+    private static final String MODULE_INFO_NAME = "module-info.class";
 
 
     private final Path path;
@@ -51,13 +48,11 @@ abstract class ClasspathElementBase extends WithResourcesBase implements Classpa
 
     private final LazyValue<String> moduleName = lazyValue(() -> {
         val moduleName = parseModuleName(
-            () -> getResources().stream()
-                .filter(resource -> MODULE_INFO_RESOURCE_NAME.matcher(resource.getName()).matches())
+            () -> getResources(MODULE_INFO_NAME).stream()
                 .findFirst()
                 .map(sneakyThrows(Resource::open))
                 .orElse(null),
-            () -> getResources().stream()
-                .filter(resource -> MANIFEST_NAME.equals(resource.getName()))
+            () -> getResources(MANIFEST_NAME).stream()
                 .findFirst()
                 .map(sneakyThrows(Resource::open))
                 .orElse(null),

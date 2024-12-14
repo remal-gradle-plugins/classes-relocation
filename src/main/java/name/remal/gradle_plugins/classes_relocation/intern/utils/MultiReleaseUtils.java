@@ -7,6 +7,8 @@ import java.util.jar.Attributes.Name;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import lombok.Value;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
 
@@ -37,10 +39,11 @@ public abstract class MultiReleaseUtils {
         return null;
     }
 
-    public static String getMultiReleaseResourceName(String resourceName, @Nullable Integer version) {
+    public static String withMultiReleasePathPrefix(String resourceName, @Nullable Integer version) {
         if (version == null) {
             return resourceName;
         }
+
         return "META-INF/versions/" + version + "/" + resourceName;
     }
 
@@ -50,6 +53,33 @@ public abstract class MultiReleaseUtils {
             return matcher.group(2);
         }
         return resourceName;
+    }
+
+
+    public static MultiReleaseResourceName parseMultiReleaseResourceName(String resourceName) {
+        val matcher = MULTI_RELEASE_RESOURCE_NAME.matcher(resourceName);
+        if (matcher.matches()) {
+            return new MultiReleaseResourceName(
+                matcher.group(2),
+                parseInt(matcher.group(1))
+            );
+        }
+
+        return new MultiReleaseResourceName(
+            resourceName,
+            null
+        );
+    }
+
+    @Value
+    @RequiredArgsConstructor(access = PRIVATE)
+    public static class MultiReleaseResourceName {
+
+        String name;
+
+        @Nullable
+        Integer multiReleaseVersion;
+
     }
 
 }

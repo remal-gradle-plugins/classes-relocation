@@ -42,9 +42,7 @@ class ClasspathElementDir extends ClasspathElementBase {
 
         private final Path path;
 
-        public ResourceFile(
-            String name
-        ) {
+        public ResourceFile(String name) {
             super(name);
             this.path = getPath().resolve(name);
         }

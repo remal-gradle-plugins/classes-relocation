@@ -7,6 +7,7 @@ buildscript {
     dependencies {
         //classpath("$rootGroupId:$rootArtifactId:$rootSnapshotVersion") { version { strictly(rootSnapshotVersion) } }
         classpath 'name.remal.gradle-plugins.toolkit:build-logic:0.69.4'
+        classpath 'name.remal.gradle-plugins.build-time-constants:build-time-constants:1.0.0-rc-2'
     }
     repositories {
         mavenCentral()
@@ -22,13 +23,21 @@ allprojects {
 }
 
 apply plugin: 'name.remal.toolkit.build-logic'
+apply plugin: 'name.remal.build-time-constants'
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 apply plugin: 'java-gradle-plugin'
 
 dependencies {
+    //relocateClasses('com.google.dagger:dagger:2.53.1') { transitive = false }
+    //annotationProcessorAll 'com.google.dagger:dagger-compiler:2.53.1'
+
+
     relocateClasses 'org.apache.commons:commons-compress:1.27.1'
+
+    compileOnly 'org.apiguardian:apiguardian-api:1.1.2'
+    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.6'
 
     optional 'org.ow2.asm:asm-util'
 

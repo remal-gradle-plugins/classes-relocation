@@ -28,7 +28,7 @@ public class NameClassVisitor extends ClassVisitor {
         super.visit(version, access, name, signature, superName, interfaces);
     }
 
-    public String getClassName() {
+    public String getClassInternalName() {
         return className.get();
     }
 

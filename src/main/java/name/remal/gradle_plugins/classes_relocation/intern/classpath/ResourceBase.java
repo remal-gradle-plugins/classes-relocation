@@ -1,5 +1,8 @@
 package name.remal.gradle_plugins.classes_relocation.intern.classpath;
 
+import static name.remal.gradle_plugins.classes_relocation.intern.utils.MultiReleaseUtils.parseMultiReleaseResourceName;
+
+import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -10,15 +13,33 @@ abstract class ResourceBase extends WithIdentityEqualsHashCode implements Resour
 
     private final String name;
 
+    @Nullable
+    private final Integer multiReleaseVersion;
+
+    protected ResourceBase(String name) {
+        val multiReleaseResourceName = parseMultiReleaseResourceName(name);
+        this.name = multiReleaseResourceName.getName();
+        this.multiReleaseVersion = multiReleaseResourceName.getMultiReleaseVersion();
+    }
+
 
     @Override
     public String toString() {
+        val sb = new StringBuilder();
+
         val classpathElement = getClasspathElement();
         if (classpathElement != null) {
-            return classpathElement.toString() + '[' + getName() + ']';
+            sb.append(classpathElement).append('[').append(getName()).append(']');
         } else {
-            return getName();
+            sb.append(getClass().getSimpleName()).append('[').append(getName()).append(']');
         }
+
+        val multiReleaseVersion = getMultiReleaseVersion();
+        if (multiReleaseVersion != null) {
+            sb.append("[multiReleaseVersion=").append(multiReleaseVersion).append(']');
+        }
+
+        return sb.toString();
     }
 
 }

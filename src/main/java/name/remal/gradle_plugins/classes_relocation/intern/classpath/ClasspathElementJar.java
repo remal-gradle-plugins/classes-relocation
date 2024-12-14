@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
 import lombok.val;
@@ -54,8 +55,10 @@ class ClasspathElementJar extends ClasspathElementBase {
 
     @Override
     protected Collection<Resource> readClasspathElementResources() {
+        val processedEntryNames = new LinkedHashSet<>();
         return list(zipFile.get().getEntries()).stream()
             .filter(not(ZipArchiveEntry::isDirectory))
+            .filter(entry -> processedEntryNames.add(entry.getName()))
             .map(ResourceJar::new)
             .collect(toList());
     }
@@ -65,9 +68,7 @@ class ClasspathElementJar extends ClasspathElementBase {
 
         private final ZipArchiveEntry zipEntry;
 
-        public ResourceJar(
-            ZipArchiveEntry zipEntry
-        ) {
+        public ResourceJar(ZipArchiveEntry zipEntry) {
             super(zipEntry.getName());
             this.zipEntry = zipEntry;
         }
