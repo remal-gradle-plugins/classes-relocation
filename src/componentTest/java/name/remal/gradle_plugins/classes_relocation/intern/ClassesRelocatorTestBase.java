@@ -34,6 +34,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Stream;
+import lombok.CustomLog;
 import lombok.SneakyThrows;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Classpath;
@@ -44,6 +45,8 @@ import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.junit.jupiter.api.AfterEach;
 
+@CustomLog
+@SuppressWarnings("Slf4jSignOnlyFormat")
 public abstract class ClassesRelocatorTestBase {
 
     protected final Path tempDirPath = asLazyProxy(Path.class, () ->
@@ -92,7 +95,9 @@ public abstract class ClassesRelocatorTestBase {
                 .basePackageForRelocatedClasses("relocated")
                 .build()
         ) {
+            //val start = nanoTime();
             relocator.relocate();
+            //logger.warn("{}: {}", logicClass.getSimpleName(), NANOSECONDS.toMillis(nanoTime() - start));
         }
 
         val classLoaderUrls = Stream.of(targetJarPath)

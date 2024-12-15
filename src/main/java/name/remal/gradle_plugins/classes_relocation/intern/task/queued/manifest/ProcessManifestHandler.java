@@ -15,8 +15,8 @@ import java.util.jar.Manifest;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
+import name.remal.gradle_plugins.classes_relocation.intern.context.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandlerResult;
 

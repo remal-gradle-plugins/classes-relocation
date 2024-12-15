@@ -20,7 +20,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.intern.context.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.string_constant.ClassDescriptorHandler;

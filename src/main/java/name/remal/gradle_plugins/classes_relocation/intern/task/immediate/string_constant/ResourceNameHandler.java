@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.intern.context.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.resource.RelocateResource;
 

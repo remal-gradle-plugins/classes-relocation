@@ -3,14 +3,12 @@ package name.remal.gradle_plugins.classes_relocation.intern.task.queued.clazz;
 import static name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandlerResult.TASK_HANDLED;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmTestUtils.wrapWithTestClassVisitors;
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils.toClassInternalName;
-import static org.objectweb.asm.Type.getDescriptor;
 
 import lombok.SneakyThrows;
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.api.RelocateClasses;
-import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.asm.NameClassVisitor;
 import name.remal.gradle_plugins.classes_relocation.intern.asm.UnsupportedAnnotationsClassVisitor;
+import name.remal.gradle_plugins.classes_relocation.intern.context.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandlerResult;
 import org.objectweb.asm.ClassReader;
@@ -37,7 +35,6 @@ public class ProcessSourceClassHandler implements QueuedTaskHandler<ProcessSourc
             classVisitor = new ClassRemapper(classVisitor, remapper);
 
             classVisitor = new UnsupportedAnnotationsClassVisitor(classVisitor,
-                getDescriptor(RelocateClasses.class), // TODO: implement it instead of throwing an exception
                 "Lname/remal/gradle_plugins/api/RelocateClasses;",
                 "Lname/remal/gradle_plugins/api/RelocatePackages;"
             );

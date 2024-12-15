@@ -24,6 +24,7 @@ import name.remal.gradle_plugins.classes_relocation.intern.classpath.Classpath;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.ClasspathElement;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.GeneratedResource;
 import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
+import name.remal.gradle_plugins.classes_relocation.intern.context.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.TasksExecutor;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTask;
@@ -63,14 +64,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
 
 
     public void relocate() {
-        {
-            val sourcePackageNamesToRelocate = new LinkedHashSet<>(sourceClasspath.getPackageNames());
-            val relocationPackageNames = relocationClasspath.getPackageNames();
-            sourcePackageNamesToRelocate.retainAll(relocationPackageNames);
-            if (!sourcePackageNamesToRelocate.isEmpty()) {
-                throw new SourceResourcesInRelocationPackagesException(sourcePackageNamesToRelocate);
-            }
-        }
+        checkThatNoSourceResourcesAreInRelocationPackages();
 
         try (val tasksExecutor = new TasksExecutor()) {
             val executionContext = new RelocationContextImpl(tasksExecutor);
@@ -94,6 +88,15 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
             tasksExecutor.queue(new ProcessManifest());
 
             tasksExecutor.executeQueuedTasks();
+        }
+    }
+
+    private void checkThatNoSourceResourcesAreInRelocationPackages() {
+        val sourcePackageNamesToRelocate = new LinkedHashSet<>(sourceClasspath.getPackageNames());
+        val relocationPackageNames = relocationClasspath.getPackageNames();
+        sourcePackageNamesToRelocate.retainAll(relocationPackageNames);
+        if (!sourcePackageNamesToRelocate.isEmpty()) {
+            throw new SourceResourcesInRelocationPackagesException(sourcePackageNamesToRelocate);
         }
     }
 

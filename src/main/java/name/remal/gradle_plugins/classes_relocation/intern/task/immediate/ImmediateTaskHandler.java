@@ -5,7 +5,7 @@ import java.lang.reflect.ParameterizedType;
 import java.util.Optional;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.intern.Ordered;
-import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.intern.context.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.BaseWithSupportedTaskClass;
 
 public interface ImmediateTaskHandler<RESULT, TASK extends ImmediateTask<RESULT>>

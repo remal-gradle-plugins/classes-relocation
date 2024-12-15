@@ -5,9 +5,9 @@ import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmTestU
 
 import lombok.SneakyThrows;
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.asm.NameClassVisitor;
 import name.remal.gradle_plugins.classes_relocation.intern.asm.RelocationAnnotationsClassVisitor;
+import name.remal.gradle_plugins.classes_relocation.intern.context.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.QueuedTaskHandlerResult;
 import org.objectweb.asm.ClassReader;

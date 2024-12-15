@@ -1,4 +1,4 @@
-package name.remal.gradle_plugins.classes_relocation.intern;
+package name.remal.gradle_plugins.classes_relocation.intern.context;
 
 import static name.remal.gradle_plugins.classes_relocation.intern.utils.AsmUtils.toClassInternalName;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.isNotEmpty;
