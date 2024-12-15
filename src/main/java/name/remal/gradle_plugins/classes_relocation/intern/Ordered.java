@@ -1,10 +1,10 @@
-package name.remal.gradle_plugins.classes_relocation.intern.task;
+package name.remal.gradle_plugins.classes_relocation.intern;
 
 import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
 import org.jetbrains.annotations.ApiStatus;
 
 @ApiStatus.Internal
-public interface BaseTaskHandler extends Comparable<BaseTaskHandler> {
+public interface Ordered extends Comparable<Ordered> {
 
     default int getOrder() {
         return 0;
@@ -12,7 +12,7 @@ public interface BaseTaskHandler extends Comparable<BaseTaskHandler> {
 
     @Override
     @OverridingMethodsMustInvokeSuper
-    default int compareTo(BaseTaskHandler other) {
+    default int compareTo(Ordered other) {
         return Integer.compare(getOrder(), other.getOrder());
     }
 

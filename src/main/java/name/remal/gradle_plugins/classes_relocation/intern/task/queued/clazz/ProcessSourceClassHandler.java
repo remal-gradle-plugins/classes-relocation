@@ -33,7 +33,7 @@ public class ProcessSourceClassHandler implements QueuedTaskHandler<ProcessSourc
 
             val relocatedNameVisitor = (NameClassVisitor) (classVisitor = new NameClassVisitor(classVisitor));
 
-            val remapper = new RelocationRemapper(context, toClassInternalName(task.getSourceClassName()));
+            val remapper = new RelocationRemapper(toClassInternalName(task.getSourceClassName()), resource, context);
             classVisitor = new ClassRemapper(classVisitor, remapper);
 
             classVisitor = new UnsupportedAnnotationsClassVisitor(classVisitor,

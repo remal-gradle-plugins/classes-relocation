@@ -34,7 +34,7 @@ public class RelocateClassHandler implements QueuedTaskHandler<RelocateClass> {
             val relocationSource = context.getRelocationSource(resource);
             classVisitor = new RelocationAnnotationsClassVisitor(classVisitor, relocationSource);
 
-            val remapper = new RelocationRemapper(context, classInternalName);
+            val remapper = new RelocationRemapper(classInternalName, resource, context);
             classVisitor = new ClassRemapper(classVisitor, remapper);
 
             try (val in = resource.open()) {

@@ -14,7 +14,7 @@ public class ProcessSourceClass implements QueuedTask {
 
     @Override
     public int getPhase() {
-        return PROCESS_SOURCE_CLASSES_PHASE;
+        return PROCESS_SOURCES_PHASE;
     }
 
 }

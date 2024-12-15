@@ -7,10 +7,9 @@ import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
 
 public interface QueuedTask extends Comparable<QueuedTask> {
 
-    int PROCESS_SOURCE_CLASSES_PHASE = doNotInline(0);
-    int RELOCATE_PHASE = PROCESS_SOURCE_CLASSES_PHASE + 100;
-    int COPY_PHASE = RELOCATE_PHASE + 100;
-    int AGGREGATE_PHASE = COPY_PHASE + 100;
+    int PROCESS_SOURCES_PHASE = doNotInline(0);
+    int RELOCATE_PHASE = PROCESS_SOURCES_PHASE + 100;
+    int AGGREGATE_PHASE = RELOCATE_PHASE + 100;
 
     int getPhase();
 

@@ -13,7 +13,7 @@ public class CopySourceResource implements QueuedTask {
 
     @Override
     public int getPhase() {
-        return COPY_PHASE;
+        return PROCESS_SOURCES_PHASE;
     }
 
 }

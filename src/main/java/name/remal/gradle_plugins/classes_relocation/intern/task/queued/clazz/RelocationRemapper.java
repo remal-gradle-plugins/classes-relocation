@@ -5,6 +5,7 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.intern.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.intern.task.immediate.string_constant.ProcessStringConstant;
 import name.remal.gradle_plugins.classes_relocation.intern.task.queued.meta_inf_services.RelocateMetaInfServices;
 import org.objectweb.asm.Type;
@@ -13,8 +14,9 @@ import org.objectweb.asm.commons.Remapper;
 @RequiredArgsConstructor
 class RelocationRemapper extends Remapper {
 
-    private final RelocationContext context;
     private final String classInternalName;
+    private final Resource classResource;
+    private final RelocationContext context;
 
 
     @Override
@@ -35,7 +37,7 @@ class RelocationRemapper extends Remapper {
             val string = (String) value;
             return mappedStrings.computeIfAbsent(string, str ->
                 context.execute(
-                    new ProcessStringConstant(classInternalName, str),
+                    new ProcessStringConstant(classResource, classInternalName, str),
                     str
                 )
             );

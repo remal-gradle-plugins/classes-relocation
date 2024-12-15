@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.experimental.Delegate;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
@@ -133,6 +134,7 @@ public class TasksExecutor implements Closeable {
         return executeImmediateTask(task, defaultResult);
     }
 
+    @SneakyThrows
     @SuppressWarnings({"unchecked", "rawtypes"})
     private <RESULT> RESULT executeImmediateTask(
         ImmediateTask<RESULT> task,
@@ -155,6 +157,7 @@ public class TasksExecutor implements Closeable {
     }
 
 
+    @SneakyThrows
     public void queue(QueuedTask task) {
         if (!processedQueuedTasks.add(task)) {
             return;
@@ -183,6 +186,7 @@ public class TasksExecutor implements Closeable {
         }
     }
 
+    @SneakyThrows
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void executeQueuedTask(QueuedTask task) {
         for (QueuedTaskHandler handler : queuedTaskHandlers) {
@@ -199,6 +203,7 @@ public class TasksExecutor implements Closeable {
 
 
     @Override
+    @SneakyThrows
     public void close() {
         for (val handler : queuedTaskHandlers) {
             handler.postProcess(executionContext.get());

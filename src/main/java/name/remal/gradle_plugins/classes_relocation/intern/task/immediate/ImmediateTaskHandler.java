@@ -4,12 +4,12 @@ import com.google.common.reflect.TypeToken;
 import java.lang.reflect.ParameterizedType;
 import java.util.Optional;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.intern.Ordered;
 import name.remal.gradle_plugins.classes_relocation.intern.RelocationContext;
-import name.remal.gradle_plugins.classes_relocation.intern.task.BaseTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.intern.task.BaseWithSupportedTaskClass;
 
 public interface ImmediateTaskHandler<RESULT, TASK extends ImmediateTask<RESULT>>
-    extends BaseTaskHandler, BaseWithSupportedTaskClass<TASK> {
+    extends Ordered, BaseWithSupportedTaskClass<TASK> {
 
     @Override
     default Class<TASK> getSupportedTaskClass() {
@@ -23,6 +23,6 @@ public interface ImmediateTaskHandler<RESULT, TASK extends ImmediateTask<RESULT>
         return handlerSupportedTaskClass;
     }
 
-    Optional<RESULT> handle(TASK task, RelocationContext context);
+    Optional<RESULT> handle(TASK task, RelocationContext context) throws Throwable;
 
 }
