@@ -7,7 +7,6 @@ buildscript {
     dependencies {
         //classpath("$rootGroupId:$rootArtifactId:$rootSnapshotVersion") { version { strictly(rootSnapshotVersion) } }
         classpath 'name.remal.gradle-plugins.toolkit:build-logic:0.69.6'
-        classpath 'name.remal.gradle-plugins.build-time-constants:build-time-constants:1.0.0-rc-3'
     }
     repositories {
         mavenCentral()
@@ -23,28 +22,10 @@ allprojects {
 }
 
 apply plugin: 'name.remal.toolkit.build-logic'
-apply plugin: 'name.remal.build-time-constants'
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 apply plugin: 'java-gradle-plugin'
-
-dependencies {
-    relocateClasses 'org.apache.commons:commons-compress:1.27.1'
-
-    compileOnly 'org.apiguardian:apiguardian-api:1.1.2'
-    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.6'
-
-    optional 'org.ow2.asm:asm-util'
-
-    implementation 'org.ow2.asm:asm'
-    implementation 'org.ow2.asm:asm-tree'
-    implementation 'org.ow2.asm:asm-commons'
-
-
-    testImplementation 'com.google.jimfs:jimfs:1.3.0'
-    testImplementation 'org.apache.commons:commons-compress:1.27.1'
-}
 
 gradlePlugin {
     plugins {
@@ -59,59 +40,19 @@ gradlePlugin {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-SourceSet componentTestSourceSet = testSourceSets.create('componentTest')
+Project relocatorProject = project(':relocator')
+project.fatJarWith(relocatorProject)
 
-dependencies {
-    componentTestImplementation platform('com.fasterxml.jackson:jackson-bom:2.18.2')
-    componentTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
-    componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
-    componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
-    componentTestImplementation 'joda-time:joda-time:2.13.0'
-}
-
-Map<String, String> componentTestRelocationNotations = [
-    'guava': 'com.google.guava:guava',
-    'jackson-databind': 'com.fasterxml.jackson.core:jackson-databind',
-    'jackson-guava': 'com.fasterxml.jackson.datatype:jackson-datatype-guava',
-    'jackson-jsr310': 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310',
-    'joda-time': 'joda-time:joda-time',
-
-    'junit-jupiter-api': 'org.junit.jupiter:junit-jupiter-api',
-    'assertj-core': 'org.assertj:assertj-core',
-    'asm': 'org.ow2.asm:asm',
-]
-
-if (!tasks.names.contains(componentTestSourceSet.jarTaskName)) {
-    tasks.register(componentTestSourceSet.jarTaskName, Jar) { jar ->
-        jar.description = "Assembles a jar archive containing the classes of the '${componentTestSourceSet.name}' feature."
-        jar.group = 'build'
-        jar.from(componentTestSourceSet.output)
-        jar.archiveClassifier = componentTestSourceSet.name
-    }
-}
-
-tasks.named(componentTestSourceSet.name, Test) {
-    inputs.property('componentTestRelocationNotations', componentTestRelocationNotations)
-
-    TaskProvider componentTestJar = tasks.named(componentTestSourceSet.jarTaskName, Jar)
-    dependsOn(componentTestJar)
-    inputs.file(componentTestJar.flatMap { it.archiveFile })
-
-    onlyIf {
-        systemProperty("test-classes-jar", componentTestJar.get().archiveFile.get().asFile.absolutePath)
-
-        componentTestRelocationNotations.forEach { library, notation ->
-            Configuration conf = configurations[componentTestSourceSet.compileClasspathConfigurationName]
-            ResolvedDependency resolvedDep = conf.resolvedConfiguration
-                .getFirstLevelModuleDependencies()
-                .find { "${it.moduleGroup}:${it.moduleName}" == notation }
-            if (resolvedDep == null) {
-                throw new GradleException("Resolved dependency with notation `$notation` can't be found in $conf")
+project.pluginManager.withPlugin('java') {
+    relocatorProject.pluginManager.withPlugin('java') {
+        ; ['runtimeOnly', 'implementation', 'api'].forEach { confName ->
+            project.configurations.matching { it.name == confName }.all { Configuration conf ->
+                relocatorProject.configurations.matching { it.name == confName }.all { Configuration relocatorConf ->
+                    relocatorConf.dependencies.all { Dependency dep ->
+                        conf.dependencies.add(dep.copy())
+                    }
+                }
             }
-            Collection<File> files = resolvedDep.allModuleArtifacts.collect { it.file }
-            systemProperty("$library-classpath", files.join(File.pathSeparator))
         }
-
-        return true
     }
 }

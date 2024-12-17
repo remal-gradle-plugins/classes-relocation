@@ -2,7 +2,7 @@ package name.remal.gradle_plugins.classes_relocation;
 
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static java.util.stream.Collectors.toList;
-import static name.remal.gradle_plugins.classes_relocation.intern.ClassesRelocatorParams.DEFAULT_METADATA_CHARSET;
+import static name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocatorParams.DEFAULT_METADATA_CHARSET;
 import static name.remal.gradle_plugins.toolkit.UriUtils.parseUri;
 
 import java.io.File;
@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import lombok.CustomLog;
 import lombok.NoArgsConstructor;
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.intern.ClassesRelocator;
+import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocator;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.workers.WorkAction;
 

@@ -6,4 +6,10 @@
 
 [![configuration cache: supported](https://img.shields.io/static/v1?label=configuration%20cache&message=supported&color=success)](https://docs.gradle.org/current/userguide/configuration_cache.html)
 
+Usage:
+
+<!--plugin-usage:name.remal.classes-relocation--><!--/plugin-usage-->
+
+&nbsp;
+
 Gradle plugin description
