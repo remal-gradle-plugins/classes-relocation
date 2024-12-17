@@ -8,7 +8,13 @@
 
 Usage:
 
-<!--plugin-usage:name.remal.classes-relocation--><!--/plugin-usage-->
+<!--plugin-usage:name.remal.classes-relocation-->
+```groovy
+plugins {
+    id 'name.remal.classes-relocation' version '1.5.0'
+}
+```
+<!--/plugin-usage-->
 
 &nbsp;
 
