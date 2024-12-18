@@ -56,3 +56,40 @@ project.pluginManager.withPlugin('java') {
         }
     }
 }
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+SourceSet functionalTestSourceSet = testSourceSets.getByName('functionalTest')
+
+Map<String, String> functionalTestRelocationNotations = [
+    'guava': 'com.google.guava:guava',
+
+    'junit-jupiter-api': 'org.junit.jupiter:junit-jupiter-api',
+    'junit-jupiter-engine': 'org.junit.jupiter:junit-jupiter-engine',
+    'junit-platform-launcher': 'org.junit.platform:junit-platform-launcher',
+]
+
+tasks.named(functionalTestSourceSet.name, Test) {
+    inputs.property('functionalTestRelocationNotations', functionalTestRelocationNotations)
+
+    onlyIf {
+        functionalTestRelocationNotations.forEach { library, notation ->
+            Closure<ResolvedDependency> getResolvedDependencyFrom = { String confName ->
+                Configuration conf = configurations[confName]
+                return conf.resolvedConfiguration
+                    .getFirstLevelModuleDependencies()
+                    .find { "${it.moduleGroup}:${it.moduleName}" == notation }
+            }
+
+            ResolvedDependency resolvedDep = getResolvedDependencyFrom(functionalTestSourceSet.compileClasspathConfigurationName)
+                ?: getResolvedDependencyFrom(functionalTestSourceSet.runtimeClasspathConfigurationName)
+            if (resolvedDep == null) {
+                throw new GradleException("Resolved dependency with notation `$notation` can't be found in $conf")
+            }
+            Collection<File> files = resolvedDep.allModuleArtifacts.collect { it.file }
+            systemProperty("$library-classpath", files.join(File.pathSeparator))
+        }
+
+        return true
+    }
+}

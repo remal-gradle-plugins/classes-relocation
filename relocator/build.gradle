@@ -64,10 +64,15 @@ tasks.named(componentTestSourceSet.name, Test) {
         systemProperty("test-classes-jar", componentTestJar.get().archiveFile.get().asFile.absolutePath)
 
         componentTestRelocationNotations.forEach { library, notation ->
-            Configuration conf = configurations[componentTestSourceSet.compileClasspathConfigurationName]
-            ResolvedDependency resolvedDep = conf.resolvedConfiguration
-                .getFirstLevelModuleDependencies()
-                .find { "${it.moduleGroup}:${it.moduleName}" == notation }
+            Closure<ResolvedDependency> getResolvedDependencyFrom = { String confName ->
+                Configuration conf = configurations[confName]
+                return conf.resolvedConfiguration
+                    .getFirstLevelModuleDependencies()
+                    .find { "${it.moduleGroup}:${it.moduleName}" == notation }
+            }
+
+            ResolvedDependency resolvedDep = getResolvedDependencyFrom(componentTestSourceSet.compileClasspathConfigurationName)
+                ?: getResolvedDependencyFrom(componentTestSourceSet.runtimeClasspathConfigurationName)
             if (resolvedDep == null) {
                 throw new GradleException("Resolved dependency with notation `$notation` can't be found in $conf")
             }

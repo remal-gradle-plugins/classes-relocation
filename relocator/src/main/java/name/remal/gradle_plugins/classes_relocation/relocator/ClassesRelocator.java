@@ -1,10 +1,13 @@
 package name.remal.gradle_plugins.classes_relocation.relocator;
 
+import static java.lang.System.nanoTime;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableSet;
+import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.jar.JarFile.MANIFEST_NAME;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath.newClasspathForPaths;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.MultiReleaseUtils.withMultiReleasePathPrefix;
+import static name.remal.gradle_plugins.toolkit.InTestFlags.isInFunctionalTest;
 import static name.remal.gradle_plugins.toolkit.LateInit.lateInit;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyProxy;
 
@@ -36,12 +39,15 @@ import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHan
 import name.remal.gradle_plugins.classes_relocation.relocator.task.TasksExecutor;
 import name.remal.gradle_plugins.toolkit.ClosablesContainer;
 import name.remal.gradle_plugins.toolkit.LateInit;
+import org.gradle.api.logging.LogLevel;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.UnmodifiableView;
 
 @SuperBuilder
 @CustomLog
 public class ClassesRelocator extends ClassesRelocatorParams implements Closeable {
+
+    private static final boolean IS_IN_FUNCTIONAL_TEST = isInFunctionalTest();
 
     private final ClosablesContainer closables = new ClosablesContainer();
 
@@ -67,10 +73,25 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
     private final Set<Resource> processedResources = new LinkedHashSet<>();
 
 
-    @SneakyThrows
     public void relocate() {
         checkThatNoSourceResourcesAreInRelocationPackages();
 
+        val start = nanoTime();
+        try {
+            relocateImpl();
+
+        } finally {
+            val millis = NANOSECONDS.toMillis(nanoTime() - start);
+            logger.log(
+                IS_IN_FUNCTIONAL_TEST ? LogLevel.QUIET : LogLevel.INFO,
+                "Relocation took {}ms",
+                millis
+            );
+        }
+    }
+
+    @SneakyThrows
+    private void relocateImpl() {
         try (val implementations = new Implementations()) {
             val context = new RelocationContextImpl();
             context.setImplementations(implementations);

@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static name.remal.gradle_plugins.classes_relocation.ClassRelocationForkOptions.IS_FORK_ENABLED_DEFAULT;
 import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.getModuleVersionIdentifiersForFilesIn;
 import static name.remal.gradle_plugins.toolkit.JavaLauncherUtils.getJavaLauncherProviderFor;
+import static name.remal.gradle_plugins.toolkit.ObjectUtils.isEmpty;
 import static org.gradle.api.tasks.PathSensitivity.RELATIVE;
 
 import java.io.File;
@@ -15,8 +16,8 @@ import lombok.Getter;
 import lombok.val;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileSystemOperations;
-import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.model.ObjectFactory;
@@ -28,6 +29,7 @@ import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFile;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Nested;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
@@ -67,18 +69,55 @@ public abstract class RelocateJar extends DefaultTask implements ClassesRelocati
     public abstract Property<String> getMetadataCharset();
 
 
+    @Internal
+    public abstract DirectoryProperty getArchiveDestinationDirectory();
+
+    @Internal
+    public abstract Property<String> getArchiveBaseName();
+
+    @Internal
+    public abstract Property<String> getArchiveAppendix();
+
+    @Internal
+    public abstract Property<String> getArchiveVersion();
+
+    @Internal
+    public abstract Property<String> getArchiveClassifier();
+
+    @Internal
+    public abstract Property<String> getArchiveExtension();
+
     @OutputFile
     public abstract RegularFileProperty getTargetJarFile();
 
     {
-        getTargetJarFile().convention(getLayout().getBuildDirectory()
-            .dir(getName()).flatMap(dir ->
-                dir.file(getJarFile()
-                    .map(RegularFile::getAsFile)
-                    .map(File::getName)
-                )
-            )
-        );
+        getTargetJarFile().convention(getArchiveDestinationDirectory().file(getProviders().provider(() -> {
+            val name = new StringBuilder();
+            appendToTargetFileName(name, "", getArchiveBaseName(), false);
+            appendToTargetFileName(name, "-", getArchiveAppendix(), false);
+            appendToTargetFileName(name, "-", getArchiveVersion(), false);
+            appendToTargetFileName(name, "-", getArchiveClassifier(), false);
+            appendToTargetFileName(name, ".", getArchiveExtension(), true);
+            return name.toString();
+        })));
+    }
+
+    private static void appendToTargetFileName(
+        StringBuilder name,
+        String delimiter,
+        Provider<? extends CharSequence> partProvider,
+        boolean requiredDelimiter
+    ) {
+        val part = partProvider.getOrNull();
+        if (isEmpty(part)) {
+            return;
+        }
+
+        if (name.length() > 0 || requiredDelimiter) {
+            name.append(delimiter);
+        }
+
+        name.append(part);
     }
 
 
@@ -173,9 +212,6 @@ public abstract class RelocateJar extends DefaultTask implements ClassesRelocati
 
     @Inject
     protected abstract ObjectFactory getObjects();
-
-    @Inject
-    protected abstract ProjectLayout getLayout();
 
     @Inject
     protected abstract FileSystemOperations getFiles();

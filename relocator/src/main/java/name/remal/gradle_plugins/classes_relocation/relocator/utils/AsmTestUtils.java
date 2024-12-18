@@ -1,6 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.utils;
 
 import static lombok.AccessLevel.PRIVATE;
+import static name.remal.gradle_plugins.toolkit.InTestFlags.isInFunctionalTest;
 import static name.remal.gradle_plugins.toolkit.InTestFlags.isInTest;
 
 import java.io.PrintWriter;
@@ -20,7 +21,8 @@ import org.objectweb.asm.util.TraceClassVisitor;
 @NoArgsConstructor(access = PRIVATE)
 public abstract class AsmTestUtils {
 
-    private static final boolean IN_TEST = isInTest();
+    private static final boolean IN_TEST = isInTest()
+        && !isInFunctionalTest(); // we don't have org.ow2.asm:asm-util in functional tests
 
     private static final boolean TRACE = false;
 
@@ -36,6 +38,13 @@ public abstract class AsmTestUtils {
         return classVisitor;
     }
 
+    private static class CheckClassAdapterApplier {
+
+        public static ClassVisitor wrap(ClassVisitor classVisitor) {
+            return new CheckClassAdapter(classVisitor);
+        }
+
+    }
 
     private static class TraceClassVisitorApplier {
 
@@ -46,13 +55,4 @@ public abstract class AsmTestUtils {
         }
 
     }
-
-    private static class CheckClassAdapterApplier {
-
-        public static ClassVisitor wrap(ClassVisitor classVisitor) {
-            return new CheckClassAdapter(classVisitor);
-        }
-
-    }
-
 }
