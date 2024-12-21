@@ -61,8 +61,13 @@ project.pluginManager.withPlugin('java') {
 
 SourceSet functionalTestSourceSet = testSourceSets.getByName('functionalTest')
 
+dependencies {
+    functionalTestImplementation 'name.remal.gradle-plugins.test-source-sets:test-source-sets:4.1.8'
+}
+
 Map<String, String> functionalTestRelocationNotations = [
     'guava': 'com.google.guava:guava',
+    'test-source-sets': 'name.remal.gradle-plugins.test-source-sets:test-source-sets',
 
     'junit-jupiter-api': 'org.junit.jupiter:junit-jupiter-api',
     'junit-jupiter-engine': 'org.junit.jupiter:junit-jupiter-engine',

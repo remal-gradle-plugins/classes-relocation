@@ -179,8 +179,6 @@ public abstract class RelocateJar extends DefaultTask implements ClassesRelocati
         workQueue.submit(RelocateJarAction.class, params -> {
             params.getJarFile().set(getJarFile());
             params.getRelocationClasspath().setFrom(getRelocationClasspath());
-            params.getRuntimeClasspath().setFrom(getRuntimeClasspath());
-            params.getCompileClasspath().setFrom(getCompileClasspath());
             params.getModuleIdentifiers().putAll(getProviders().provider(() -> {
                 val moduleIdentifiers = new LinkedHashMap<String, String>();
                 Stream.of(

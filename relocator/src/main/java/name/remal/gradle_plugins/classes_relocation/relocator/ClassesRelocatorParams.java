@@ -26,12 +26,6 @@ public abstract class ClassesRelocatorParams {
     protected final List<Path> relocationClasspathPaths;
 
     @Singular
-    protected final List<Path> runtimeClasspathPaths;
-
-    @Singular
-    protected final List<Path> compileClasspathPaths;
-
-    @Singular
     protected final Map<URI, String> moduleIdentifiers;
 
 

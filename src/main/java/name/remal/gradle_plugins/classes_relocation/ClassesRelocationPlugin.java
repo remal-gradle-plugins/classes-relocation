@@ -16,7 +16,6 @@ import static org.gradle.api.attributes.LibraryElements.JAR;
 import static org.gradle.api.attributes.LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE;
 import static org.gradle.api.plugins.BasePlugin.BUILD_GROUP;
 import static org.gradle.api.plugins.JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME;
-import static org.gradle.api.plugins.JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME;
 import static org.gradle.api.plugins.JavaPlugin.JAR_TASK_NAME;
 import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
 
@@ -114,7 +113,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         NamedDomainObjectProvider<Configuration> relocationClasspathConfProvider
     ) {
         setLibraryElementToJar(project);
-        extendCompileOnlyConfiguration(relocationConfProvider);
+        extendCompileClasspathConfiguration(relocationConfProvider);
         resolveConsistentlyWithCompileClasspath(relocationClasspathConfProvider);
 
         val jarProvider = getTasks().named(JAR_TASK_NAME, Jar.class);
@@ -175,19 +174,20 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         });
     }
 
-    private void extendCompileOnlyConfiguration(
+    private void extendCompileClasspathConfiguration(
         NamedDomainObjectProvider<Configuration> relocationConfProvider
     ) {
         getConfigurations().named(
-            COMPILE_ONLY_CONFIGURATION_NAME,
+            COMPILE_CLASSPATH_CONFIGURATION_NAME,
             conf -> conf.extendsFrom(relocationConfProvider.get())
         );
     }
 
+    @SuppressWarnings("UnstableApiUsage")
     private void resolveConsistentlyWithCompileClasspath(
-        NamedDomainObjectProvider<Configuration> relocationConfProvider
+        NamedDomainObjectProvider<Configuration> relocationClasspathConfProvider
     ) {
-        relocationConfProvider.configure(conf -> {
+        relocationClasspathConfProvider.configure(conf -> {
             val compileClasspathConf = getConfigurations().getByName(COMPILE_CLASSPATH_CONFIGURATION_NAME);
             conf.shouldResolveConsistentlyWith(compileClasspathConf);
             conf.setDescription(
@@ -232,18 +232,14 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         ClassesRelocationExtension extension,
         Provider<RelocateJar> relocateJarProvider
     ) {
-        val sourceSetClasspaths = extension.getSourceSetClasspaths();
-
         val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
-        val mainSourceSetProvider = sourceSets.named(MAIN_SOURCE_SET_NAME);
-
         sourceSets
-            .matching(it -> !it.getName().equals(mainSourceSetProvider.getName()))
+            .matching(sourceSet -> !sourceSet.getName().equals(MAIN_SOURCE_SET_NAME))
             .configureEach(sourceSet -> {
-                val mainSourceSet = mainSourceSetProvider.get();
+                val mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
                 useRelocatedJarInsteadOfSourceSetOutput(
                     project,
-                    sourceSetClasspaths,
+                    extension.getSourceSetClasspaths(),
                     relocateJarProvider,
                     mainSourceSet,
                     sourceSet,
