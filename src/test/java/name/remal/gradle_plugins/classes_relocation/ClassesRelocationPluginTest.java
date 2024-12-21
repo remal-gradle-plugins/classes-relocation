@@ -7,6 +7,8 @@ import static name.remal.gradle_plugins.toolkit.testkit.ProjectValidations.execu
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
 
+import java.io.File;
+import java.util.Collection;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
@@ -29,26 +31,37 @@ class ClassesRelocationPluginTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     void sourceSetsClasspaths() {
         val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         val mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
         val relocateJar = project.getTasks().withType(RelocateJar.class).getByName(RELOCATED_JAR_TASK_NAME);
         for (val sourceSet : sourceSets) {
-            val compileClasspathAssertion = assertThat(sourceSet.getCompileClasspath().getFiles())
+            assertThat(sourceSet.getCompileClasspath().getFiles())
                 .as("%s: %s", sourceSet, "compileClasspath")
-                .doesNotContainAnyElementsOf(mainSourceSet.getOutput().getFiles());
+                .doesNotContainAnyElementsOf(mainSourceSet.getOutput().getFiles())
+                .satisfies(classpath -> {
+                    if (sourceSet.getName().equals(MAIN_SOURCE_SET_NAME)) {
+                        // relocated JAR can't be a part of compile classpath for the `main` source set
+                        // do nothing
+                    } else {
+                        assertThat((Collection<File>) classpath)
+                            .contains(relocateJar.getTargetJarFile().get().getAsFile());
+                    }
+                });
 
-            val runtimeClasspathAssertion = assertThat(sourceSet.getRuntimeClasspath().getFiles())
+            assertThat(sourceSet.getRuntimeClasspath().getFiles())
                 .as("%s: %s", sourceSet, "runtimeClasspath")
-                .doesNotContainAnyElementsOf(mainSourceSet.getOutput().getFiles());
-
-            if (sourceSet.getName().equals(MAIN_SOURCE_SET_NAME)) {
-                // relocated JAR can't be a part of classpaths for the `main` source set
-                // do nothing
-            } else {
-                compileClasspathAssertion.contains(relocateJar.getTargetJarFile().get().getAsFile());
-                runtimeClasspathAssertion.contains(relocateJar.getTargetJarFile().get().getAsFile());
-            }
+                .doesNotContainAnyElementsOf(mainSourceSet.getOutput().getFiles())
+                .satisfies(classpath -> {
+                    if (sourceSet.getName().equals(MAIN_SOURCE_SET_NAME)) {
+                        // relocated JAR can't be a part of runtime classpath for the `main` source set
+                        // do nothing
+                    } else {
+                        assertThat((Collection<File>) classpath)
+                            .contains(relocateJar.getTargetJarFile().get().getAsFile());
+                    }
+                });
         }
     }
 
