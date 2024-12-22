@@ -7,6 +7,7 @@ org.ow2.asm:asm-tree:9.7.1
 org.ow2.asm:asm:9.7.1
 zzzz-classes-relying-on-external-dependency:name.remal.gradle_plugins.classes_relocation.internal._relocated.name.remal.gradle_plugins.toolkit.reflection.LatestLtsJdkModules:b4d586751c9461f17555eeebe93b28e3cf02b048e0e7ac573d73bdeb873150dc
 zzzz-classes-relying-on-external-dependency:name.remal.gradle_plugins.classes_relocation.relocator.internal._relocated.name.remal.gradle_plugins.toolkit.reflection.LatestLtsJdkModules:ffe2483aa65aee7a4bd4cc5667f71a42b680712600563db68bafbef65d0e495d
+zzzz-classes-relying-on-gradle-internal-api:name.remal.gradle_plugins.classes_relocation.internal._relocated.name.remal.gradle_plugins.toolkit.ComponentIdentifierUtils:8b572cf03d46222e67a83243360074c24a7687402e5cec7486c8c094bc0233aa
 zzzz-classes-relying-on-gradle-internal-api:name.remal.gradle_plugins.classes_relocation.internal._relocated.name.remal.gradle_plugins.toolkit.DebugUtils$1:add489bf3b58d999019a4558aec53735c73fc80e889b29143502f80059c8c532
 zzzz-classes-relying-on-gradle-internal-api:name.remal.gradle_plugins.classes_relocation.internal._relocated.name.remal.gradle_plugins.toolkit.DebugUtils$IfDebugEnabled:5316cc6b19a4dabc62e65035512e3fc61fce680c08c059aebcc96bb12dd4aafc
 zzzz-classes-relying-on-gradle-internal-api:name.remal.gradle_plugins.classes_relocation.internal._relocated.name.remal.gradle_plugins.toolkit.DebugUtils:78c22d80d8b1ccbe0b78c6cbb1c9d2171fd7799e0a23be12e21753c4580c055d
