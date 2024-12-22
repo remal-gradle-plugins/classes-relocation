@@ -22,6 +22,7 @@ import lombok.val;
 import name.remal.gradle_plugins.toolkit.generators.BaseGroovyFileContent;
 import name.remal.gradle_plugins.toolkit.testkit.functional.GradleProject;
 import name.remal.gradle_plugins.toolkit.testkit.functional.SuppressedMessage;
+import org.gradle.util.GradleVersion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -72,8 +73,8 @@ class ClassesRelocationPluginFunctionalTest {
         project.addSuppressedDeprecationMessage(SuppressedMessage.builder()
             .startsWith(true)
             .message("The runtime configuration has been deprecated for artifact declaration")
-            //TODO: .minGradleVersion(GradleVersion.parse("6.8"))
-            //TODO: .maxGradleVersion(GradleVersion.parse("6.9.9999"))
+            .minGradleVersion(GradleVersion.version("6.8"))
+            .maxGradleVersion(GradleVersion.version("6.9.9999"))
             .build()
         );
     }
@@ -207,8 +208,6 @@ class ClassesRelocationPluginFunctionalTest {
                 "",
                 "}",
             }));
-
-            child.getBuildFile().registerDefaultTask("test");
         });
 
         project.getBuildFile().registerDefaultTask("test");

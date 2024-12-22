@@ -48,11 +48,6 @@ public abstract class RelocateJar extends DefaultTask implements ClassesRelocati
     @InputFiles
     @Classpath
     @org.gradle.api.tasks.Optional
-    public abstract ConfigurableFileCollection getRuntimeClasspath();
-
-    @InputFiles
-    @Classpath
-    @org.gradle.api.tasks.Optional
     public abstract ConfigurableFileCollection getCompileClasspath();
 
     @InputFiles
@@ -183,7 +178,6 @@ public abstract class RelocateJar extends DefaultTask implements ClassesRelocati
                 val moduleIdentifiers = new LinkedHashMap<String, String>();
                 Stream.of(
                     getRelocationClasspath(),
-                    getRuntimeClasspath(),
                     getCompileClasspath()
                 ).forEach(fileCollection ->
                     getModuleVersionIdentifiersForFilesIn(fileCollection).forEach((file, id) ->

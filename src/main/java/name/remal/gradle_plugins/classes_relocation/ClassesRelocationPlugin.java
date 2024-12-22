@@ -7,6 +7,7 @@ import static java.util.stream.Collectors.toList;
 import static name.remal.gradle_plugins.classes_relocation.SourceSetClasspathsCheckMode.DISABLE;
 import static name.remal.gradle_plugins.classes_relocation.SourceSetClasspathsCheckMode.FAIL;
 import static name.remal.gradle_plugins.toolkit.AttributeContainerUtils.javaRuntimeLibrary;
+import static name.remal.gradle_plugins.toolkit.ComponentIdentifierUtils.isGradleEmbeddedComponentIdentifier;
 import static name.remal.gradle_plugins.toolkit.GradleManagedObjectsUtils.copyManagedProperties;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.doNotInline;
 import static name.remal.gradle_plugins.toolkit.PluginUtils.findPluginIdFor;
@@ -46,6 +47,7 @@ import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.testing.Test;
 import org.gradle.jvm.tasks.Jar;
+import org.gradle.plugin.devel.tasks.PluginUnderTestMetadata;
 
 @CustomLog
 public abstract class ClassesRelocationPlugin implements Plugin<Project> {
@@ -93,7 +95,13 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         project.getPluginManager().withPlugin("java", __ -> {
             configureJavaProject(project, extension, depsConfProvider, confProvider);
         });
+
+
+        project.getPluginManager().withPlugin("java-gradle-plugin", __ -> {
+            configureJavaGradlePluginProject(project);
+        });
     }
+
 
     private void configureTaskDefaults(
         ClassesRelocationExtension extension,
@@ -105,6 +113,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
             task.getRelocationClasspath().from(relocationConfProvider);
         });
     }
+
 
     private void configureJavaProject(
         Project project,
@@ -128,7 +137,6 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
             task.dependsOn(jarProvider);
 
             task.getJarFile().set(jarProvider.flatMap(Jar::getArchiveFile));
-            task.getRuntimeClasspath().from(mainSourceSetProvider.map(SourceSet::getRuntimeClasspath));
             task.getCompileClasspath().from(mainSourceSetProvider.map(SourceSet::getCompileClasspath));
             task.getPreserveFileTimestamps().set(jarProvider.map(Jar::isPreserveFileTimestamps));
             task.getMetadataCharset().set(jarProvider.map(Jar::getMetadataCharset));
@@ -233,19 +241,17 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         Provider<RelocateJar> relocateJarProvider
     ) {
         val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
-        sourceSets
-            .matching(sourceSet -> !sourceSet.getName().equals(MAIN_SOURCE_SET_NAME))
-            .configureEach(sourceSet -> {
-                val mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
-                useRelocatedJarInsteadOfSourceSetOutput(
-                    project,
-                    extension.getSourceSetClasspaths(),
-                    relocateJarProvider,
-                    mainSourceSet,
-                    sourceSet,
-                    false
-                );
-            });
+        sourceSets.configureEach(sourceSet -> {
+            val mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
+            useRelocatedJarInsteadOfSourceSetOutput(
+                project,
+                extension.getSourceSetClasspaths(),
+                relocateJarProvider,
+                mainSourceSet,
+                sourceSet,
+                false
+            );
+        });
     }
 
     private void useRelocatedJarInsteadOfSourceSetOutput(
@@ -428,6 +434,40 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         val projectPath = project.getProjectDir().toPath();
         val relativePath = rootProjectPath.relativize(projectPath).toString();
         return relativePath.isEmpty() ? "." : relativePath;
+    }
+
+
+    private void configureJavaGradlePluginProject(Project project) {
+        val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
+        val mainSourceSetProvider = sourceSets.named(MAIN_SOURCE_SET_NAME);
+
+        getTasks().withType(PluginUnderTestMetadata.class).configureEach(task -> {
+            task.getPluginClasspath().setFrom(getProviders().provider(() ->
+                createPluginUnderTestMetadataPluginClasspath(mainSourceSetProvider)
+            ));
+        });
+    }
+
+    private FileCollection createPluginUnderTestMetadataPluginClasspath(
+        Provider<SourceSet> mainSourceSetProvider
+    ) {
+        val relocateJarProvider = getTasks().named(RELOCATED_JAR_TASK_NAME, RelocateJar.class);
+        val pluginClasspath = getObjects().fileCollection()
+            .builtBy(relocateJarProvider)
+            .from(relocateJarProvider
+                .flatMap(RelocateJar::getTargetJarFile)
+            );
+
+        val mainSourceSet = mainSourceSetProvider.get();
+        val runtimeClasspathConf = getConfigurations().getByName(mainSourceSet.getRuntimeClasspathConfigurationName());
+        val runtimeClasspathConfView = runtimeClasspathConf.getIncoming().artifactView(config ->
+            config.componentFilter(componentId ->
+                !isGradleEmbeddedComponentIdentifier(componentId)
+            )
+        );
+        pluginClasspath.from(runtimeClasspathConfView.getFiles().getElements());
+
+        return pluginClasspath;
     }
 
 
