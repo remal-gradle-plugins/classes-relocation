@@ -1,31 +1,17 @@
 package name.remal.gradle_plugins.classes_relocation;
 
-import javax.inject.Inject;
 import lombok.Getter;
 import org.gradle.api.Action;
-import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.tasks.Nested;
 
 @Getter
 public abstract class ClassesRelocationExtension implements ClassesRelocationSettings {
 
-    {
-        excludeClasses(
-            "kotlin.Metadata"
-        );
-    }
-
-
     @Nested
-    private final ClassesRelocationSourceSetClasspaths sourceSetClasspaths =
-        getObjects().newInstance(ClassesRelocationSourceSetClasspaths.class);
+    public abstract ClassesRelocationSourceSetClasspaths getSourceSetClasspaths();
 
     public void sourceSetClasspaths(Action<? super ClassesRelocationSourceSetClasspaths> action) {
-        action.execute(sourceSetClasspaths);
+        action.execute(getSourceSetClasspaths());
     }
-
-
-    @Inject
-    protected abstract ObjectFactory getObjects();
 
 }

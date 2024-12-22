@@ -5,7 +5,7 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.Nested;
 
-interface ClassesRelocationSettings extends ClassesRelocationExclusions {
+interface ClassesRelocationSettings {
 
     @Input
     Property<String> getBasePackageForRelocatedClasses();

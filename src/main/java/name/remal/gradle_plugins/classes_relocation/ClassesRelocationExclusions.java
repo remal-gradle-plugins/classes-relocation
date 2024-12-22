@@ -6,6 +6,10 @@ import static java.util.Collections.singletonList;
 import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
 
+/**
+ * @deprecated for the future use
+ */
+@Deprecated
 public interface ClassesRelocationExclusions {
 
     @Input

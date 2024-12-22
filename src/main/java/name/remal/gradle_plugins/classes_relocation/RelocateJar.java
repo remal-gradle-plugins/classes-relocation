@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.Optional;
 import java.util.stream.Stream;
 import javax.inject.Inject;
-import lombok.Getter;
 import lombok.val;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
@@ -115,10 +114,6 @@ public abstract class RelocateJar extends DefaultTask implements ClassesRelocati
         name.append(part);
     }
 
-
-    @Getter
-    @Nested
-    private final ClassRelocationForkOptions forkOptions = getObjects().newInstance(ClassRelocationForkOptions.class);
 
     @org.gradle.api.tasks.Optional
     @Nested

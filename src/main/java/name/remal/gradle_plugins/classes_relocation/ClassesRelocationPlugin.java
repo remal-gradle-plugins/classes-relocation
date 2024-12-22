@@ -30,11 +30,14 @@ import lombok.CustomLog;
 import lombok.Value;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocationException;
+import name.remal.gradle_plugins.toolkit.ComponentIdentifierUtils;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
+import org.gradle.api.artifacts.component.ComponentIdentifier;
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.attributes.LibraryElements;
 import org.gradle.api.file.FileCollection;
@@ -461,13 +464,29 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         val mainSourceSet = mainSourceSetProvider.get();
         val runtimeClasspathConf = getConfigurations().getByName(mainSourceSet.getRuntimeClasspathConfigurationName());
         val runtimeClasspathConfView = runtimeClasspathConf.getIncoming().artifactView(config ->
-            config.componentFilter(componentId ->
-                !isGradleEmbeddedComponentIdentifier(componentId)
-            )
+            config.componentFilter(componentId -> !isGradleComponentIdentifier(componentId))
         );
         pluginClasspath.from(runtimeClasspathConfView.getFiles().getElements());
 
         return pluginClasspath;
+    }
+
+    /**
+     * TODO: replace with {@link ComponentIdentifierUtils#isGradleComponentIdentifier(ComponentIdentifier)}.
+     */
+    private static boolean isGradleComponentIdentifier(ComponentIdentifier componentId) {
+        if (isGradleEmbeddedComponentIdentifier(componentId)) {
+            return true;
+        }
+
+        if (componentId instanceof ModuleComponentIdentifier) {
+            val moduleComponentId = (ModuleComponentIdentifier) componentId;
+            if (Objects.equals(moduleComponentId.getGroup(), "name.remal.gradle-api")) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
 
