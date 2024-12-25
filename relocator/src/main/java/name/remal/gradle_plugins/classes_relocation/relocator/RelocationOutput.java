@@ -12,6 +12,10 @@ interface RelocationOutput extends Closeable {
     @Unmodifiable
     Set<String> getAddedResourceNames();
 
+    default boolean isResourceAdded(String resourceName) {
+        return getAddedResourceNames().contains(resourceName);
+    }
+
     void write(
         String resourceName,
         @Nullable Long lastModifiedMillis,

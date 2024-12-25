@@ -1,4 +1,4 @@
-package name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource;
+package name.remal.gradle_plugins.classes_relocation.relocator.relocators.module_info;
 
 import lombok.EqualsAndHashCode;
 import lombok.EqualsAndHashCode.CacheStrategy;
@@ -7,13 +7,11 @@ import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTask;
 
 @Value
 @EqualsAndHashCode(cacheStrategy = CacheStrategy.LAZY)
-public class CopySourceResource implements QueuedTask {
-
-    String resourceName;
+public class ProcessModuleInfo implements QueuedTask {
 
     @Override
     public int getPhase() {
-        return PROCESS_REMAINING_SOURCES_PHASE;
+        return AGGREGATE_PHASE;
     }
 
 }

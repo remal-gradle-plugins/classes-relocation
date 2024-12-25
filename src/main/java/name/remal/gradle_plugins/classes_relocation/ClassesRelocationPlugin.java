@@ -2,66 +2,67 @@ package name.remal.gradle_plugins.classes_relocation;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static name.remal.gradle_plugins.classes_relocation.SourceSetClasspathsCheckMode.DISABLE;
-import static name.remal.gradle_plugins.classes_relocation.SourceSetClasspathsCheckMode.FAIL;
-import static name.remal.gradle_plugins.toolkit.AttributeContainerUtils.javaRuntimeLibrary;
-import static name.remal.gradle_plugins.toolkit.ComponentIdentifierUtils.isGradleEmbeddedComponentIdentifier;
+import static java.util.Collections.emptyMap;
+import static name.remal.gradle_plugins.toolkit.AttributeContainerUtils.javaApiLibrary;
+import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.getModuleVersionIdentifiersForFilesIn;
 import static name.remal.gradle_plugins.toolkit.GradleManagedObjectsUtils.copyManagedProperties;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.doNotInline;
-import static name.remal.gradle_plugins.toolkit.PluginUtils.findPluginIdFor;
-import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
+import static name.remal.gradle_plugins.toolkit.TaskUtils.doBeforeTaskExecution;
 import static org.gradle.api.artifacts.Configuration.State.UNRESOLVED;
 import static org.gradle.api.attributes.LibraryElements.JAR;
 import static org.gradle.api.attributes.LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE;
+import static org.gradle.api.plugins.ApplicationPlugin.TASK_RUN_NAME;
+import static org.gradle.api.plugins.BasePlugin.ASSEMBLE_TASK_NAME;
 import static org.gradle.api.plugins.BasePlugin.BUILD_GROUP;
 import static org.gradle.api.plugins.JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME;
 import static org.gradle.api.plugins.JavaPlugin.JAR_TASK_NAME;
 import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
 
-import com.google.common.collect.ImmutableList;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Objects;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import lombok.CustomLog;
-import lombok.Value;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocationException;
-import name.remal.gradle_plugins.toolkit.ComponentIdentifierUtils;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
-import org.gradle.api.artifacts.component.ComponentIdentifier;
-import org.gradle.api.artifacts.component.ModuleComponentIdentifier;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.attributes.LibraryElements;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.invocation.Gradle;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
+import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.TaskProvider;
 import org.gradle.api.tasks.testing.Test;
+import org.gradle.jvm.application.tasks.CreateStartScripts;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.plugin.devel.tasks.PluginUnderTestMetadata;
+import org.gradle.testing.jacoco.tasks.JacocoReportBase;
 
 @CustomLog
 public abstract class ClassesRelocationPlugin implements Plugin<Project> {
 
     public static final String CLASSES_RELOCATION_EXTENSION_NAME = doNotInline("classesRelocation");
+
+    public static final String CLASSES_RELOCATION_LEGACY_CONFIGURATION_NAME = doNotInline("relocateClasses");
     public static final String CLASSES_RELOCATION_CONFIGURATION_NAME = doNotInline("classesRelocation");
     public static final String CLASSES_RELOCATION_CLASSPATH_CONFIGURATION_NAME =
         doNotInline("classesRelocationClasspath");
-    public static final String RELOCATED_JAR_TASK_NAME = doNotInline("relocatedJar");
+
+    public static final String RELOCATE_JAR_TASK_NAME = doNotInline("relocateJar");
 
     @Override
+    @SuppressWarnings("Slf4jFormatShouldBeConst")
     public void apply(Project project) {
         val extension = project.getExtensions().create(
             CLASSES_RELOCATION_EXTENSION_NAME,
@@ -69,25 +70,51 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         );
 
 
+        val depsLegacyConfProvider = getConfigurations().register(
+            CLASSES_RELOCATION_LEGACY_CONFIGURATION_NAME,
+            conf -> {
+                conf.setVisible(false);
+                conf.setCanBeConsumed(false);
+                conf.setCanBeResolved(false);
+                conf.setDescription(
+                    "Dependencies for classes state (legacy configuration for backwards compatibility)"
+                );
+
+                conf.getDependencies().configureEach(__ -> {
+                    val message = format(
+                        "Use `%s` configuration for classes relocation dependencies instead of the legacy `%s`",
+                        CLASSES_RELOCATION_CONFIGURATION_NAME,
+                        CLASSES_RELOCATION_LEGACY_CONFIGURATION_NAME
+                    );
+                    val exception = new ClassesRelocationException(message);
+                    logger.warn(exception.toString(), exception);
+                });
+            }
+        );
+
         val depsConfProvider = getConfigurations().register(
             CLASSES_RELOCATION_CONFIGURATION_NAME,
             conf -> {
+                conf.setVisible(false);
                 conf.setCanBeConsumed(false);
                 conf.setCanBeResolved(false);
-                conf.setDescription("Dependencies for classes state");
+                conf.extendsFrom(depsLegacyConfProvider.get());
+                conf.setDescription("Dependencies for classes relocation");
             }
         );
 
         val confProvider = getConfigurations().register(
             CLASSES_RELOCATION_CLASSPATH_CONFIGURATION_NAME,
             conf -> {
-                conf.setCanBeConsumed(true);
+                conf.setVisible(false);
+                conf.setCanBeConsumed(false);
                 conf.setCanBeResolved(true);
                 conf.extendsFrom(depsConfProvider.get());
-                conf.attributes(javaRuntimeLibrary(getObjects()));
-                conf.setDescription(
-                    "Classpath for classes state: dependencies took from " + depsConfProvider.getName()
-                );
+                conf.attributes(javaApiLibrary(getObjects()));
+                conf.setDescription(format(
+                    "Classpath for classes relocation (dependencies are taken from `%s` configuration)",
+                    depsConfProvider.getName()
+                ));
             }
         );
 
@@ -96,12 +123,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
 
 
         project.getPluginManager().withPlugin("java", __ -> {
-            configureJavaProject(project, extension, depsConfProvider, confProvider);
-        });
-
-
-        project.getPluginManager().withPlugin("java-gradle-plugin", __ -> {
-            configureJavaGradlePluginProject(project);
+            configureJavaProject(project, depsConfProvider, confProvider);
         });
     }
 
@@ -114,19 +136,43 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
             copyManagedProperties(ClassesRelocationSettings.class, extension, task);
 
             task.getRelocationClasspath().from(relocationConfProvider);
+            task.getModuleIdentifiers().putAll(retrieveModuleIdentifiers(relocationConfProvider));
+        });
+    }
+
+    private Provider<Map<String, String>> retrieveModuleIdentifiers(
+        Provider<? extends FileCollection> fileCollectionProvider
+    ) {
+        return getProviders().provider(() -> {
+            val fileCollection = fileCollectionProvider.getOrNull();
+            if (fileCollection == null) {
+                return emptyMap();
+            }
+
+            val moduleIdentifiers = new LinkedHashMap<String, String>();
+            getModuleVersionIdentifiersForFilesIn(fileCollection).forEach((file, id) -> {
+                moduleIdentifiers.putIfAbsent(
+                    file.toPath().toUri().toString(),
+                    format(
+                        "%s:%s",
+                        id.getGroup(),
+                        id.getName()
+                    )
+                );
+            });
+            return moduleIdentifiers;
         });
     }
 
 
     private void configureJavaProject(
         Project project,
-        ClassesRelocationExtension extension,
-        NamedDomainObjectProvider<Configuration> relocationConfProvider,
-        NamedDomainObjectProvider<Configuration> relocationClasspathConfProvider
+        NamedDomainObjectProvider<Configuration> relocationDepsConfProvider,
+        NamedDomainObjectProvider<Configuration> relocationConfProvider
     ) {
         setLibraryElementToJar(project);
-        extendCompileClasspathConfiguration(relocationConfProvider);
-        resolveConsistentlyWithCompileClasspath(relocationClasspathConfProvider);
+        extendCompileClasspathConfiguration(relocationDepsConfProvider);
+        resolveConsistentlyWithCompileClasspath(relocationConfProvider);
 
         val jarProvider = getTasks().named(JAR_TASK_NAME, Jar.class);
         jarProvider.configure(jar -> {
@@ -136,11 +182,13 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         val mainSourceSetProvider = sourceSets.named(MAIN_SOURCE_SET_NAME);
 
-        val relocateJarProvider = getTasks().register(RELOCATED_JAR_TASK_NAME, RelocateJar.class, task -> {
+        val relocateJarProvider = getTasks().register(RELOCATE_JAR_TASK_NAME, RelocateJar.class, task -> {
             task.dependsOn(jarProvider);
 
             task.getJarFile().set(jarProvider.flatMap(Jar::getArchiveFile));
-            task.getCompileClasspath().from(mainSourceSetProvider.map(SourceSet::getCompileClasspath));
+            task.getModuleIdentifiers().putAll(retrieveModuleIdentifiers(mainSourceSetProvider
+                .map(SourceSet::getCompileClasspath)
+            ));
             task.getPreserveFileTimestamps().set(jarProvider.map(Jar::isPreserveFileTimestamps));
             task.getMetadataCharset().set(jarProvider.map(Jar::getMetadataCharset));
 
@@ -151,19 +199,35 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
             task.getArchiveExtension().set(jarProvider.flatMap(Jar::getArchiveExtension));
 
             task.setDescription(format(
-                "Relocate classes from dependencies of `%s` configuration in a JAR file created by %s task.",
-                relocationClasspathConfProvider.getName(),
+                "Relocate classes from dependencies of `%s` configuration in a JAR file created by `%s` task.",
+                relocationConfProvider.getName(),
                 jarProvider.getName()
             ));
             task.setGroup(BUILD_GROUP);
         });
 
-        useRelocatedJarInsteadOfSourceSetOutput(project, extension, relocateJarProvider);
+        getTasks().named(ASSEMBLE_TASK_NAME, task ->
+            task.dependsOn(relocateJarProvider)
+        );
+
+
         publishRelocatedJar(jarProvider, relocateJarProvider);
 
-        getTasks().withType(Test.class).configureEach(test ->
-            test.shouldRunAfter(relocateJarProvider)
-        );
+
+        configureTestTasks(mainSourceSetProvider, relocateJarProvider);
+
+        configurePluginUnderTestMetadataTasks(mainSourceSetProvider, relocateJarProvider);
+
+        // TODO: configure ValidatePlugins
+        // TODO: configure JavaExec
+
+        configureJacocoReportBaseTasks(mainSourceSetProvider, relocateJarProvider);
+
+        configureCreateStartScriptsTasks(mainSourceSetProvider, relocateJarProvider);
+
+        project.getPluginManager().withPlugin("application", __ -> {
+            configureApplicationRunTask(mainSourceSetProvider, relocateJarProvider);
+        });
     }
 
     private void setLibraryElementToJar(Project project) {
@@ -186,26 +250,29 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
     }
 
     private void extendCompileClasspathConfiguration(
-        NamedDomainObjectProvider<Configuration> relocationConfProvider
+        NamedDomainObjectProvider<Configuration> relocationDepsConfProvider
     ) {
         getConfigurations().named(
             COMPILE_CLASSPATH_CONFIGURATION_NAME,
-            conf -> conf.extendsFrom(relocationConfProvider.get())
+            conf -> conf.extendsFrom(relocationDepsConfProvider.get())
         );
     }
 
     @SuppressWarnings("UnstableApiUsage")
     private void resolveConsistentlyWithCompileClasspath(
-        NamedDomainObjectProvider<Configuration> relocationClasspathConfProvider
+        NamedDomainObjectProvider<Configuration> relocationConfProvider
     ) {
-        relocationClasspathConfProvider.configure(conf -> {
+        relocationConfProvider.configure(conf -> {
             val compileClasspathConf = getConfigurations().getByName(COMPILE_CLASSPATH_CONFIGURATION_NAME);
             conf.shouldResolveConsistentlyWith(compileClasspathConf);
-            conf.setDescription(
-                conf.getDescription() + ", resolved consistently with " + compileClasspathConf.getName()
-            );
+            conf.setDescription(format(
+                "%s, resolved consistently with `%s` configuration",
+                conf.getDescription(),
+                compileClasspathConf.getName()
+            ));
         });
     }
+
 
     private void publishRelocatedJar(
         Provider<Jar> jarProvider,
@@ -238,255 +305,158 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         );
     }
 
-    private void useRelocatedJarInsteadOfSourceSetOutput(
-        Project project,
-        ClassesRelocationExtension extension,
-        Provider<RelocateJar> relocateJarProvider
+
+    private void configureTestTasks(
+        NamedDomainObjectProvider<SourceSet> sourceSetProvider,
+        TaskProvider<RelocateJar> relocateJarProvider
     ) {
-        val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
-        sourceSets.configureEach(sourceSet -> {
-            val mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
-            useRelocatedJarInsteadOfSourceSetOutput(
-                project,
-                extension.getSourceSetClasspaths(),
-                relocateJarProvider,
-                mainSourceSet,
-                sourceSet,
-                false
-            );
+        getTasks().withType(Test.class).configureEach(it -> {
+            it.dependsOn(relocateJarProvider);
+            doBeforeTaskExecution(it, task -> {
+                val classpath = task.getClasspath();
+                val modifiedClasspath = createModifiedClasspath(
+                    classpath,
+                    sourceSetProvider,
+                    relocateJarProvider
+                );
+                if (modifiedClasspath != null) {
+                    modifiedClasspath.builtBy(classpath);
+                    task.setClasspath(modifiedClasspath);
+                }
+            });
         });
     }
 
-    private void useRelocatedJarInsteadOfSourceSetOutput(
-        Project project,
-        ClassesRelocationSourceSetClasspaths sourceSetClasspaths,
-        Provider<RelocateJar> relocateJarProvider,
-        SourceSet mainSourceSet,
-        SourceSet sourceSet,
-        boolean isAfterEvaluate
+    private void configurePluginUnderTestMetadataTasks(
+        NamedDomainObjectProvider<SourceSet> sourceSetProvider,
+        TaskProvider<RelocateJar> relocateJarProvider
     ) {
-        val projectId = getProjectId(project);
-
-        val mainOutput = mainSourceSet.getOutput();
-        for (val classpathInfo : SOURCE_SET_CLASSPATH_INFOS) {
-            val classpathName = classpathInfo.getName();
-            val classpath = classpathInfo.getGetter().apply(sourceSet);
-            classpathInfo.getSetter().accept(sourceSet, getObjects().fileCollection()
-                .builtBy(classpath)
-                .from(getProviders().provider(() ->
-                    useRelocatedJarInsteadOfSourceSetOutput(
-                        projectId,
-                        sourceSetClasspaths,
-                        relocateJarProvider,
-                        classpathName,
-                        sourceSet,
-                        classpath,
-                        mainSourceSet.getName(),
-                        mainOutput,
-                        isAfterEvaluate
-                    )
-                ))
-            );
-        }
-
-        if (!isAfterEvaluate && !project.getState().getExecuted()) {
-            project.afterEvaluate(__ ->
-                useRelocatedJarInsteadOfSourceSetOutput(
-                    project,
-                    sourceSetClasspaths,
-                    relocateJarProvider,
-                    mainSourceSet,
-                    sourceSet,
-                    true
-                )
-            );
-        }
+        getTasks().withType(PluginUnderTestMetadata.class).configureEach(it -> {
+            it.dependsOn(relocateJarProvider);
+            doBeforeTaskExecution(it, task -> {
+                val classpath = task.getPluginClasspath();
+                val modifiedClasspath = createModifiedClasspath(
+                    classpath,
+                    sourceSetProvider,
+                    relocateJarProvider
+                );
+                if (modifiedClasspath != null) {
+                    classpath.setFrom(modifiedClasspath);
+                }
+            });
+        });
     }
 
-    @SuppressWarnings({"java:S3776", "java:S6541", "java:S107", "Slf4jFormatShouldBeConst"})
-    private FileCollection useRelocatedJarInsteadOfSourceSetOutput(
-        String projectId,
-        ClassesRelocationSourceSetClasspaths sourceSetClasspaths,
-        Provider<RelocateJar> relocateJarProvider,
-        String classpathName,
-        SourceSet sourceSet,
+    private void configureJacocoReportBaseTasks(
+        NamedDomainObjectProvider<SourceSet> sourceSetProvider,
+        TaskProvider<RelocateJar> relocateJarProvider
+    ) {
+        getTasks().withType(JacocoReportBase.class).configureEach(it -> {
+            it.dependsOn(relocateJarProvider);
+            doBeforeTaskExecution(it, task -> {
+                val classpath = task.getClassDirectories();
+                val modifiedClasspath = createModifiedClasspath(
+                    classpath,
+                    sourceSetProvider,
+                    relocateJarProvider
+                );
+                if (modifiedClasspath != null) {
+                    classpath.setFrom(modifiedClasspath);
+                }
+            });
+            doBeforeTaskExecution(it, task -> {
+                val classpath = task.getAdditionalClassDirs();
+                val modifiedClasspath = createModifiedClasspath(
+                    classpath,
+                    sourceSetProvider,
+                    relocateJarProvider
+                );
+                if (modifiedClasspath != null) {
+                    classpath.setFrom(modifiedClasspath);
+                }
+            });
+        });
+    }
+
+    private void configureCreateStartScriptsTasks(
+        NamedDomainObjectProvider<SourceSet> sourceSetProvider,
+        TaskProvider<RelocateJar> relocateJarProvider
+    ) {
+        getTasks().withType(CreateStartScripts.class).configureEach(it -> {
+            it.dependsOn(relocateJarProvider);
+            doBeforeTaskExecution(it, task -> {
+                val classpath = task.getClasspath();
+                if (classpath == null) {
+                    return;
+                }
+
+                val modifiedClasspath = createModifiedClasspath(
+                    classpath,
+                    sourceSetProvider,
+                    relocateJarProvider
+                );
+                if (modifiedClasspath != null) {
+                    modifiedClasspath.builtBy(classpath);
+                    task.setClasspath(modifiedClasspath);
+                }
+            });
+        });
+    }
+
+    private void configureApplicationRunTask(
+        NamedDomainObjectProvider<SourceSet> sourceSetProvider,
+        TaskProvider<RelocateJar> relocateJarProvider
+    ) {
+        getTasks().named(TASK_RUN_NAME, JavaExec.class, it -> {
+            it.dependsOn(relocateJarProvider);
+            doBeforeTaskExecution(it, task -> {
+                val classpath = task.getClasspath();
+                val modifiedClasspath = createModifiedClasspath(
+                    classpath,
+                    sourceSetProvider,
+                    relocateJarProvider
+                );
+                if (modifiedClasspath != null) {
+                    modifiedClasspath.builtBy(classpath);
+                    task.setClasspath(modifiedClasspath);
+                }
+            });
+        });
+    }
+
+    @Nullable
+    private ConfigurableFileCollection createModifiedClasspath(
         FileCollection classpath,
-        String mainSourceSetName,
-        FileCollection mainOutput,
-        boolean isAfterEvaluate
+        NamedDomainObjectProvider<SourceSet> sourceSetProvider,
+        TaskProvider<RelocateJar> relocateJarProvider
     ) {
-        if (sourceSetClasspaths.getSkipSourceSets().contains(sourceSet)) {
-            return classpath;
-        }
-
-        if (classpath.isEmpty()) {
-            return classpath;
-        }
-
-        val mainOutputFiles = mainOutput.getFiles();
-        if (mainOutputFiles.isEmpty()) {
-            return classpath;
-        }
-
-        if (sourceSetClasspaths.getPartialMatchCheck().getOrNull() != DISABLE) {
-            val notMatchedFiles = mainOutputFiles.stream()
-                .filter(not(classpath::contains))
-                .collect(toList());
-            if (!notMatchedFiles.isEmpty() && notMatchedFiles.size() < mainOutputFiles.size()) {
-                val message = (
-                    "For project `{projectId}`, source set `{sourceSetName}` contain partial output"
-                        + " of `{mainSourceSetName}` source set in `{classpathName}`"
-                        + ", but missing the following files:\n{notMatchedFiles}"
-                        + "\n\nIf you don't want `{pluginId}` plugin to process classpaths"
-                        + " of `{sourceSetName}` source set"
-                        + ", add this source set to `{extensionName}.sourceSetClasspaths.skipSourceSets`."
-                        + "\n\nThis check can be configured by setting"
-                        + " `{extensionName}.sourceSetClasspaths.partialMatchCheck`."
-                        + "\n"
-                ).replace("{projectId}", projectId)
-                    .replace("{sourceSetName}", sourceSet.getName())
-                    .replace("{mainSourceSetName}", mainSourceSetName)
-                    .replace("{classpathName}", classpathName)
-                    .replace("{notMatchedFiles}", notMatchedFiles.stream()
-                        .map(file -> "  * " + file)
-                        .collect(joining("\n"))
-                    )
-                    .replace("{pluginId}", String.valueOf(findPluginIdFor(ClassesRelocationPlugin.class)))
-                    .replace("{extensionName}", CLASSES_RELOCATION_EXTENSION_NAME);
-                if (sourceSetClasspaths.getPartialMatchCheck().getOrNull() == FAIL) {
-                    throw new ClassesRelocationException(message);
-                } else {
-                    logger.warn(message);
-                }
-            }
-        }
-
-        boolean matched = false;
-        val updatedClasspath = getObjects().fileCollection()
-            .builtBy(classpath)
-            .builtBy(relocateJarProvider);
+        ConfigurableFileCollection modifiedClasspath = null;
+        boolean foundSourceSetOutput = false;
+        val sourceSetOutputFiles = sourceSetProvider.get().getOutput().getFiles();
         for (val file : classpath.getFiles()) {
-            if (mainOutput.contains(file)) {
-                if (!matched) {
-                    updatedClasspath.from(relocateJarProvider.flatMap(RelocateJar::getTargetJarFile));
-                    matched = true;
+            if (sourceSetOutputFiles.contains(file)) {
+                if (!foundSourceSetOutput) {
+                    if (modifiedClasspath == null) {
+                        modifiedClasspath = getObjects().fileCollection();
+                    }
+                    modifiedClasspath.from(relocateJarProvider
+                        .flatMap(RelocateJar::getTargetJarFile)
+                    );
+                    foundSourceSetOutput = true;
                 }
             } else {
-                updatedClasspath.from(file);
-            }
-        }
-        if (!matched) {
-            return classpath;
-        }
-
-        if (isAfterEvaluate && sourceSetClasspaths.getAfterEvaluateChangesCheck().getOrNull() != DISABLE) {
-            val message = (
-                "For project `{projectId}`, classpath `{classpathName}` of source set `{sourceSetName}`"
-                    + " was updated after `{pluginId}` plugin was applied."
-                    + "\nThe classpath was fixed on the `afterEvaluate` phase."
-                    + "\nThe most common reason for this is when another plugin that configures source sets"
-                    + " is applied after `{pluginId}` plugin was applied. For example, `name.remal.test-source-sets`."
-                    + "\nThe easiest was to get rid of this message and make your build more stable is"
-                    + " to apply `{pluginId}` plugin AFTER other plugins that configure source sets."
-                    + "\n\nIf you don't want `{pluginId}` plugin to process classpaths"
-                    + " of `{sourceSetName}` source set"
-                    + ", add this source set to `{extensionName}.sourceSetClasspaths.skipSourceSets`."
-                    + "\n\nThis check can be configured by setting"
-                    + " `{extensionName}.sourceSetClasspaths.afterEvaluateChangesCheck`."
-                    + "\n"
-            ).replace("{projectId}", projectId)
-                .replace("{classpathName}", classpathName)
-                .replace("{sourceSetName}", sourceSet.getName())
-                .replace("{pluginId}", String.valueOf(findPluginIdFor(ClassesRelocationPlugin.class)))
-                .replace("{extensionName}", CLASSES_RELOCATION_EXTENSION_NAME);
-            if (sourceSetClasspaths.getAfterEvaluateChangesCheck().getOrNull() == FAIL) {
-                throw new ClassesRelocationException(message);
-            } else {
-                logger.warn(message);
+                if (modifiedClasspath == null) {
+                    modifiedClasspath = getObjects().fileCollection();
+                }
+                modifiedClasspath.from(file);
             }
         }
 
-        return updatedClasspath;
-    }
-
-    private static final List<SourceSetClasspathInfo> SOURCE_SET_CLASSPATH_INFOS = ImmutableList.of(
-        new SourceSetClasspathInfo("compileClasspath", SourceSet::getCompileClasspath, SourceSet::setCompileClasspath),
-        new SourceSetClasspathInfo("runtimeClasspath", SourceSet::getRuntimeClasspath, SourceSet::setRuntimeClasspath)
-    );
-
-    @Value
-    private static class SourceSetClasspathInfo {
-        String name;
-        Function<SourceSet, FileCollection> getter;
-        BiConsumer<SourceSet, FileCollection> setter;
-    }
-
-    private static String getProjectId(Project project) {
-        Gradle gradle = project.getGradle();
-        while (true) {
-            val parentGradle = gradle.getParent();
-            if (parentGradle != null) {
-                gradle = parentGradle;
-            } else {
-                break;
-            }
+        if (modifiedClasspath != null) {
+            return modifiedClasspath.builtBy(relocateJarProvider);
         }
 
-        val rootProject = gradle.getRootProject();
-        val rootProjectPath = rootProject.getProjectDir().toPath();
-        val projectPath = project.getProjectDir().toPath();
-        val relativePath = rootProjectPath.relativize(projectPath).toString();
-        return relativePath.isEmpty() ? "." : relativePath;
-    }
-
-
-    private void configureJavaGradlePluginProject(Project project) {
-        val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
-        val mainSourceSetProvider = sourceSets.named(MAIN_SOURCE_SET_NAME);
-
-        getTasks().withType(PluginUnderTestMetadata.class).configureEach(task -> {
-            task.getPluginClasspath().setFrom(getProviders().provider(() ->
-                createPluginUnderTestMetadataPluginClasspath(mainSourceSetProvider)
-            ));
-        });
-    }
-
-    private FileCollection createPluginUnderTestMetadataPluginClasspath(
-        Provider<SourceSet> mainSourceSetProvider
-    ) {
-        val relocateJarProvider = getTasks().named(RELOCATED_JAR_TASK_NAME, RelocateJar.class);
-        val pluginClasspath = getObjects().fileCollection()
-            .builtBy(relocateJarProvider)
-            .from(relocateJarProvider
-                .flatMap(RelocateJar::getTargetJarFile)
-            );
-
-        val mainSourceSet = mainSourceSetProvider.get();
-        val runtimeClasspathConf = getConfigurations().getByName(mainSourceSet.getRuntimeClasspathConfigurationName());
-        val runtimeClasspathConfView = runtimeClasspathConf.getIncoming().artifactView(config ->
-            config.componentFilter(componentId -> !isGradleComponentIdentifier(componentId))
-        );
-        pluginClasspath.from(runtimeClasspathConfView.getFiles().getElements());
-
-        return pluginClasspath;
-    }
-
-    /**
-     * TODO: replace with {@link ComponentIdentifierUtils#isGradleComponentIdentifier(ComponentIdentifier)}.
-     */
-    private static boolean isGradleComponentIdentifier(ComponentIdentifier componentId) {
-        if (isGradleEmbeddedComponentIdentifier(componentId)) {
-            return true;
-        }
-
-        if (componentId instanceof ModuleComponentIdentifier) {
-            val moduleComponentId = (ModuleComponentIdentifier) componentId;
-            if (Objects.equals(moduleComponentId.getGroup(), "name.remal.gradle-api")) {
-                return true;
-            }
-        }
-
-        return false;
+        return null;
     }
 
 

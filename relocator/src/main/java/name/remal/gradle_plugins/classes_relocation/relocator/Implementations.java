@@ -19,6 +19,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.relocators.license
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.manifest.ProcessManifestHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.meta_inf_services.MetaInfServicesHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.meta_inf_services.RelocateMetaInfServicesHandler;
+import name.remal.gradle_plugins.classes_relocation.relocator.relocators.module_info.ProcessModuleInfoHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource.CopySourceResourceHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource.RelocateResourceHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant.ClassDescriptorHandler;
@@ -43,6 +44,7 @@ class Implementations extends AbstractClosablesContainer {
                 new RelocateResourceHandler(),
                 new CopySourceResourceHandler(),
                 new ProcessManifestHandler(),
+                new ProcessModuleInfoHandler(),
                 new ProcessSourceClassHandler(),
                 new CopyRelocationLicensesHandler(),
                 new RelocateMetaInfServicesHandler(),

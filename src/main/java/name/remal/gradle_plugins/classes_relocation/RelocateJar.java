@@ -1,16 +1,12 @@
 package name.remal.gradle_plugins.classes_relocation;
 
-import static java.lang.String.format;
 import static name.remal.gradle_plugins.classes_relocation.ClassRelocationForkOptions.IS_FORK_ENABLED_DEFAULT;
-import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.getModuleVersionIdentifiersForFilesIn;
 import static name.remal.gradle_plugins.toolkit.JavaLauncherUtils.getJavaLauncherProviderFor;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.isEmpty;
 import static org.gradle.api.tasks.PathSensitivity.RELATIVE;
 
 import java.io.File;
-import java.util.LinkedHashMap;
 import java.util.Optional;
-import java.util.stream.Stream;
 import javax.inject.Inject;
 import lombok.val;
 import org.gradle.api.DefaultTask;
@@ -19,7 +15,7 @@ import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileSystemOperations;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
@@ -47,12 +43,11 @@ public abstract class RelocateJar extends DefaultTask implements ClassesRelocati
     @InputFiles
     @Classpath
     @org.gradle.api.tasks.Optional
-    public abstract ConfigurableFileCollection getCompileClasspath();
-
-    @InputFiles
-    @Classpath
-    @org.gradle.api.tasks.Optional
     public abstract ConfigurableFileCollection getRelocationClasspath();
+
+    @Input
+    @org.gradle.api.tasks.Optional
+    public abstract MapProperty<String, String> getModuleIdentifiers();
 
     @Input
     @org.gradle.api.tasks.Optional
@@ -153,6 +148,9 @@ public abstract class RelocateJar extends DefaultTask implements ClassesRelocati
                         .getAsFile()
                         .getAbsolutePath()
                     );
+                    if (getJavaLauncher().get().getMetadata().getLanguageVersion().canCompileOrRun(9)) {
+                        spec.getForkOptions().jvmArgs("--add-opens", "java.base/java.lang=ALL-UNNAMED");
+                    }
                     spec.getForkOptions().setMaxHeapSize(forkParams
                         .map(ClassRelocationForkOptions::getMaxHeapSize)
                         .map(Provider::getOrNull)
@@ -169,25 +167,7 @@ public abstract class RelocateJar extends DefaultTask implements ClassesRelocati
         workQueue.submit(RelocateJarAction.class, params -> {
             params.getJarFile().set(getJarFile());
             params.getRelocationClasspath().setFrom(getRelocationClasspath());
-            params.getModuleIdentifiers().putAll(getProviders().provider(() -> {
-                val moduleIdentifiers = new LinkedHashMap<String, String>();
-                Stream.of(
-                    getRelocationClasspath(),
-                    getCompileClasspath()
-                ).forEach(fileCollection ->
-                    getModuleVersionIdentifiersForFilesIn(fileCollection).forEach((file, id) ->
-                        moduleIdentifiers.putIfAbsent(
-                            file.toPath().toUri().toString(),
-                            format(
-                                "%s:%s",
-                                id.getGroup(),
-                                id.getModule()
-                            )
-                        )
-                    )
-                );
-                return moduleIdentifiers;
-            }));
+            params.getModuleIdentifiers().set(getModuleIdentifiers());
 
             params.getTargetJarFile().set(getTargetJarFile());
             params.getBasePackageForRelocatedClasses().set(getBasePackageForRelocatedClasses());
@@ -196,9 +176,6 @@ public abstract class RelocateJar extends DefaultTask implements ClassesRelocati
         });
     }
 
-
-    @Inject
-    protected abstract ObjectFactory getObjects();
 
     @Inject
     protected abstract FileSystemOperations getFiles();

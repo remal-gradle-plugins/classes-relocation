@@ -32,6 +32,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.context.Relocation
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.ProcessSourceClass;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.license.CopyRelocationLicenses;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.manifest.ProcessManifest;
+import name.remal.gradle_plugins.classes_relocation.relocator.relocators.module_info.ProcessModuleInfo;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource.CopySourceResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTask;
@@ -107,17 +108,19 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
                 .map(ProcessSourceClass::new)
                 .forEach(tasksExecutor::queue);
 
+            tasksExecutor.queue(new CopyRelocationLicenses());
+            tasksExecutor.queue(new ProcessManifest());
+            tasksExecutor.queue(new ProcessModuleInfo());
+
             sourceClasspath.getAllResources().stream()
                 .map(Resource::getName)
                 .filter(name -> !name.endsWith(".class")
                     && !name.equals(MANIFEST_NAME)
+                    && !name.equals("module-info.class")
                     && !name.equals("META-INF/INDEX.LIST")
                 )
                 .map(CopySourceResource::new)
                 .forEach(tasksExecutor::queue);
-
-            tasksExecutor.queue(new CopyRelocationLicenses());
-            tasksExecutor.queue(new ProcessManifest());
 
             tasksExecutor.executeQueuedTasks();
 
@@ -216,6 +219,15 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
 
             val resourceName = updatedResourceName != null ? updatedResourceName : resource.getName();
             val fullResourceName = withMultiReleasePathPrefix(resourceName, resource.getMultiReleaseVersion());
+            if (output.isResourceAdded(fullResourceName)) {
+                logger.warn(
+                    "A resource was already relocated, ignoring duplicated path `{}` (source resource: {})",
+                    fullResourceName,
+                    resource
+                );
+                return;
+            }
+
             val lastModifiedMillis = resource.getLastModifiedMillis();
             if (updatedContent != null) {
                 output.write(fullResourceName, lastModifiedMillis, updatedContent);

@@ -47,7 +47,9 @@ class RelocationRemapper extends Remapper {
             val type = (Type) value;
             if (type.getSort() == Type.OBJECT) {
                 val internalName = type.getInternalName();
-                if (!internalName.equals("org/codehaus/groovy/runtime/ExtensionModule")) {
+                if (context.isRelocationClassInternalName(internalName)
+                    && !internalName.equals("org/codehaus/groovy/runtime/ExtensionModule")
+                ) {
                     context.queue(new RelocateMetaInfServices(internalName));
                 }
             }

@@ -11,6 +11,8 @@ public class CopySourceResourceHandler implements QueuedTaskHandler<CopySourceRe
 
     @Override
     public QueuedTaskHandlerResult handle(CopySourceResource task, RelocationContext context) {
+        // FIXME: we need to process `META-INF/services/*`, not just copy these resources
+
         context.getSourceClasspath().getResources(task.getResourceName()).stream()
             .filter(not(context::isResourceProcessed))
             .forEach(context::writeToOutput);

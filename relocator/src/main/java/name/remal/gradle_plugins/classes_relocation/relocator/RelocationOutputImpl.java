@@ -72,6 +72,11 @@ class RelocationOutputImpl implements RelocationOutput {
     }
 
     @Override
+    public synchronized boolean isResourceAdded(String resourceName) {
+        return addedResourceNames.contains(resourceName);
+    }
+
+    @Override
     @SneakyThrows
     public synchronized void write(
         String path,
@@ -79,8 +84,7 @@ class RelocationOutputImpl implements RelocationOutput {
         byte[] bytes
     ) {
         if (!addedResourceNames.add(path)) {
-            logger.warn("A resource was already relocated, ignoring duplicated path: {}", path);
-            return;
+            throw new IllegalStateException("A resource was already relocated, ignoring duplicated path: " + path);
         }
 
         val archiveEntry = new ZipArchiveEntry(path);
@@ -98,8 +102,7 @@ class RelocationOutputImpl implements RelocationOutput {
         @WillNotClose InputStream inputStream
     ) {
         if (!addedResourceNames.add(path)) {
-            logger.warn("A resource was already relocated, ignoring duplicated path: {}", path);
-            return;
+            throw new IllegalStateException("A resource was already relocated, ignoring duplicated path: " + path);
         }
 
         val archiveEntry = new ZipArchiveEntry(path);
