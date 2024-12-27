@@ -78,6 +78,7 @@ public class RelocationAnnotationsClassVisitor extends ClassVisitor {
         {
             val av = super.visitAnnotation(SUPPRESS_FB_WARNINGS_DESCRIPTOR, false);
             if (av != null) {
+                av.visit("justification", "relocated class");
                 av.visitEnd();
             }
         }

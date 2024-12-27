@@ -73,8 +73,13 @@ public class ResourceNameHandler implements ImmediateTaskHandler<String, Process
     }
 
     private static Predicate<String> byResourceName(String resourceName) {
-        return name -> name.startsWith(resourceName)
-            && (name.length() == resourceName.length() || name.charAt(resourceName.length()) == '/');
+        if (resourceName.contains("/")) {
+            return name -> name.startsWith(resourceName)
+                && (name.length() == resourceName.length() || name.charAt(resourceName.length()) == '/');
+
+        } else {
+            return resourceName::equals;
+        }
     }
 
     private static boolean isExcludedResource(String resourceName) {

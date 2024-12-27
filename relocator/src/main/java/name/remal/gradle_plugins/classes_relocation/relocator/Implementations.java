@@ -26,6 +26,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant.ClassInternalNameHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant.ClassNameHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant.ResourceNameHandler;
+import name.remal.gradle_plugins.classes_relocation.relocator.relocators.type_constant.ProcessTypeConstantHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.BaseWithSupportedTaskClass;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
@@ -52,7 +53,8 @@ class Implementations extends AbstractClosablesContainer {
                 new ClassInternalNameHandler(),
                 new ClassDescriptorHandler(),
                 new ClassNameHandler(),
-                new ResourceNameHandler()
+                new ResourceNameHandler(),
+                new ProcessTypeConstantHandler()
             )
             .map(this::registerCloseableIfPossible)
             .map(Implementations::wrapWithCacheIfPossible)

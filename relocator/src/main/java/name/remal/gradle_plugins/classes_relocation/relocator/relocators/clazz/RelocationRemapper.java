@@ -6,8 +6,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
-import name.remal.gradle_plugins.classes_relocation.relocator.relocators.meta_inf_services.RelocateMetaInfServices;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant.ProcessStringConstant;
+import name.remal.gradle_plugins.classes_relocation.relocator.relocators.type_constant.ProcessTypeConstant;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
 
@@ -35,24 +35,14 @@ class RelocationRemapper extends Remapper {
     public Object mapValue(Object value) {
         if (value instanceof String) {
             val string = (String) value;
-            return mappedStrings.computeIfAbsent(string, str ->
-                context.execute(
-                    new ProcessStringConstant(classResource, classInternalName, str),
-                    str
-                )
+            value = mappedStrings.computeIfAbsent(string, str ->
+                context.execute(new ProcessStringConstant(classResource, classInternalName, str), str)
             );
         }
 
         if (value instanceof Type) {
             val type = (Type) value;
-            if (type.getSort() == Type.OBJECT) {
-                val internalName = type.getInternalName();
-                if (context.isRelocationClassInternalName(internalName)
-                    && !internalName.equals("org/codehaus/groovy/runtime/ExtensionModule")
-                ) {
-                    context.queue(new RelocateMetaInfServices(internalName));
-                }
-            }
+            value = context.execute(new ProcessTypeConstant(type), type);
         }
 
         return super.mapValue(value);
