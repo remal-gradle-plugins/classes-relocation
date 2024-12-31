@@ -6,7 +6,7 @@ import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.workers.WorkParameters;
 
-interface RelocateJarActionParams extends WorkParameters {
+interface RelocateJarWorkActionParams extends WorkParameters {
 
     RegularFileProperty getJarFile();
 

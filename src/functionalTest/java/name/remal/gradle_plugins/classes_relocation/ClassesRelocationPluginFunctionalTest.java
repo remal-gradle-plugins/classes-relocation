@@ -216,6 +216,86 @@ class ClassesRelocationPluginFunctionalTest {
     }
 
     @Test
+    void sourceSetOutputDependencyInAnotherProject() {
+        addLibraryToDependencies(project.getBuildFile(), "guava", "classesRelocation");
+
+        project.writeTextFile("src/main/java/pkg/Logic.java", join("\n", new String[]{
+            "package pkg;",
+            "",
+            "import com.google.common.collect.ImmutableList;",
+            "import java.util.List;",
+            "",
+            "public class Logic {",
+            "",
+            "    public static List<String> execute() {",
+            "        return ImmutableList.of(\"a\", \"b\", \"c\");",
+            "    }",
+            "",
+            "}",
+        }));
+
+        project.newChildProject("executor", child -> {
+            child.getBuildFile().applyPlugin("java");
+
+            child.getBuildFile().append("evaluationDependsOn(':')");
+            child.getBuildFile().appendBlock("dependencies", dependencies -> {
+                dependencies.append("implementation files(project(':').sourceSets.main.output)");
+            });
+
+            child.writeTextFile("src/main/java/pkg/child/LogicExecutor.java", join("\n", new String[]{
+                "package pkg.child;",
+                "",
+                "import java.util.List;",
+                "import pkg.Logic;",
+                "",
+                "public class LogicExecutor {",
+                "",
+                "    public static List<String> execute() {",
+                "        return Logic.execute();",
+                "    }",
+                "",
+                "}",
+            }));
+
+            addLibraryToDependencies(child.getBuildFile(), "junit-jupiter-api", "testImplementation");
+            addLibraryToDependencies(child.getBuildFile(), "junit-jupiter-engine", "testRuntimeOnly");
+            addLibraryToDependencies(child.getBuildFile(), "junit-platform-launcher", "testRuntimeOnly");
+
+            child.getBuildFile().appendBlock("tasks.withType(Test).configureEach", task -> {
+                task.append("useJUnitPlatform()");
+                task.append("enableAssertions = true");
+            });
+
+            child.writeTextFile("src/test/java/pkg/child/LogicExecutorTest.java", join("\n", new String[]{
+                "package pkg.child;",
+                "",
+                "import static org.junit.jupiter.api.Assertions.*;",
+                "import static java.util.Arrays.*;",
+                "",
+                "import org.junit.jupiter.api.Test;",
+                "",
+                "public class LogicExecutorTest {",
+                "",
+                "    @Test",
+                "    void test() {",
+                "        assertThrows(ClassNotFoundException.class, () ->",
+                "            // this class should NOT be available here",
+                "            Class.forName(\"com.google.common.collect.ImmutableList\")",
+                "        );",
+                "",
+                "        assertEquals(asList(\"a\", \"b\", \"c\"), LogicExecutor.execute());",
+                "    }",
+                "",
+                "}",
+            }));
+        });
+
+        project.getBuildFile().registerDefaultTask("test");
+
+        project.assertBuildSuccessfully();
+    }
+
+    @Test
     void testSourceSets() throws Throwable {
         addLibraryToDependencies(project.getBuildFile(), "guava", "classesRelocation");
 

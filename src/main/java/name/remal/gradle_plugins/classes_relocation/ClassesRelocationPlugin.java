@@ -7,19 +7,17 @@ import static name.remal.gradle_plugins.classes_relocation.TaskClasspathConfigur
 import static name.remal.gradle_plugins.toolkit.AttributeContainerUtils.javaApiLibrary;
 import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.getModuleVersionIdentifiersForFilesIn;
 import static name.remal.gradle_plugins.toolkit.GradleManagedObjectsUtils.copyManagedProperties;
+import static name.remal.gradle_plugins.toolkit.JavaLauncherUtils.getJavaLauncherProviderFor;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.doNotInline;
 import static org.gradle.api.artifacts.Configuration.State.UNRESOLVED;
 import static org.gradle.api.attributes.LibraryElements.JAR;
 import static org.gradle.api.attributes.LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE;
-import static org.gradle.api.plugins.BasePlugin.ASSEMBLE_TASK_NAME;
-import static org.gradle.api.plugins.BasePlugin.BUILD_GROUP;
 import static org.gradle.api.plugins.JavaPlugin.COMPILE_CLASSPATH_CONFIGURATION_NAME;
 import static org.gradle.api.plugins.JavaPlugin.JAR_TASK_NAME;
 import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 import javax.inject.Inject;
 import lombok.CustomLog;
 import lombok.val;
@@ -49,8 +47,6 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
     public static final String CLASSES_RELOCATION_CONFIGURATION_NAME = doNotInline("classesRelocation");
     public static final String CLASSES_RELOCATION_CLASSPATH_CONFIGURATION_NAME =
         doNotInline("classesRelocationClasspath");
-
-    public static final String RELOCATE_JAR_TASK_NAME = doNotInline("relocateJar");
 
     @Override
     @SuppressWarnings("Slf4jFormatShouldBeConst")
@@ -110,54 +106,15 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         );
 
 
-        configureTaskDefaults(extension, confProvider);
-
-
         project.getPluginManager().withPlugin("java", __ -> {
-            configureJavaProject(project, depsConfProvider, confProvider);
-        });
-    }
-
-
-    private void configureTaskDefaults(
-        ClassesRelocationExtension extension,
-        NamedDomainObjectProvider<Configuration> relocationConfProvider
-    ) {
-        getTasks().withType(RelocateJar.class).configureEach(task -> {
-            copyManagedProperties(ClassesRelocationSettings.class, extension, task);
-
-            task.getRelocationClasspath().from(relocationConfProvider);
-            task.getModuleIdentifiers().putAll(retrieveModuleIdentifiers(relocationConfProvider));
-        });
-    }
-
-    private Provider<Map<String, String>> retrieveModuleIdentifiers(
-        Provider<? extends FileCollection> fileCollectionProvider
-    ) {
-        return getProviders().provider(() -> {
-            val fileCollection = fileCollectionProvider.getOrNull();
-            if (fileCollection == null) {
-                return emptyMap();
-            }
-
-            val moduleIdentifiers = new LinkedHashMap<String, String>();
-            getModuleVersionIdentifiersForFilesIn(fileCollection).forEach((file, id) -> {
-                moduleIdentifiers.putIfAbsent(
-                    file.toPath().toUri().toString(),
-                    format(
-                        "%s:%s",
-                        id.getGroup(),
-                        id.getName()
-                    )
-                );
-            });
-            return moduleIdentifiers;
+            configureJavaProject(project, extension, depsConfProvider, confProvider);
         });
     }
 
 
     private void configureJavaProject(
         Project project,
+        ClassesRelocationExtension extension,
         NamedDomainObjectProvider<Configuration> relocationDepsConfProvider,
         NamedDomainObjectProvider<Configuration> relocationConfProvider
     ) {
@@ -165,48 +122,30 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         extendCompileClasspathConfiguration(relocationDepsConfProvider);
         resolveConsistentlyWithCompileClasspath(relocationConfProvider);
 
-        val jarProvider = getTasks().named(JAR_TASK_NAME, Jar.class);
-        jarProvider.configure(jar -> {
-            jar.getArchiveClassifier().set("original");
-        });
-
         val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         val mainSourceSetProvider = sourceSets.named(MAIN_SOURCE_SET_NAME);
 
-        val relocateJarProvider = getTasks().register(RELOCATE_JAR_TASK_NAME, RelocateJar.class, task -> {
-            task.dependsOn(jarProvider);
+        val jarProvider = getTasks().named(JAR_TASK_NAME, Jar.class);
+        jarProvider.configure(jar -> {
+            val action = getObjects().newInstance(RelocateJarAction.class);
+            // TODO: registerTaskProperties(jar, action, RelocateJarAction.class.getSimpleName());
+            jar.getOutputs().cacheIf(RelocateJarAction.class.getName(), __ -> true);
 
-            task.getJarFile().set(jarProvider.flatMap(Jar::getArchiveFile));
-            task.getModuleIdentifiers().putAll(retrieveModuleIdentifiers(mainSourceSetProvider
+            copyManagedProperties(ClassesRelocationSettings.class, extension, action);
+
+            action.getRelocationClasspath().from(relocationConfProvider);
+            action.getModuleIdentifiers().putAll(retrieveModuleIdentifiers(mainSourceSetProvider
                 .map(SourceSet::getCompileClasspath)
             ));
-            task.getPreserveFileTimestamps().set(jarProvider.map(Jar::isPreserveFileTimestamps));
-            task.getMetadataCharset().set(jarProvider.map(Jar::getMetadataCharset));
 
-            task.getArchiveDestinationDirectory().set(jarProvider.flatMap(Jar::getDestinationDirectory));
-            task.getArchiveBaseName().set(jarProvider.flatMap(Jar::getArchiveBaseName));
-            task.getArchiveAppendix().set(jarProvider.flatMap(Jar::getArchiveAppendix));
-            task.getArchiveVersion().set(jarProvider.flatMap(Jar::getArchiveVersion));
-            task.getArchiveExtension().set(jarProvider.flatMap(Jar::getArchiveExtension));
+            action.getJavaLauncher().convention(getJavaLauncherProviderFor(project));
 
-            task.setDescription(format(
-                "Relocate classes from dependencies of `%s` configuration in a JAR file created by `%s` task.",
-                relocationConfProvider.getName(),
-                jarProvider.getName()
-            ));
-            task.setGroup(BUILD_GROUP);
+            jar.doLast(action);
         });
-
-        getTasks().named(ASSEMBLE_TASK_NAME, task ->
-            task.dependsOn(relocateJarProvider)
-        );
-
-
-        publishRelocatedJar(jarProvider, relocateJarProvider);
 
 
         TASK_CLASSPATH_CONFIGURERS.forEach(configurer ->
-            configurer.configureTasks(getTasks(), mainSourceSetProvider, relocateJarProvider)
+            configurer.configureTasks(project, mainSourceSetProvider, jarProvider)
         );
     }
 
@@ -253,36 +192,28 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         });
     }
 
-
-    private void publishRelocatedJar(
-        Provider<Jar> jarProvider,
-        Provider<RelocateJar> relocateJarProvider
+    private Provider<Map<String, String>> retrieveModuleIdentifiers(
+        Provider<? extends FileCollection> fileCollectionProvider
     ) {
-        getConfigurations()
-            .matching(Configuration::isCanBeConsumed)
-            .configureEach(conf -> publishRelocatedJar(conf, jarProvider, relocateJarProvider));
-    }
+        return getProviders().provider(() -> {
+            val fileCollection = fileCollectionProvider.getOrNull();
+            if (fileCollection == null) {
+                return emptyMap();
+            }
 
-    private void publishRelocatedJar(
-        Configuration conf,
-        Provider<Jar> jarProvider,
-        Provider<RelocateJar> relocateJarProvider
-    ) {
-        val hasJar = conf.getArtifacts().removeIf(artifact ->
-            Objects.equals(
-                artifact.getFile(),
-                jarProvider.get().getArchiveFile().get().getAsFile()
-            )
-        );
-        if (!hasJar) {
-            return;
-        }
-
-        getArtifacts().add(
-            conf.getName(),
-            relocateJarProvider.flatMap(RelocateJar::getTargetJarFile),
-            it -> it.builtBy(relocateJarProvider)
-        );
+            val moduleIdentifiers = new LinkedHashMap<String, String>();
+            getModuleVersionIdentifiersForFilesIn(fileCollection).forEach((file, id) -> {
+                moduleIdentifiers.putIfAbsent(
+                    file.toPath().toUri().toString(),
+                    format(
+                        "%s:%s",
+                        id.getGroup(),
+                        id.getName()
+                    )
+                );
+            });
+            return moduleIdentifiers;
+        });
     }
 
 

@@ -1,18 +1,20 @@
 package name.remal.gradle_plugins.classes_relocation;
 
+import static java.util.Collections.emptyList;
 import static name.remal.gradle_plugins.toolkit.TaskUtils.doBeforeTaskExecution;
 
 import com.google.errorprone.annotations.ForOverride;
 import javax.annotation.Nullable;
 import lombok.val;
 import org.gradle.api.NamedDomainObjectProvider;
+import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskProvider;
+import org.gradle.jvm.tasks.Jar;
 
 abstract class TaskClasspathConfigurer<T extends Task> {
 
@@ -20,10 +22,14 @@ abstract class TaskClasspathConfigurer<T extends Task> {
 
 
     @ForOverride
+    @Nullable
+    protected abstract FileCollection getClasspath(T task);
+
+    @ForOverride
     protected abstract void configureTask(
         T task,
         NamedDomainObjectProvider<SourceSet> sourceSetProvider,
-        TaskProvider<RelocateJar> relocateJarProvider
+        TaskProvider<Jar> jarProvider
     );
 
 
@@ -42,19 +48,49 @@ abstract class TaskClasspathConfigurer<T extends Task> {
 
 
     public void configureTasks(
-        TaskContainer tasks,
+        Project project,
         NamedDomainObjectProvider<SourceSet> sourceSetProvider,
-        TaskProvider<RelocateJar> relocateJarProvider
+        TaskProvider<Jar> jarProvider
     ) {
-        tasks
-            .withType(taskType)
-            .matching(taskPredicate)
-            .configureEach(it -> {
-                it.dependsOn(relocateJarProvider);
-                doBeforeTaskExecution(it, task ->
-                    configureTask(task, sourceSetProvider, relocateJarProvider)
-                );
-            });
+        project.getRootProject().allprojects(currentProject -> {
+            currentProject.getTasks()
+                .withType(taskType)
+                .matching(taskPredicate)
+                .configureEach(task -> {
+                    task.dependsOn(task.getProject().getProviders().provider(() ->
+                        calculateDependsOn(task, sourceSetProvider, jarProvider)
+                    ));
+
+                    doBeforeTaskExecution(task, it ->
+                        configureTask(it, sourceSetProvider, jarProvider)
+                    );
+                });
+        });
+    }
+
+    private Object calculateDependsOn(
+        T task,
+        NamedDomainObjectProvider<SourceSet> sourceSetProvider,
+        TaskProvider<Jar> jarProvider
+    ) {
+        val classpath = getClasspath(task);
+        if (classpath == null) {
+            return emptyList();
+        }
+
+        val classpathFiles = classpath.getFiles();
+        if (classpathFiles.isEmpty()) {
+            return emptyList();
+        }
+
+        val sourceSetOutputFiles = sourceSetProvider.get().getOutput().getFiles();
+        val hasSourceSetOutputFiles = classpathFiles.stream()
+            .anyMatch(sourceSetOutputFiles::contains);
+        if (hasSourceSetOutputFiles) {
+            return jarProvider;
+        }
+
+        return emptyList();
     }
 
     @Nullable
@@ -62,7 +98,7 @@ abstract class TaskClasspathConfigurer<T extends Task> {
         Task task,
         @Nullable FileCollection classpath,
         NamedDomainObjectProvider<SourceSet> sourceSetProvider,
-        TaskProvider<RelocateJar> relocateJarProvider
+        TaskProvider<Jar> jarProvider
     ) {
         if (classpath == null) {
             return null;
@@ -79,8 +115,9 @@ abstract class TaskClasspathConfigurer<T extends Task> {
         for (val file : classpathFiles) {
             if (sourceSetOutputFiles.contains(file)) {
                 if (!foundSourceSetOutput) {
-                    modifiedClasspath.from(relocateJarProvider.flatMap(RelocateJar::getTargetJarFile))
-                        .builtBy(relocateJarProvider);
+                    modifiedClasspath
+                        .builtBy(jarProvider)
+                        .from(jarProvider.flatMap(Jar::getArchiveFile));
                     foundSourceSetOutput = true;
                 }
             } else {
