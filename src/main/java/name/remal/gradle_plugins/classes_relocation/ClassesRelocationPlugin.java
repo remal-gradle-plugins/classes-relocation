@@ -9,6 +9,7 @@ import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.getModuleVer
 import static name.remal.gradle_plugins.toolkit.GradleManagedObjectsUtils.copyManagedProperties;
 import static name.remal.gradle_plugins.toolkit.JavaLauncherUtils.getJavaLauncherProviderFor;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.doNotInline;
+import static name.remal.gradle_plugins.toolkit.TaskPropertiesUtils.registerTaskProperties;
 import static org.gradle.api.artifacts.Configuration.State.UNRESOLVED;
 import static org.gradle.api.attributes.LibraryElements.JAR;
 import static org.gradle.api.attributes.LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE;
@@ -128,8 +129,8 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         val jarProvider = getTasks().named(JAR_TASK_NAME, Jar.class);
         jarProvider.configure(jar -> {
             val action = getObjects().newInstance(RelocateJarAction.class);
-            // TODO: registerTaskProperties(jar, action, RelocateJarAction.class.getSimpleName());
             jar.getOutputs().cacheIf(RelocateJarAction.class.getName(), __ -> true);
+            registerTaskProperties(jar, action, RelocateJarAction.class.getSimpleName());
 
             copyManagedProperties(ClassesRelocationSettings.class, extension, action);
 

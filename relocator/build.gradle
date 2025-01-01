@@ -4,7 +4,7 @@ apply plugin: 'name.remal.build-time-constants'
 dependencies {
     optional 'name.remal.gradle-api:gradle-api'
 
-    relocateClasses 'org.apache.commons:commons-compress:1.27.1'
+    classesRelocation 'org.apache.commons:commons-compress:1.27.1'
 
     compileOnly 'org.apiguardian:apiguardian-api:1.1.2'
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.6'

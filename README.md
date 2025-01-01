@@ -9,26 +9,31 @@
 Usage:
 
 <!--plugin-usage:name.remal.classes-relocation-->
+
 ```groovy
 plugins {
-    id 'name.remal.classes-relocation' version '2.0.0-rc-1'
+  id 'name.remal.classes-relocation' version '2.0.0-rc-1'
 }
 ```
+
 <!--/plugin-usage-->
 
 &nbsp;
 
-This Gradle plugin facilitates the creation of a fat JAR by bundling your Java application with specific dependencies. It relocates these dependencies to a new namespace within the JAR to prevent exposure to and conflicts with downstream projects.
+This Gradle plugin facilitates the creation of a fat JAR by bundling your Java application with specific dependencies.
+It relocates these dependencies to a new namespace within the JAR to prevent exposure to and conflicts with downstream projects.
 
-This plugin is ideal for scenarios where your code relies on specific dependencies, but you need to ensure that these dependencies do not interfere with those in projects that consume your JAR.
+This plugin is ideal for scenarios where your code relies on specific dependencies,
+but you need to ensure that these dependencies do not interfere with those in projects that consume your JAR.
 
-By using this plugin, you can better manage dependency versions, leading to more reliable and predictable behavior of your Java applications across different environments.
+By using this plugin, you can better manage dependency versions,
+leading to more reliable and predictable behavior of your Java applications across different environments.
 
 Configuration:
 
 ```groovy
 classesRelocation {
-  basePackageForRelocatedClasses = 'you.base.project.relocated' / specify the base projects for relocated dependencies
+  basePackageForRelocatedClasses = 'you.base.project.relocated' // specify the base projects for relocated dependencies
 }
 
 dependencies {
@@ -40,21 +45,21 @@ dependencies {
 
 ## How the plugin works
 
-The plugin creates the `relocateJar` task that takes the JAR file created by the `jar` file as input and produces another JAR file relocating dependencies from the `classesRelocation` configuration.
+This plugin adds a new action to the [`jar`](https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Jar.html) task.
+This action recreates the JAR file relocating dependencies from the `classesRelocation` configuration.
 
 Only directly used classes will be relocated.
 
-The original JAR file gets the classifier `original`. The relocated JAR file doesn't have a classifier by default.
-
-The relocated JAR file will be used by
+The result JAR file will be used by
 [`Test`](https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/testing/Test.html),
 [`PluginUnderTestMetadata`](https://docs.gradle.org/current/javadoc/org/gradle/plugin/devel/tasks/PluginUnderTestMetadata.html),
 [`ValidatePlugins`](https://docs.gradle.org/current/javadoc/org/gradle/plugin/devel/tasks/ValidatePlugins.html),
 [`JacocoReportBase`](https://docs.gradle.org/current/javadoc/org/gradle/testing/jacoco/tasks/JacocoReportBase.html) tasks (instead of `build/classes/main/*` directories).
 
-Other projects in Multi-Project builds will consume the relocated JAR file if the current project is declared as a dependency.
+Other projects in Multi-Project builds will consume the result JAR file
+if the current project is declared as a dependency (the same way it happens by default).
 
-The relocated JAR file will be published to Maven repositories.
+The result JAR file will be published to Maven repositories (the same way it happens by default).
 
 # Alternatives
 
@@ -80,7 +85,8 @@ The classic Gradle plugin for fat-JAR creation.
 
 ## Version 1.* to 2.*
 
-The `name.remal.gradle_plugins.classes_relocation.ClassesRelocationExtension` project extension should be used instead of `name.remal.gradle_plugins.plugins.classes_relocation.ClassesRelocationExtension`.
+The `name.remal.gradle_plugins.classes_relocation.ClassesRelocationExtension` project extension should be used
+instead of `name.remal.gradle_plugins.plugins.classes_relocation.ClassesRelocationExtension`.
 
 The `relocateClasses` configuration is still supported but was deprecated. Use `classesRelocation` instead.
 

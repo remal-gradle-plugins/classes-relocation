@@ -7,6 +7,7 @@ import static name.remal.gradle_plugins.toolkit.testkit.TaskValidations.executeO
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.api.plugins.JavaPlugin.JAR_TASK_NAME;
 import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
 import java.util.ArrayList;
 import lombok.CustomLog;
@@ -33,11 +34,18 @@ class ClassesRelocationPluginTest {
     }
 
     @Test
+    void jarTaskProperties() {
+        val jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
+        val jarInputs = jar.getInputs();
+        assertDoesNotThrow(jarInputs::getProperties);
+    }
+
+    @Test
     void testClasspath() {
         val testTasks = new ArrayList<>(project.getTasks().withType(org.gradle.api.tasks.testing.Test.class));
         val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         val mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
-        val relocateJar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
+        val jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
         assertThat(testTasks).as("testTasks")
             .isNotEmpty()
             .allSatisfy(testTask -> {
@@ -45,7 +53,7 @@ class ClassesRelocationPluginTest {
                 assertThat(testTask.getClasspath().getFiles())
                     .as("%s: %s", testTask, "getClasspath")
                     .doesNotContainAnyElementsOf(mainSourceSet.getOutput().getFiles())
-                    .contains(relocateJar.getArchiveFile().get().getAsFile());
+                    .contains(jar.getArchiveFile().get().getAsFile());
             });
     }
 
@@ -56,7 +64,7 @@ class ClassesRelocationPluginTest {
         val metadataTasks = new ArrayList<>(project.getTasks().withType(PluginUnderTestMetadata.class));
         val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         val mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
-        val relocateJar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
+        val jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
         assertThat(metadataTasks).as("metadataTasks")
             .isNotEmpty()
             .allSatisfy(metadataTask -> {
@@ -64,7 +72,7 @@ class ClassesRelocationPluginTest {
                 assertThat(metadataTask.getPluginClasspath().getFiles())
                     .as("%s: %s", metadataTask, "pluginClasspath")
                     .doesNotContainAnyElementsOf(mainSourceSet.getOutput().getFiles())
-                    .contains(relocateJar.getArchiveFile().get().getAsFile());
+                    .contains(jar.getArchiveFile().get().getAsFile());
             });
     }
 

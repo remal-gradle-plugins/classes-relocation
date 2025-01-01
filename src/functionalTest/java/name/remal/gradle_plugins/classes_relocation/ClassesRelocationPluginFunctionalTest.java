@@ -137,6 +137,61 @@ class ClassesRelocationPluginFunctionalTest {
     }
 
     @Test
+    void withoutRelocation() throws Throwable {
+        project.writeTextFile("src/main/java/pkg/Logic.java", join("\n", new String[]{
+            "package pkg;",
+            "",
+            "import static java.util.Arrays.*;",
+            "",
+            "import java.util.List;",
+            "",
+            "public class Logic {",
+            "",
+            "    public static List<String> execute() {",
+            "        return asList(\"a\", \"b\", \"c\");",
+            "    }",
+            "",
+            "}",
+        }));
+
+        addLibraryToDependencies(project.getBuildFile(), "junit-jupiter-api", "testImplementation");
+        addLibraryToDependencies(project.getBuildFile(), "junit-jupiter-engine", "testRuntimeOnly");
+        addLibraryToDependencies(project.getBuildFile(), "junit-platform-launcher", "testRuntimeOnly");
+
+        project.getBuildFile().appendBlock("tasks.withType(Test).configureEach", task -> {
+            task.append("useJUnitPlatform()");
+            task.append("enableAssertions = true");
+        });
+
+        project.writeTextFile("src/test/java/pkg/LogicTest.java", join("\n", new String[]{
+            "package pkg;",
+            "",
+            "import static org.junit.jupiter.api.Assertions.*;",
+            "import static java.util.Arrays.*;",
+            "",
+            "import org.junit.jupiter.api.Test;",
+            "",
+            "public class LogicTest {",
+            "",
+            "    @Test",
+            "    void test() {",
+            "        assertThrows(ClassNotFoundException.class, () ->",
+            "            // this class should NOT be available here",
+            "            Class.forName(\"com.google.common.collect.ImmutableList\")",
+            "        );",
+            "",
+            "        assertEquals(asList(\"a\", \"b\", \"c\"), Logic.execute());",
+            "    }",
+            "",
+            "}",
+        }));
+
+        project.getBuildFile().registerDefaultTask("test");
+
+        project.assertBuildSuccessfully();
+    }
+
+    @Test
     void dependencyInAnotherProject() {
         addLibraryToDependencies(project.getBuildFile(), "guava", "classesRelocation");
 
