@@ -7,6 +7,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.guava_internal_cla
 import name.remal.gradle_plugins.classes_relocation.relocator.jackson_guava.JacksonGuavaTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.jackson_java_time.JacksonJavaTimeTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.joda_time_zone_info.JodaTimeZoneInfoTestLogic;
+import name.remal.gradle_plugins.classes_relocation.relocator.saxon_catalogs.SaxonCatalogsTestLogic;
 import org.junit.jupiter.api.Test;
 
 class ClassesRelocatorTest extends ClassesRelocatorTestBase {
@@ -48,6 +49,11 @@ class ClassesRelocatorTest extends ClassesRelocatorTestBase {
     @Test
     void resourcesRelocatedBasedOnPathPrefix() {
         assertTestLogic(JodaTimeZoneInfoTestLogic.class, "joda-time");
+    }
+
+    @Test
+    void xmlFiles() {
+        assertTestLogic(SaxonCatalogsTestLogic.class, "saxon");
     }
 
 }

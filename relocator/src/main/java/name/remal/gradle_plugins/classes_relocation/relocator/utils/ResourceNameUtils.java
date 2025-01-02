@@ -33,6 +33,21 @@ public abstract class ResourceNameUtils {
     }
 
 
+    public static String resourceNameWithFileNamePrefix(Resource resource, @Nullable String fileNamePrefix) {
+        return resourceNameWithFileNamePrefix(resource.getName(), fileNamePrefix);
+    }
+
+    public static String resourceNameWithFileNamePrefix(String resourceName, @Nullable String fileNamePrefix) {
+        if (isEmpty(fileNamePrefix)) {
+            return resourceName;
+        }
+
+        val resourceNamePrefix = getNamePrefixOfResourceName(resourceName);
+        val resourceFileName = resourceName.substring(resourceNamePrefix.length());
+        return resourceNamePrefix + fileNamePrefix + resourceFileName;
+    }
+
+
     public static String resourceNameWithRelocationSource(Resource resource, @Nullable String relocationSource) {
         return resourceNameWithRelocationSource(resource.getName(), relocationSource);
     }
@@ -42,9 +57,7 @@ public abstract class ResourceNameUtils {
             return resourceName;
         }
 
-        val resourceNamePrefix = getNamePrefixOfResourceName(resourceName);
-        val resourceFileName = resourceName.substring(resourceNamePrefix.length());
-        return resourceNamePrefix + escapeRelocationSource(relocationSource) + '-' + resourceFileName;
+        return resourceNameWithFileNamePrefix(resourceName, escapeRelocationSource(relocationSource) + "-");
     }
 
     private static final char[] FORBIDDEN_RESOURCE_NAME_CHARS = "\\:<>\"'|?*{}()&[]^".toCharArray();

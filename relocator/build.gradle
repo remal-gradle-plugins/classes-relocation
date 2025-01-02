@@ -1,3 +1,5 @@
+import static java.util.stream.Collectors.toList
+
 apply plugin: 'java-library'
 apply plugin: 'name.remal.build-time-constants'
 
@@ -30,6 +32,7 @@ dependencies {
     componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
     componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     componentTestImplementation 'joda-time:joda-time:2.13.0'
+    componentTestImplementation 'net.sf.saxon:Saxon-HE:12.5'
 }
 
 Map<String, String> componentTestRelocationNotations = [
@@ -38,6 +41,7 @@ Map<String, String> componentTestRelocationNotations = [
     'jackson-guava': 'com.fasterxml.jackson.datatype:jackson-datatype-guava',
     'jackson-jsr310': 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310',
     'joda-time': 'joda-time:joda-time',
+    'saxon': 'net.sf.saxon:Saxon-HE',
 
     'junit-jupiter-api': 'org.junit.jupiter:junit-jupiter-api',
     'assertj-core': 'org.assertj:assertj-core',
@@ -64,19 +68,26 @@ tasks.named(componentTestSourceSet.name, Test) {
         systemProperty("test-classes-jar", componentTestJar.get().archiveFile.get().asFile.absolutePath)
 
         componentTestRelocationNotations.forEach { library, notation ->
-            Closure<ResolvedDependency> getResolvedDependencyFrom = { String confName ->
+            Closure<List<ResolvedDependency>> getResolvedDependenciesFrom = { String confName ->
                 Configuration conf = configurations[confName]
                 return conf.resolvedConfiguration
-                    .getFirstLevelModuleDependencies()
-                    .find { "${it.moduleGroup}:${it.moduleName}" == notation }
+                    .firstLevelModuleDependencies
+                    .findAll { "${it.moduleGroup}:${it.moduleName}" == notation }
+                    .toList()
             }
 
-            ResolvedDependency resolvedDep = getResolvedDependencyFrom(componentTestSourceSet.compileClasspathConfigurationName)
-                ?: getResolvedDependencyFrom(componentTestSourceSet.runtimeClasspathConfigurationName)
-            if (resolvedDep == null) {
-                throw new GradleException("Resolved dependency with notation `$notation` can't be found in $conf")
+            List<ResolvedDependency> resolvedDeps = getResolvedDependenciesFrom(componentTestSourceSet.compileClasspathConfigurationName)
+            if (resolvedDeps.isEmpty()) {
+                resolvedDeps = getResolvedDependenciesFrom(componentTestSourceSet.runtimeClasspathConfigurationName)
             }
-            Collection<File> files = resolvedDep.allModuleArtifacts.collect { it.file }
+            if (resolvedDeps.isEmpty()) {
+                throw new GradleException("Resolved dependencies with notation `$notation` can't be found in `${componentTestSourceSet.name}` dependencies")
+            }
+            Collection<File> files = resolvedDeps.stream()
+                .flatMap { dep -> dep.allModuleArtifacts.stream() }
+                .map { artifact -> artifact.file }
+                .distinct()
+                .collect(toList())
             systemProperty("$library-classpath", files.join(File.pathSeparator))
         }
 

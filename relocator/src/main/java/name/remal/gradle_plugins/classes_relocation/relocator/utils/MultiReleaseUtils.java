@@ -19,7 +19,7 @@ public abstract class MultiReleaseUtils {
 
 
     private static final Pattern MULTI_RELEASE_RESOURCE_NAME = Pattern.compile(
-        "^META-INF/versions/(\\d+)/(.+)$"
+        "^META-INF/versions/([1-9]\\d*)/(.+)$"
     );
 
     public static boolean isMultiRelease(String resourceName) {

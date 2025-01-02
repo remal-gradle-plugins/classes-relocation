@@ -1,3 +1,5 @@
+import static java.util.stream.Collectors.toList
+
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 buildscript {
@@ -79,19 +81,26 @@ tasks.named(functionalTestSourceSet.name, Test) {
 
     onlyIf {
         functionalTestRelocationNotations.forEach { library, notation ->
-            Closure<ResolvedDependency> getResolvedDependencyFrom = { String confName ->
+            Closure<List<ResolvedDependency>> getResolvedDependenciesFrom = { String confName ->
                 Configuration conf = configurations[confName]
                 return conf.resolvedConfiguration
-                    .getFirstLevelModuleDependencies()
-                    .find { "${it.moduleGroup}:${it.moduleName}" == notation }
+                    .firstLevelModuleDependencies
+                    .findAll { "${it.moduleGroup}:${it.moduleName}" == notation }
+                    .toList()
             }
 
-            ResolvedDependency resolvedDep = getResolvedDependencyFrom(functionalTestSourceSet.compileClasspathConfigurationName)
-                ?: getResolvedDependencyFrom(functionalTestSourceSet.runtimeClasspathConfigurationName)
-            if (resolvedDep == null) {
-                throw new GradleException("Resolved dependency with notation `$notation` can't be found in $conf")
+            List<ResolvedDependency> resolvedDeps = getResolvedDependenciesFrom(functionalTestSourceSet.compileClasspathConfigurationName)
+            if (resolvedDeps.isEmpty()) {
+                resolvedDeps = getResolvedDependenciesFrom(functionalTestSourceSet.runtimeClasspathConfigurationName)
             }
-            Collection<File> files = resolvedDep.allModuleArtifacts.collect { it.file }
+            if (resolvedDeps.isEmpty()) {
+                throw new GradleException("Resolved dependencies with notation `$notation` can't be found in `${functionalTestSourceSet.name}` dependencies")
+            }
+            Collection<File> files = resolvedDeps.stream()
+                .flatMap { dep -> dep.allModuleArtifacts.stream() }
+                .map { artifact -> artifact.file }
+                .distinct()
+                .collect(toList())
             systemProperty("$library-classpath", files.join(File.pathSeparator))
         }
 

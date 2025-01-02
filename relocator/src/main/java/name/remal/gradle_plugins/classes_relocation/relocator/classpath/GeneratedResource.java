@@ -1,120 +1,59 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 
-import static java.lang.System.currentTimeMillis;
-import static java.util.stream.Collectors.toList;
-
 import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.Collection;
 import java.util.List;
+import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.val;
+import name.remal.gradle_plugins.toolkit.LazyValue;
 import org.jetbrains.annotations.Unmodifiable;
 
-public class GeneratedResource extends ResourceBase {
+public final class GeneratedResource extends ResourceBase {
 
-    public static GeneratedResource newGeneratedResource(
-        String name,
-        byte[] content
-    ) {
-        return newGeneratedResource(name, null, null, content);
+    public static GeneratedResourceBuilder builder() {
+        return new GeneratedResourceBuilder();
     }
 
-    public static GeneratedResource newGeneratedResource(
-        String name,
-        @Nullable Integer multiReleaseVersion,
-        @Nullable Long lastModifiedMillis,
-        byte[] content
-    ) {
-        return new GeneratedResource(
-            name,
-            multiReleaseVersion,
-            lastModifiedMillis,
-            content,
-            null
-        );
+    public static GeneratedResource newGeneratedResource(Consumer<GeneratedResourceBuilder> configurer) {
+        val builder = builder();
+        configurer.accept(builder);
+        return builder.build();
     }
 
-    public static GeneratedResource newGeneratedResource(
-        Collection<? extends Resource> sourceResources,
-        byte[] content
-    ) {
-        val resourceKey = getUniqueResourceKey(sourceResources);
-        return new GeneratedResource(
-            resourceKey.getName(),
-            resourceKey.getMultiReleaseVersion(),
-            getLastModifiedMillis(sourceResources),
-            content,
-            sourceResources
-        );
-    }
-
-    public static GeneratedResource newGeneratedResource(
-        Collection<? extends Resource> sourceResources,
-        String updatedName,
-        byte[] content
-    ) {
-        val resourceKey = getUniqueResourceKey(sourceResources);
-        return new GeneratedResource(
-            updatedName,
-            resourceKey.getMultiReleaseVersion(),
-            getLastModifiedMillis(sourceResources),
-            content,
-            sourceResources
-        );
-    }
-
-    private static ResourceKey getUniqueResourceKey(Collection<? extends Resource> sourceResources) {
-        val resourceKeys = sourceResources.stream()
-            .map(ResourceKey::resourceKeyFor)
-            .distinct()
-            .collect(toList());
-        if (resourceKeys.isEmpty()) {
-            throw new IllegalArgumentException("Source resources must not be empty");
-        } else if (resourceKeys.size() > 1) {
-            throw new IllegalArgumentException("Source resources have different resource keys: " + resourceKeys);
-        }
-        return resourceKeys.get(0);
-    }
-
-    @Nullable
-    private static Long getLastModifiedMillis(Collection<? extends Resource> sourceResources) {
-        return sourceResources.stream()
-            .map(Resource::getLastModifiedMillis)
-            .max(Long::compareTo)
-            .orElse(null);
-    }
-
-
-    @Getter
-    private final long lastModifiedMillis;
-
-    private final byte[] content;
 
     @Getter
     @Unmodifiable
     private final List<Resource> sourceResources;
 
-    protected GeneratedResource(
+    @Getter
+    private final long lastModifiedMillis;
+
+    private final LazyValue<byte[]> content;
+
+    GeneratedResource(
+        ImmutableList<Resource> sourceResources,
         String name,
         @Nullable Integer multiReleaseVersion,
-        @Nullable Long lastModifiedMillis,
-        byte[] content,
-        @Nullable Collection<? extends Resource> sourceResources
+        long lastModifiedMillis,
+        LazyValue<byte[]> content
     ) {
         super(name, multiReleaseVersion);
-        this.lastModifiedMillis = lastModifiedMillis != null && lastModifiedMillis >= 0
-            ? lastModifiedMillis
-            : currentTimeMillis();
-        this.content = content.clone();
-        this.sourceResources = sourceResources != null ? ImmutableList.copyOf(sourceResources) : ImmutableList.of();
+        this.sourceResources = sourceResources;
+        this.lastModifiedMillis = lastModifiedMillis;
+        this.content = content;
     }
 
     @Override
     public InputStream open() {
-        return new ByteArrayInputStream(content);
+        return new ByteArrayInputStream(content.get());
+    }
+
+    @Override
+    public byte[] readAllBytes() {
+        return content.get().clone();
     }
 
     @Nullable

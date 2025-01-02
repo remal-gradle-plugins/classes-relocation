@@ -36,13 +36,13 @@ class RelocationRemapper extends Remapper {
         if (value instanceof String) {
             val string = (String) value;
             value = mappedStrings.computeIfAbsent(string, str ->
-                context.execute(new ProcessStringConstant(classResource, classInternalName, str), str)
+                context.execute(new ProcessStringConstant(str, classInternalName, classResource), str)
             );
         }
 
         if (value instanceof Type) {
             val type = (Type) value;
-            value = context.execute(new ProcessTypeConstant(type), type);
+            value = context.execute(new ProcessTypeConstant(type, classResource), type);
         }
 
         return super.mapValue(value);

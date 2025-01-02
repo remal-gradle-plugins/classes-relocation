@@ -207,6 +207,7 @@ public abstract class ClassesRelocatorTestBase {
 
         return Splitter.on(pathSeparator).splitToStream(classpathString)
             .filter(not(String::isEmpty))
+            .distinct()
             .map(Paths::get)
             .collect(toImmutableSet());
     }

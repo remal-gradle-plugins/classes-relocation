@@ -1,9 +1,11 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.relocators.type_constant;
 
+import static name.remal.gradle_plugins.classes_relocation.relocator.utils.AsmUtils.toClassName;
+
 import java.util.Optional;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
-import name.remal.gradle_plugins.classes_relocation.relocator.relocators.meta_inf_services.RelocateMetaInfServices;
+import name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource.RelocateResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
 import org.objectweb.asm.Type;
 
@@ -17,7 +19,10 @@ public class ProcessTypeConstantHandler implements ImmediateTaskHandler<Type, Pr
             if (context.isRelocationClassInternalName(internalName)
                 && !internalName.equals("org/codehaus/groovy/runtime/ExtensionModule")
             ) {
-                context.queue(new RelocateMetaInfServices(internalName));
+                context.executeOptional(new RelocateResource(
+                    "META-INF/services/" + toClassName(internalName),
+                    task.getClassResource().getClasspathElement()
+                ));
             }
         }
 

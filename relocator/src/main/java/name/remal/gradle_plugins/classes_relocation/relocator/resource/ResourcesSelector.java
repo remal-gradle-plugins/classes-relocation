@@ -7,13 +7,14 @@ import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocat
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ClasspathElement;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
-import org.jetbrains.annotations.Unmodifiable;
 
 public interface ResourcesSelector extends ClassesRelocatorOrderedComponent {
 
-    @Unmodifiable
-    Optional<List<Resource>> select(
+    Optional<Resource> select(
         String resourceName,
+        String originalResourceName,
+        @Nullable Integer multiReleaseVersion,
+        List<Resource> candidateResources,
         @Nullable ClasspathElement classpathElement,
         RelocationContext context
     ) throws Throwable;

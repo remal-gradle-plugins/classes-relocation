@@ -42,4 +42,9 @@ public abstract class ClassesRelocatorParams {
 
     protected final boolean relocateResources;
 
+
+    @Default
+    protected final ClassesRelocatorObjectFactory objectFactory =
+        ClassesRelocatorObjectFactoryDefault.DEFAULT_OBJECT_FACTORY;
+
 }

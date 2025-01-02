@@ -2,6 +2,7 @@ package name.remal.gradle_plugins.classes_relocation;
 
 import static com.google.common.collect.ImmutableMap.toImmutableMap;
 import static java.util.stream.Collectors.toList;
+import static name.remal.gradle_plugins.classes_relocation.GradleClassesRelocatorObjectFactoryHolder.GradleClassesRelocatorObjectFactory;
 import static name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocatorParams.DEFAULT_METADATA_CHARSET;
 import static name.remal.gradle_plugins.toolkit.UriUtils.parseUri;
 
@@ -41,6 +42,8 @@ abstract class RelocateJarWorkAction implements WorkAction<RelocateJarWorkAction
                     .getOrElse(DEFAULT_METADATA_CHARSET)
                 )
                 .preserveFileTimestamps(params.getPreserveFileTimestamps().getOrElse(true))
+
+                .objectFactory(getObjects().newInstance(GradleClassesRelocatorObjectFactory.class))
 
                 .build()
         ) {

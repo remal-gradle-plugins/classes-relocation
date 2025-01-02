@@ -3,10 +3,10 @@ package name.remal.gradle_plugins.classes_relocation.relocator.task;
 import static name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandlerResult.TASK_HANDLED;
 
 import java.util.LinkedHashSet;
+import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
-import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
@@ -23,31 +23,25 @@ public class TasksExecutor {
     private final Queue<QueuedTask> queuedTasks = new PriorityQueue<>();
 
 
-    public <RESULT> RESULT execute(ImmediateTask<RESULT> task) {
-        return executeImmediateTask(task, null);
-    }
-
-    public <RESULT> RESULT execute(ImmediateTask<RESULT> task, RESULT defaultResult) {
-        return executeImmediateTask(task, defaultResult);
-    }
-
     @SneakyThrows
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private <RESULT> RESULT executeImmediateTask(
-        ImmediateTask<RESULT> task,
-        @Nullable RESULT defaultResult
-    ) {
+    public <RESULT> Optional<RESULT> executeOptional(ImmediateTask<RESULT> task) {
         for (ImmediateTaskHandler handler : context.getRelocationComponents(ImmediateTaskHandler.class)) {
             if (handler.getSupportedTaskClass().isAssignableFrom(task.getClass())) {
                 val result = handler.handle(task, context);
                 if (result.isPresent()) {
-                    return (RESULT) result.get();
+                    return result;
                 }
             }
         }
 
-        if (defaultResult != null) {
-            return defaultResult;
+        return Optional.empty();
+    }
+
+    public <RESULT> RESULT execute(ImmediateTask<RESULT> task) {
+        val result = executeOptional(task);
+        if (result.isPresent()) {
+            return result.get();
         }
 
         throw new NotHandledTaskException(task);

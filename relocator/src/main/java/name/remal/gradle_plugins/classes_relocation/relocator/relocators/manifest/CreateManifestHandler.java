@@ -20,11 +20,11 @@ import name.remal.gradle_plugins.classes_relocation.relocator.context.Relocation
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandlerResult;
 
-public class ProcessManifestHandler implements QueuedTaskHandler<ProcessManifest> {
+public class CreateManifestHandler implements QueuedTaskHandler<CreateManifest> {
 
     @Override
     @SneakyThrows
-    public QueuedTaskHandlerResult handle(ProcessManifest task, RelocationContext context) {
+    public QueuedTaskHandlerResult handle(CreateManifest task, RelocationContext context) {
         val manifest = new Manifest();
         val mainAttrs = manifest.getMainAttributes();
 
@@ -44,7 +44,10 @@ public class ProcessManifestHandler implements QueuedTaskHandler<ProcessManifest
                 ));
             }
         } else {
-            manifestResource = newGeneratedResource(MANIFEST_NAME, new byte[0]);
+            manifestResource = newGeneratedResource(builder -> builder
+                .withName(MANIFEST_NAME)
+                .withEmptyContent()
+            );
         }
 
         val allEntryAttrs = manifest.getEntries().values();

@@ -4,6 +4,7 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.utils.AsmUt
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.isNotEmpty;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nullable;
 import lombok.val;
@@ -28,14 +29,16 @@ public interface RelocationContext extends TaskTransformContext {
         return toClassInternalName(getRelocatedClassNamePrefix());
     }
 
+    default String getRelocatedResourceNamePrefix() {
+        return getRelocatedClassInternalNamePrefix();
+    }
+
 
     Classpath getSourceClasspath();
 
     Classpath getRelocationClasspath();
 
-    default Classpath getSourceAndRelocationClasspath() {
-        return getSourceClasspath().plus(getRelocationClasspath());
-    }
+    Classpath getSourceAndRelocationClasspath();
 
     default boolean isRelocationClassName(String string) {
         return getRelocationClasspath().getClassNames().contains(string);
@@ -93,9 +96,22 @@ public interface RelocationContext extends TaskTransformContext {
     }
 
 
+    String getOriginalResourceName(String resourceName);
+
+    void registerOriginalResourceName(String resourceName, String originalResourceName);
+
+    default void registerOriginalResourceName(Resource resource, String originalResourceName) {
+        registerOriginalResourceName(resource.getName(), originalResourceName);
+    }
+
+
+    <RESULT> Optional<RESULT> executeOptional(ImmediateTask<RESULT> task);
+
     <RESULT> RESULT execute(ImmediateTask<RESULT> task);
 
-    <RESULT> RESULT execute(ImmediateTask<RESULT> task, RESULT defaultValue);
+    default <RESULT> RESULT execute(ImmediateTask<RESULT> task, RESULT defaultValue) {
+        return executeOptional(task).orElse(defaultValue);
+    }
 
     void queue(QueuedTask task);
 
