@@ -207,9 +207,10 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
                 moduleIdentifiers.putIfAbsent(
                     file.toPath().toUri().toString(),
                     format(
-                        "%s:%s",
+                        "%s:%s:%s",
                         id.getGroup(),
-                        id.getName()
+                        id.getName(),
+                        id.getVersion()
                     )
                 );
             });
