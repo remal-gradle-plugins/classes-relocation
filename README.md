@@ -59,6 +59,9 @@ if the current project is declared as a dependency (the same way it happens by d
 
 The result JAR file will be published to Maven repositories (the same way it happens by default).
 
+By default, the [`jar`](https://docs.gradle.org/current/dsl/org.gradle.api.tasks.bundling.Jar.html) task is not cacheable.
+This plugin makes this task cacheable.
+
 # Alternatives
 
 ## [`com.gradleup.shadow`](https://plugins.gradle.org/plugin/com.gradleup.shadow)
