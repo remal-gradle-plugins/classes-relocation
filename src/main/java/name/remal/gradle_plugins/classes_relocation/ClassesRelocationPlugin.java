@@ -74,7 +74,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
                         CLASSES_RELOCATION_CONFIGURATION_NAME,
                         CLASSES_RELOCATION_LEGACY_CONFIGURATION_NAME
                     );
-                    val exception = new ClassesRelocationException(message);
+                    @SuppressWarnings("UnstableApiUsage") val exception = new ClassesRelocationException(message);
                     logger.warn(exception.toString(), exception);
                 });
             }

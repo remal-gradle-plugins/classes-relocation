@@ -98,3 +98,13 @@ tasks.named(functionalTestSourceSet.name, Test) {
         return true
     }
 }
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+tasks.named('jacocoReportMerged', JacocoReport) { JacocoReport task ->
+    onlyIf {
+        task.classDirectories.from = task.classDirectories.files
+            .findAll { File file -> !file.toPath().startsWith(relocatorProject.projectDir.toPath()) }
+        return true
+    }
+}
