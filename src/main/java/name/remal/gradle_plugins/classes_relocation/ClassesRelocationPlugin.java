@@ -141,7 +141,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
 
             action.getJavaLauncher().convention(getJavaLauncherProviderFor(project));
 
-            jar.doLast(action);
+            jar.doLast(RelocateJarAction.class.getName(), action);
         });
 
 
