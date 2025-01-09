@@ -12,7 +12,7 @@ import lombok.val;
 class ClassesRelocatorObjectFactoryDefault implements ClassesRelocatorObjectFactory {
 
     public static final ClassesRelocatorObjectFactoryDefault DEFAULT_OBJECT_FACTORY =
-            new ClassesRelocatorObjectFactoryDefault();
+        new ClassesRelocatorObjectFactoryDefault();
 
     @Override
     public <T> T create(Class<T> clazz) throws Throwable {

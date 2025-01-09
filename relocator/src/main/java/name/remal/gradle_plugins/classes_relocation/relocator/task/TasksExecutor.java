@@ -54,14 +54,6 @@ public class TasksExecutor {
             return;
         }
 
-        for (val transformer : context.getRelocationComponents(QueuedTaskTransformer.class)) {
-            val result = transformer.transform(task, context);
-            if (result.isPresent()) {
-                result.get().forEach(this::queue);
-                return;
-            }
-        }
-
         queuedTasks.add(task);
     }
 

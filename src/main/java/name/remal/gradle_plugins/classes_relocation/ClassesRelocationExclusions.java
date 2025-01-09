@@ -7,7 +7,7 @@ import org.gradle.api.provider.SetProperty;
 import org.gradle.api.tasks.Input;
 
 /**
- * @deprecated for the future use
+ * @deprecated Reserved for the future use
  */
 @Deprecated
 public interface ClassesRelocationExclusions {
