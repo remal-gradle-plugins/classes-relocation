@@ -7,6 +7,7 @@ dependencies {
     optional 'name.remal.gradle-api:gradle-api'
 
     classesRelocation 'org.apache.commons:commons-compress:1.27.1'
+    classesRelocation 'org.json:json:20250107'
 
     compileOnly 'org.apiguardian:apiguardian-api:1.1.2'
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.6'
@@ -24,9 +25,26 @@ dependencies {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
+repositories {
+    ivy {
+        name = 'graalvmReachabilityMetadataTest'
+        url = 'https://github.com'
+        patternLayout {
+            artifact('[organisation]/[module]/releases/download/[revision]/[artifact]-[revision].[ext]')
+        }
+        metadataSources {
+            artifact()
+        }
+    }
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 SourceSet componentTestSourceSet = testSourceSets.create('componentTest')
 
 dependencies {
+    componentTestImplementation "oracle:graalvm-reachability-metadata:${property('graalvm-reachability-metadata.version')}@zip"
+
     componentTestImplementation platform('com.fasterxml.jackson:jackson-bom:2.18.2')
     componentTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
     componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
@@ -36,6 +54,8 @@ dependencies {
 }
 
 Map<String, String> componentTestRelocationNotations = [
+    'graalvm-reachability-metadata': 'oracle:graalvm-reachability-metadata',
+
     'guava': 'com.google.guava:guava',
     'jackson-databind': 'com.fasterxml.jackson.core:jackson-databind',
     'jackson-guava': 'com.fasterxml.jackson.datatype:jackson-datatype-guava',

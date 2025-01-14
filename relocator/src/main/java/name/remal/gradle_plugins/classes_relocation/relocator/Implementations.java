@@ -14,8 +14,14 @@ import lombok.Getter;
 import lombok.experimental.Delegate;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorComponent;
+import name.remal.gradle_plugins.classes_relocation.relocator.class_info.ClassInfoComponent;
+import name.remal.gradle_plugins.classes_relocation.relocator.metadata.OriginalResourceNames;
+import name.remal.gradle_plugins.classes_relocation.relocator.metadata.OriginalResourceSources;
+import name.remal.gradle_plugins.classes_relocation.relocator.reachability.ClassReachabilityConfigs;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.ProcessSourceClassHandler;
-import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.RelocateClassHandler;
+import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.RelocateClassCombinedImmediateHandler;
+import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.RelocateClassCombinedQueuedHandler;
+import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.RelocateClassTaskTransformer;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.license.CopyRelocationLicensesHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.manifest.CreateManifestHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.meta_inf_classpath_element.MetaInfClasspathElementResourcesHandler;
@@ -45,7 +51,13 @@ class Implementations extends AbstractClosablesContainer {
     public Implementations(ClassesRelocatorObjectFactory objectFactory) {
         this.objectFactory = objectFactory;
         this.componentClasses = ImmutableSet.of(
-            RelocateClassHandler.class,
+            OriginalResourceNames.class,
+            OriginalResourceSources.class,
+            ClassReachabilityConfigs.class,
+            ClassInfoComponent.class,
+            RelocateClassTaskTransformer.class,
+            RelocateClassCombinedImmediateHandler.class,
+            RelocateClassCombinedQueuedHandler.class,
             CopySourceResourceHandler.class,
             CreateManifestHandler.class,
             ProcessModuleInfoHandler.class,
@@ -89,14 +101,20 @@ class Implementations extends AbstractClosablesContainer {
     private final ConcurrentMap<Class<?>, List<Object>> implementationsCache = new ConcurrentHashMap<>();
 
     @Unmodifiable
-    @SuppressWarnings({"unchecked", "rawtypes"})
+    @SuppressWarnings({"unchecked", "rawtypes", "java:S3776"})
     public <T> List<T> getImplementations(Class<? extends ClassesRelocatorComponent> type) {
         return (List<T>) implementationsCache.computeIfAbsent(type, clazz -> {
             val impls = new ArrayList(componentClasses.size());
             for (val componentClass : componentClasses) {
                 if (clazz.isAssignableFrom(componentClass)) {
-                    val impl = clazz.cast(getComponentFor(componentClass));
-                    impls.add(impl);
+                    Object impl = getComponentFor(componentClass);
+                    if (!clazz.isInstance(impl) && impl instanceof WithDelegate<?>) {
+                        val delegate = ((WithDelegate<?>) impl).delegate();
+                        if (clazz.isInstance(delegate)) {
+                            impl = delegate;
+                        }
+                    }
+                    impls.add(clazz.cast(impl));
                 }
             }
             if (Comparable.class.isAssignableFrom(clazz)) {
@@ -127,8 +145,12 @@ class Implementations extends AbstractClosablesContainer {
         }
     }
 
+    private interface WithDelegate<T> {
+        T delegate();
+    }
+
     private static class CachedImmediateTaskHandler<RESULT, TASK extends ImmediateTask<RESULT>>
-        implements ImmediateTaskHandler<RESULT, TASK> {
+        implements ImmediateTaskHandler<RESULT, TASK>, WithDelegate<ImmediateTaskHandler<RESULT, TASK>> {
 
         @Delegate(excludes = BaseWithSupportedTaskClass.class)
         private final ImmediateTaskHandler<RESULT, TASK> delegate;
@@ -146,10 +168,15 @@ class Implementations extends AbstractClosablesContainer {
             return delegate.toString();
         }
 
+        @Override
+        public ImmediateTaskHandler<RESULT, TASK> delegate() {
+            return delegate;
+        }
+
     }
 
     private static class CachedQueuedTaskHandler<TASK extends QueuedTask>
-        implements QueuedTaskHandler<TASK> {
+        implements QueuedTaskHandler<TASK>, WithDelegate<QueuedTaskHandler<TASK>> {
 
         @Delegate(excludes = BaseWithSupportedTaskClass.class)
         private final QueuedTaskHandler<TASK> delegate;
@@ -165,6 +192,11 @@ class Implementations extends AbstractClosablesContainer {
         @Override
         public String toString() {
             return delegate.toString();
+        }
+
+        @Override
+        public QueuedTaskHandler<TASK> delegate() {
+            return delegate;
         }
 
     }

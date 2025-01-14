@@ -1,4 +1,4 @@
-package name.remal.gradle_plugins.classes_relocation.relocator.utils;
+package name.remal.gradle_plugins.classes_relocation.relocator.asm;
 
 import static lombok.AccessLevel.PRIVATE;
 import static name.remal.gradle_plugins.toolkit.InTestFlags.isInFunctionalTest;

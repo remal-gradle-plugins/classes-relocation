@@ -4,12 +4,17 @@ import static java.util.regex.Pattern.CASE_INSENSITIVE;
 import static java.util.stream.Collectors.toList;
 import static name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandlerResult.TASK_HANDLED;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.ResourceNameUtils.resourceNameWithRelocationSource;
+import static name.remal.gradle_plugins.toolkit.DebugUtils.isDebugEnabled;
 
+import java.util.LinkedHashSet;
 import java.util.Objects;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.relocator.classpath.GeneratedResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandlerResult;
 
@@ -19,6 +24,8 @@ public class CopyRelocationLicensesHandler implements QueuedTaskHandler<CopyRelo
         "^(.*/)?[^/]*\\b((license)|(notice))\\b[^/]*$",
         CASE_INSENSITIVE
     );
+
+    private final Set<String> usedNames = isDebugEnabled() ? new TreeSet<>() : new LinkedHashSet<>();
 
     @Override
     public QueuedTaskHandlerResult handle(CopyRelocationLicenses task, RelocationContext context) {
@@ -33,9 +40,16 @@ public class CopyRelocationLicensesHandler implements QueuedTaskHandler<CopyRelo
             )
             .collect(toList());
         for (val resource : licenseResources) {
+            val originalResourceName = context.getOriginalResourceName(resource);
             val relocationSource = context.getRelocationSource(resource);
-            val updatedResourceName = resourceNameWithRelocationSource(resource, relocationSource);
-            context.writeToOutput(resource, updatedResourceName);
+            val updatedResourceName = resourceNameWithRelocationSource(originalResourceName, relocationSource);
+            val newResource = GeneratedResource.newGeneratedResource(builder -> builder
+                .withSourceResource(resource)
+                .withName(updatedResourceName)
+            );
+            if (usedNames.add(newResource.getName())) {
+                context.writeToOutput(newResource);
+            }
         }
 
         return TASK_HANDLED;

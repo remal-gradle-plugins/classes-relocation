@@ -67,8 +67,14 @@ public final class GeneratedResourceBuilder {
     }
 
     @CanIgnoreReturnValue
+    @Contract("->this")
+    public GeneratedResourceBuilder withoutMultiReleaseVersion() {
+        return withMultiReleaseVersion(null);
+    }
+
+    @CanIgnoreReturnValue
     @Contract("_->this")
-    public GeneratedResourceBuilder withMultiReleaseVersion(long lastModifiedMillis) {
+    public GeneratedResourceBuilder withLastModifiedMillis(long lastModifiedMillis) {
         this.lastModifiedMillis = lastModifiedMillis;
         return this;
     }
@@ -110,14 +116,24 @@ public final class GeneratedResourceBuilder {
                 throw new IllegalStateException(
                     "Name and Multi-Release version must be set if sources resources are empty"
                 );
-            }
 
-            val resourceKey = getUniqueResourceKey(sourceResources);
-            if (withoutName) {
-                name = resourceKey.getName();
-            }
-            if (withoutMultiReleaseVersion) {
-                multiReleaseVersion = resourceKey.getMultiReleaseVersion();
+            } else if (sourceResources.size() == 1) {
+                val sourceResource = sourceResources.get(0);
+                if (withoutName) {
+                    name = sourceResource.getName();
+                }
+                if (withoutMultiReleaseVersion) {
+                    multiReleaseVersion = sourceResource.getMultiReleaseVersion();
+                }
+
+            } else {
+                val resourceKey = getUniqueResourceKey(sourceResources);
+                if (withoutName) {
+                    name = resourceKey.getName();
+                }
+                if (withoutMultiReleaseVersion) {
+                    multiReleaseVersion = resourceKey.getMultiReleaseVersion();
+                }
             }
         }
 

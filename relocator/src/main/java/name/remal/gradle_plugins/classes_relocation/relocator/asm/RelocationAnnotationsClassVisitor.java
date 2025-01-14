@@ -1,7 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.asm;
 
 import static name.remal.gradle_plugins.build_time_constants.api.BuildTimeConstants.getClassDescriptor;
-import static name.remal.gradle_plugins.classes_relocation.relocator.utils.AsmUtils.getLatestAsmApi;
+import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.getLatestAsmApi;
 import static org.jetbrains.annotations.ApiStatus.Internal;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;

@@ -14,6 +14,9 @@ import lombok.CustomLog;
 import lombok.NoArgsConstructor;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocator;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorConfig;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.MinimizationConfig;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.ResourcesFilter;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.workers.WorkAction;
 
@@ -24,6 +27,8 @@ abstract class RelocateJarWorkAction implements WorkAction<RelocateJarWorkAction
     @Override
     public void execute() {
         val params = getParameters();
+        val settings = params.getSettings().get();
+        val minimizeSettings = settings.getMinimize();
         try (
             val relocator = ClassesRelocator.builder()
                 .sourceJarPath(params.getJarFile().get().getAsFile().toPath())
@@ -31,17 +36,34 @@ abstract class RelocateJarWorkAction implements WorkAction<RelocateJarWorkAction
                     .map(File::toPath)
                     .collect(toList())
                 )
+                .systemClasspathPaths(params.getSystemClasspath().getFiles().stream()
+                    .map(File::toPath)
+                    .collect(toList()))
+                .reachabilityMetadataClasspathPaths(params.getReachabilityMetadataClasspath().getFiles().stream()
+                    .map(File::toPath)
+                    .collect(toList()))
                 .moduleIdentifiers(params.getModuleIdentifiers().get().entrySet().stream()
                     .collect(toImmutableMap(entry -> parseUri(entry.getKey()), Entry::getValue))
                 )
 
                 .targetJarPath(params.getTargetJarFile().get().getAsFile().toPath())
-                .basePackageForRelocatedClasses(params.getBasePackageForRelocatedClasses().get())
+                .basePackageForRelocatedClasses(settings.getBasePackageForRelocatedClasses().get())
                 .metadataCharset(params.getMetadataCharset()
                     .map(Charset::forName)
                     .getOrElse(DEFAULT_METADATA_CHARSET)
                 )
                 .preserveFileTimestamps(params.getPreserveFileTimestamps().getOrElse(true))
+
+                .config(ClassesRelocatorConfig.builder()
+                    .minimization(MinimizationConfig.builder()
+                        .resourcesFilter(new ResourcesFilter()
+                            .excludeClasses(minimizeSettings.getKeepClasses().get())
+                        )
+                        .classReachabilityConfigs(minimizeSettings.getClassReachabilityConfigs().get())
+                        .build()
+                    )
+                    .build()
+                )
 
                 .objectFactory(getObjects().newInstance(GradleClassesRelocatorObjectFactory.class))
 

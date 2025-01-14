@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import lombok.val;
-import name.remal.gradle_plugins.toolkit.generators.BaseGroovyFileContent;
+import name.remal.gradle_plugins.generate_sources.generators.java_like.JavaLikeContent;
 import name.remal.gradle_plugins.toolkit.testkit.functional.GradleProject;
 import name.remal.gradle_plugins.toolkit.testkit.functional.SuppressedMessage;
 import org.gradle.util.GradleVersion;
@@ -55,18 +55,18 @@ class ClassesRelocationPluginFunctionalTest {
     @BeforeEach
     void beforeEach() {
         project.forSettingsFile(settings -> {
-            settings.append("rootProject.name = '" + escapeGroovy(artifactId) + "'");
+            settings.line("rootProject.name = '" + escapeGroovy(artifactId) + "'");
         });
 
         project.forBuildFile(build -> {
-            build.append("group = '" + escapeGroovy(groupId) + "'");
-            build.append("version = '" + escapeGroovy(version) + "'");
+            build.line("group = '" + build.escapeString(groupId) + "'");
+            build.line("version = '" + build.escapeString(version) + "'");
 
             build.applyPlugin("name.remal.classes-relocation");
             build.applyPlugin("java");
 
-            build.appendBlock("classesRelocation", classesRelocation -> {
-                classesRelocation.append("basePackageForRelocatedClasses = 'relocated'");
+            build.block("classesRelocation", classesRelocation -> {
+                classesRelocation.line("basePackageForRelocatedClasses = 'relocated'");
             });
         });
 
@@ -103,9 +103,9 @@ class ClassesRelocationPluginFunctionalTest {
         addLibraryToDependencies(project.getBuildFile(), "junit-jupiter-engine", "testRuntimeOnly");
         addLibraryToDependencies(project.getBuildFile(), "junit-platform-launcher", "testRuntimeOnly");
 
-        project.getBuildFile().appendBlock("tasks.withType(Test).configureEach", task -> {
-            task.append("useJUnitPlatform()");
-            task.append("enableAssertions = true");
+        project.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
+            task.line("useJUnitPlatform()");
+            task.line("enableAssertions = true");
         });
 
         project.writeTextFile("src/test/java/pkg/LogicTest.java", join("\n", new String[]{
@@ -131,9 +131,7 @@ class ClassesRelocationPluginFunctionalTest {
             "}",
         }));
 
-        project.getBuildFile().registerDefaultTask("test");
-
-        project.assertBuildSuccessfully();
+        project.assertBuildSuccessfully("test");
     }
 
     @Test
@@ -158,9 +156,9 @@ class ClassesRelocationPluginFunctionalTest {
         addLibraryToDependencies(project.getBuildFile(), "junit-jupiter-engine", "testRuntimeOnly");
         addLibraryToDependencies(project.getBuildFile(), "junit-platform-launcher", "testRuntimeOnly");
 
-        project.getBuildFile().appendBlock("tasks.withType(Test).configureEach", task -> {
-            task.append("useJUnitPlatform()");
-            task.append("enableAssertions = true");
+        project.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
+            task.line("useJUnitPlatform()");
+            task.line("enableAssertions = true");
         });
 
         project.writeTextFile("src/test/java/pkg/LogicTest.java", join("\n", new String[]{
@@ -186,9 +184,7 @@ class ClassesRelocationPluginFunctionalTest {
             "}",
         }));
 
-        project.getBuildFile().registerDefaultTask("test");
-
-        project.assertBuildSuccessfully();
+        project.assertBuildSuccessfully("test");
     }
 
     @Test
@@ -213,8 +209,8 @@ class ClassesRelocationPluginFunctionalTest {
         project.newChildProject("executor", child -> {
             child.getBuildFile().applyPlugin("java");
 
-            child.getBuildFile().appendBlock("dependencies", dependencies -> {
-                dependencies.append("implementation project(':')");
+            child.getBuildFile().block("dependencies", dependencies -> {
+                dependencies.line("implementation project(':')");
             });
 
             child.writeTextFile("src/main/java/pkg/child/LogicExecutor.java", join("\n", new String[]{
@@ -236,9 +232,9 @@ class ClassesRelocationPluginFunctionalTest {
             addLibraryToDependencies(child.getBuildFile(), "junit-jupiter-engine", "testRuntimeOnly");
             addLibraryToDependencies(child.getBuildFile(), "junit-platform-launcher", "testRuntimeOnly");
 
-            child.getBuildFile().appendBlock("tasks.withType(Test).configureEach", task -> {
-                task.append("useJUnitPlatform()");
-                task.append("enableAssertions = true");
+            child.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
+                task.line("useJUnitPlatform()");
+                task.line("enableAssertions = true");
             });
 
             child.writeTextFile("src/test/java/pkg/child/LogicExecutorTest.java", join("\n", new String[]{
@@ -265,9 +261,7 @@ class ClassesRelocationPluginFunctionalTest {
             }));
         });
 
-        project.getBuildFile().registerDefaultTask("test");
-
-        project.assertBuildSuccessfully();
+        project.assertBuildSuccessfully("test");
     }
 
     @Test
@@ -292,9 +286,9 @@ class ClassesRelocationPluginFunctionalTest {
         project.newChildProject("executor", child -> {
             child.getBuildFile().applyPlugin("java");
 
-            child.getBuildFile().append("evaluationDependsOn(':')");
-            child.getBuildFile().appendBlock("dependencies", dependencies -> {
-                dependencies.append("implementation files(project(':').sourceSets.main.output)");
+            child.getBuildFile().line("evaluationDependsOn(':')");
+            child.getBuildFile().block("dependencies", dependencies -> {
+                dependencies.line("implementation files(project(':').sourceSets.main.output)");
             });
 
             child.writeTextFile("src/main/java/pkg/child/LogicExecutor.java", join("\n", new String[]{
@@ -316,9 +310,9 @@ class ClassesRelocationPluginFunctionalTest {
             addLibraryToDependencies(child.getBuildFile(), "junit-jupiter-engine", "testRuntimeOnly");
             addLibraryToDependencies(child.getBuildFile(), "junit-platform-launcher", "testRuntimeOnly");
 
-            child.getBuildFile().appendBlock("tasks.withType(Test).configureEach", task -> {
-                task.append("useJUnitPlatform()");
-                task.append("enableAssertions = true");
+            child.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
+                task.line("useJUnitPlatform()");
+                task.line("enableAssertions = true");
             });
 
             child.writeTextFile("src/test/java/pkg/child/LogicExecutorTest.java", join("\n", new String[]{
@@ -345,9 +339,7 @@ class ClassesRelocationPluginFunctionalTest {
             }));
         });
 
-        project.getBuildFile().registerDefaultTask("test");
-
-        project.assertBuildSuccessfully();
+        project.assertBuildSuccessfully("test");
     }
 
     @Test
@@ -373,24 +365,24 @@ class ClassesRelocationPluginFunctionalTest {
         addLibraryToDependencies(project.getBuildFile(), "junit-jupiter-engine", "testRuntimeOnly");
         addLibraryToDependencies(project.getBuildFile(), "junit-platform-launcher", "testRuntimeOnly");
 
-        project.getBuildFile().appendBlock("tasks.withType(Test).configureEach", task -> {
-            task.append("useJUnitPlatform()");
-            task.append("enableAssertions = true");
+        project.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
+            task.line("useJUnitPlatform()");
+            task.line("enableAssertions = true");
         });
 
         project.getBuildFile().forBuildscript(buildscript -> {
             addLibraryToDependencies(buildscript, "test-source-sets", "classpath");
         });
-        project.getBuildFile().append("apply plugin: 'name.remal.test-source-sets'");
+        project.getBuildFile().line("apply plugin: 'name.remal.test-source-sets'");
 
-        project.getBuildFile().append("testSourceSets.register('otherTest').get()");
+        project.getBuildFile().line("testSourceSets.register('otherTest').get()");
 
         Stream.of(
             "otherTestCompileClasspath",
             "otherTestRuntimeClasspath"
         ).forEach(confName -> {
-            project.getBuildFile().append("configurations." + confName + ".exclude(group: 'org.junit.jupiter')");
-            project.getBuildFile().append("configurations." + confName + ".exclude(group: 'org.junit.platform')");
+            project.getBuildFile().line("configurations." + confName + ".exclude(group: 'org.junit.jupiter')");
+            project.getBuildFile().line("configurations." + confName + ".exclude(group: 'org.junit.platform')");
         });
 
         project.writeTextFile("src/otherTest/java/pkg/LogicTest.java", join("\n", new String[]{
@@ -416,9 +408,7 @@ class ClassesRelocationPluginFunctionalTest {
             "}",
         }));
 
-        project.getBuildFile().registerDefaultTask("otherTest");
-
-        project.assertBuildSuccessfully();
+        project.assertBuildSuccessfully("otherTest");
     }
 
     @Test
@@ -442,21 +432,19 @@ class ClassesRelocationPluginFunctionalTest {
 
         project.getBuildFile().applyPlugin("maven-publish");
 
-        project.getBuildFile().appendBlock("publishing", publishing -> {
-            publishing.appendBlock("repositories", repositories -> {
-                repositories.appendBlock("maven", maven -> {
-                    maven.append("name = 'testRepo'");
-                    maven.append("url = '" + escapeGroovy(mavenRepoPath.toUri().toString()) + "'");
+        project.getBuildFile().block("publishing", publishing -> {
+            publishing.block("repositories", repositories -> {
+                repositories.block("maven", maven -> {
+                    maven.line("name = 'testRepo'");
+                    maven.line("url = '" + escapeGroovy(mavenRepoPath.toUri().toString()) + "'");
                 });
             });
-            publishing.appendBlock("publications.create('mavenJava', MavenPublication)", publication -> {
-                publication.append("from components.java");
+            publishing.block("publications.create('mavenJava', MavenPublication)", publication -> {
+                publication.line("from components.java");
             });
         });
 
-        project.getBuildFile().registerDefaultTask("publishAllPublicationsToTestRepoRepository");
-
-        project.assertBuildSuccessfully();
+        project.assertBuildSuccessfully("publishAllPublicationsToTestRepoRepository");
 
         Path publishedJarPath = getPublishedJarPath();
         assertThat(publishedJarPath).isRegularFile();
@@ -476,16 +464,18 @@ class ClassesRelocationPluginFunctionalTest {
 
 
     private static void addLibraryToDependencies(
-        BaseGroovyFileContent<?> script,
+        JavaLikeContent<?> script,
         String libraryName,
         String configurationName
     ) {
-        script.appendBlock("dependencies", deps -> {
-            deps.append(configurationName + " files(");
-            getLibraryFilePaths(libraryName).forEach(path ->
-                deps.append("    '" + escapeGroovy(path.toString()) + "',")
+        script.block("dependencies", deps -> {
+            deps.line(configurationName + " files(");
+            deps.indent(indent ->
+                getLibraryFilePaths(libraryName).forEach(path ->
+                    indent.line("    '" + indent.escapeString(path.toString()) + "',")
+                )
             );
-            deps.append(")");
+            deps.line(")");
         });
     }
 

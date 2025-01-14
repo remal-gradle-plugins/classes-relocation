@@ -1,5 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.task;
 
+import static java.lang.String.format;
 import static name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandlerResult.TASK_HANDLED;
 
 import java.util.LinkedHashSet;
@@ -7,10 +8,11 @@ import java.util.Optional;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
+import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 
 @RequiredArgsConstructor
 public class TasksExecutor {
@@ -38,20 +40,38 @@ public class TasksExecutor {
         return Optional.empty();
     }
 
-    public <RESULT> RESULT execute(ImmediateTask<RESULT> task) {
-        val result = executeOptional(task);
-        if (result.isPresent()) {
-            return result.get();
+
+    public boolean markAsProcessed(QueuedTask task) {
+        if (task instanceof AbstractQueuedIdentityTask) {
+            throw new IllegalArgumentException(format(
+                "Tasks of %s can't be marked as processed, as their processing state is not stored",
+                AbstractQueuedIdentityTask.class
+            ));
         }
 
-        throw new NotHandledTaskException(task);
+        return processedQueuedTasks.add(task);
     }
 
+    public boolean hasTaskQueued(Predicate<? super QueuedTask> predicate) {
+        return queuedTasks.stream().anyMatch(predicate);
+    }
 
     @SneakyThrows
     public void queue(QueuedTask task) {
-        if (!processedQueuedTasks.add(task)) {
+        if (!(task instanceof AbstractQueuedIdentityTask)
+            && !processedQueuedTasks.add(task)
+        ) {
             return;
+        }
+
+        for (val transformer : context.getRelocationComponents(QueuedTaskTransformer.class)) {
+            val transformed = transformer.transform(task, context);
+            if (transformed.isPresent()) {
+                for (val newTask : transformed.get()) {
+                    queue(newTask);
+                }
+                return;
+            }
         }
 
         queuedTasks.add(task);
@@ -76,12 +96,13 @@ public class TasksExecutor {
             if (handler.getSupportedTaskClass().isAssignableFrom(task.getClass())) {
                 val result = handler.handle(task, context);
                 if (result == TASK_HANDLED) {
+                    task.onHandled();
                     return;
                 }
             }
         }
 
-        throw new NotHandledTaskException(task);
+        task.onNotHandled();
     }
 
 }

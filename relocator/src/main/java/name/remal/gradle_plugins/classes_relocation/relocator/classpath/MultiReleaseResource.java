@@ -1,0 +1,48 @@
+package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
+
+import static java.util.Collections.unmodifiableMap;
+import static lombok.AccessLevel.PRIVATE;
+import static name.remal.gradle_plugins.toolkit.ObjectUtils.defaultValue;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.TreeMap;
+import java.util.function.Consumer;
+import javax.annotation.Nullable;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import lombok.val;
+import org.gradle.api.Action;
+import org.jetbrains.annotations.Unmodifiable;
+
+@Data
+@RequiredArgsConstructor(access = PRIVATE)
+public class MultiReleaseResource {
+
+    public static MultiReleaseResource buildMultiReleaseResources(Action<Consumer<Resource>> builder) {
+        val sortedResources = new TreeMap<Integer, Resource>();
+        builder.execute(resource -> {
+            val multiReleaseVersion = defaultValue(resource.getMultiReleaseVersion(), -1);
+            sortedResources.putIfAbsent(multiReleaseVersion, resource);
+        });
+
+        val resources = new LinkedHashMap<Integer, Resource>();
+        sortedResources.forEach((multiReleaseVersion, resource) ->
+            resources.putIfAbsent(
+                multiReleaseVersion > 0 ? multiReleaseVersion : null,
+                resource
+            )
+        );
+        return new MultiReleaseResource(unmodifiableMap(resources));
+    }
+
+
+    @Unmodifiable
+    private final Map<@org.jetbrains.annotations.Nullable Integer, Resource> resources;
+
+    @Nullable
+    public Resource forReleaseVersion(int releaseVersion) {
+        return resources.get(releaseVersion);
+    }
+
+}

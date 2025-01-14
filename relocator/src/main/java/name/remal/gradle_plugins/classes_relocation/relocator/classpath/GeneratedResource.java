@@ -11,7 +11,9 @@ import lombok.val;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 import org.jetbrains.annotations.Unmodifiable;
 
-public final class GeneratedResource extends ResourceBase {
+public final class GeneratedResource
+    extends ResourceBase
+    implements WithSourceResources {
 
     public static GeneratedResourceBuilder builder() {
         return new GeneratedResourceBuilder();

@@ -1,30 +1,31 @@
 package name.remal.gradle_plugins.classes_relocation.relocator;
 
+import static com.google.common.collect.Lists.reverse;
+import static java.lang.String.format;
 import static java.lang.System.nanoTime;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.jar.JarFile.MANIFEST_NAME;
+import static name.remal.gradle_plugins.build_time_constants.api.BuildTimeConstants.getStringProperty;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath.newClasspathForPaths;
+import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.ResourceContainer.newResourceContainerPaths;
+import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.SystemClasspathUtils.getSystemClasspathPaths;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.MultiReleaseUtils.withMultiReleasePathPrefix;
 import static name.remal.gradle_plugins.toolkit.InTestFlags.isInFunctionalTest;
+import static name.remal.gradle_plugins.toolkit.InTestFlags.isInTest;
 import static name.remal.gradle_plugins.toolkit.LateInit.lateInit;
-import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyMapProxy;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyProxy;
-import static name.remal.gradle_plugins.toolkit.PropertiesUtils.loadProperties;
-import static name.remal.gradle_plugins.toolkit.PropertiesUtils.storeProperties;
+import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
 import java.io.Closeable;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Properties;
 import java.util.Set;
+import java.util.function.Predicate;
 import javax.annotation.Nullable;
 import lombok.CustomLog;
 import lombok.Getter;
@@ -32,11 +33,14 @@ import lombok.SneakyThrows;
 import lombok.experimental.SuperBuilder;
 import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorComponent;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorConfig;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorLifecycleComponent;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ClasspathElement;
-import name.remal.gradle_plugins.classes_relocation.relocator.classpath.GeneratedResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ResourceContainer;
+import name.remal.gradle_plugins.classes_relocation.relocator.classpath.WithSourceResources;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.ProcessSourceClass;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.license.CopyRelocationLicenses;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.manifest.CreateManifest;
@@ -44,23 +48,21 @@ import name.remal.gradle_plugins.classes_relocation.relocator.relocators.module_
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource.CopySourceResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTask;
-import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.TasksExecutor;
 import name.remal.gradle_plugins.toolkit.ClosablesContainer;
 import name.remal.gradle_plugins.toolkit.LateInit;
-import org.apache.commons.io.output.ByteArrayOutputStream;
 import org.gradle.api.logging.LogLevel;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.UnmodifiableView;
 
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @CustomLog
 public class ClassesRelocator extends ClassesRelocatorParams implements Closeable {
 
-    private static final String ORIGINAL_RESOURCE_NAMES_RESOURCE_NAME =
-        "META-INF/name.remal.classes-relocation/original-resource-names.properties";
+    private static final boolean IN_TEST = isInTest();
 
-    private static final boolean IS_IN_FUNCTIONAL_TEST = isInFunctionalTest();
+    private static final boolean IN_FUNCTIONAL_TEST = isInFunctionalTest();
+
 
     private final ClosablesContainer closables = new ClosablesContainer();
 
@@ -79,8 +81,24 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         closables.registerCloseable(newClasspathForPaths(relocationClasspathPaths))
     );
 
-    private final Classpath sourceAndrelocationClasspath = asLazyProxy(Classpath.class, () ->
+    private final Classpath sourceAndRelocationClasspath = asLazyProxy(Classpath.class, () ->
         sourceClasspath.plus(relocationClasspath)
+    );
+
+    private final Classpath compileAndRuntimeClasspath = asLazyProxy(Classpath.class, () ->
+        closables.registerCloseable(newClasspathForPaths(compileAndRuntimeClasspathPaths))
+    );
+
+    private final Classpath systemClasspath = asLazyProxy(Classpath.class, () -> {
+        List<Path> systemClasspathPaths = this.systemClasspathPaths;
+        if (systemClasspathPaths.isEmpty()) {
+            systemClasspathPaths = getSystemClasspathPaths();
+        }
+        return closables.registerCloseable(newClasspathForPaths(systemClasspathPaths));
+    });
+
+    private final ResourceContainer reachabilityMetadataResourceContainer = asLazyProxy(ResourceContainer.class, () ->
+        closables.registerCloseable(newResourceContainerPaths(reachabilityMetadataClasspathPaths))
     );
 
     private final RelocationOutput output = asLazyProxy(RelocationOutput.class, () ->
@@ -88,21 +106,6 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
     );
 
     private final Set<Resource> processedResources = new LinkedHashSet<>();
-
-    private final Map<String, String> relocationOriginalResourceNames = asLazyMapProxy(() -> {
-        val result = new LinkedHashMap<String, String>();
-        for (val resource : relocationClasspath.getResources(ORIGINAL_RESOURCE_NAMES_RESOURCE_NAME)) {
-            try (val in = resource.open()) {
-                val properties = loadProperties(in);
-                properties.forEach((key, value) ->
-                    result.putIfAbsent(key.toString(), value.toString())
-                );
-            }
-        }
-        return ImmutableMap.copyOf(result);
-    });
-
-    private final Map<String, String> newOriginalResourceNames = new LinkedHashMap<>();
 
 
     public void relocate() {
@@ -115,7 +118,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         } finally {
             val millis = NANOSECONDS.toMillis(nanoTime() - start);
             logger.log(
-                IS_IN_FUNCTIONAL_TEST ? LogLevel.QUIET : LogLevel.INFO,
+                IN_FUNCTIONAL_TEST ? LogLevel.QUIET : LogLevel.INFO,
                 "Relocation took {}ms",
                 millis
             );
@@ -131,8 +134,9 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
             val tasksExecutor = new TasksExecutor(context);
             context.setTasksExecutor(tasksExecutor);
 
-            for (val handler : context.getRelocationComponents(QueuedTaskHandler.class)) {
-                handler.prepareRelocation(context);
+            val lifecycleComponents = context.getRelocationComponents(ClassesRelocatorLifecycleComponent.class);
+            for (val lifecycleComponent : lifecycleComponents) {
+                lifecycleComponent.prepareRelocation(context);
             }
 
             sourceClasspath.getClassNames().stream()
@@ -144,28 +148,20 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
             tasksExecutor.queue(new ProcessModuleInfo());
 
             sourceClasspath.getAllResources().stream()
+                .filter(not(context::isResourceProcessed))
                 .map(Resource::getName)
                 .filter(name -> !name.endsWith(".class")
                     && !name.equals(MANIFEST_NAME)
                     && !name.equals("module-info.class")
                     && !name.equals("META-INF/INDEX.LIST")
-                    && !name.equals(ORIGINAL_RESOURCE_NAMES_RESOURCE_NAME)
                 )
                 .map(CopySourceResource::new)
                 .forEach(tasksExecutor::queue);
 
             tasksExecutor.executeQueuedTasks();
 
-            for (val handler : context.getRelocationComponents(QueuedTaskHandler.class)) {
-                handler.finalizeRelocation(context);
-            }
-
-            try (val out = new ByteArrayOutputStream()) {
-                // TODO: simplify when toolkit v0.70.3 released
-                val properties = new Properties();
-                properties.putAll(newOriginalResourceNames);
-                storeProperties(properties, out);
-                output.write(ORIGINAL_RESOURCE_NAMES_RESOURCE_NAME, null, out.toByteArray());
+            for (val lifecycleComponent : reverse(lifecycleComponents)) {
+                lifecycleComponent.finalizeRelocation(context);
             }
         }
     }
@@ -225,7 +221,22 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
 
         @Override
         public Classpath getSourceAndRelocationClasspath() {
-            return sourceAndrelocationClasspath;
+            return sourceAndRelocationClasspath;
+        }
+
+        @Override
+        public Classpath getCompileAndRuntimeClasspath() {
+            return compileAndRuntimeClasspath;
+        }
+
+        @Override
+        public Classpath getSystemClasspath() {
+            return systemClasspath;
+        }
+
+        @Override
+        public ResourceContainer getReachabilityMetadataResourceContainer() {
+            return reachabilityMetadataResourceContainer;
         }
 
         @Nullable
@@ -251,9 +262,9 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
                 return false;
             }
 
-            if (resource instanceof GeneratedResource) {
+            if (resource instanceof WithSourceResources) {
                 boolean result = false;
-                val sourceResources = ((GeneratedResource) resource).getSourceResources();
+                val sourceResources = ((WithSourceResources) resource).getSourceResources();
                 for (val sourceResource : sourceResources) {
                     if (markResourceAsProcessed(sourceResource)) {
                         result = true;
@@ -267,44 +278,52 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
 
         @Override
         @SneakyThrows
-        public void writeToOutput(
-            Resource resource,
-            @Nullable String updatedResourceName,
-            @Nullable byte[] updatedContent
-        ) {
+        @SuppressWarnings("Slf4jFormatShouldBeConst")
+        public void writeToOutput(Resource resource) {
             markResourceAsProcessed(resource);
 
-            val resourceName = updatedResourceName != null ? updatedResourceName : resource.getName();
+            val originalResource = getOriginalResource(resource);
+            if (originalResource != resource) {
+                registerOriginalResource(resource, originalResource);
+            }
+
+            val resourceName = resource.getName();
             val fullResourceName = withMultiReleasePathPrefix(resourceName, resource.getMultiReleaseVersion());
             if (output.isResourceAdded(fullResourceName)) {
-                logger.warn(
-                    "A resource was already relocated, ignoring duplicated path `{}` (source resource: {})",
+                val message = format(
+                    "A resource was already relocated, ignoring duplicated path `%s` (source resource: %s)",
                     fullResourceName,
                     resource
                 );
+                if (IN_TEST) {
+                    throw new IllegalStateException(message);
+                } else if (getStringProperty("project.version").endsWith("-SNAPSHOT")) {
+                    logger.warn(message, new IllegalStateException());
+                } else {
+                    logger.warn(message);
+                }
                 return;
             }
 
             val lastModifiedMillis = resource.getLastModifiedMillis();
-            if (updatedContent != null) {
-                output.write(fullResourceName, lastModifiedMillis, updatedContent);
-
-            } else {
-                try (val in = resource.open()) {
-                    output.copy(fullResourceName, lastModifiedMillis, in);
-                }
+            try (val in = resource.open()) {
+                output.copy(fullResourceName, lastModifiedMillis, in);
             }
         }
 
-        @Override
-        public String getOriginalResourceName(String resourceName) {
-            return relocationOriginalResourceNames.getOrDefault(resourceName, resourceName);
+        private Resource getOriginalResource(Resource resource) {
+            while (resource instanceof WithSourceResources) {
+                val sourceResources = ((WithSourceResources) resource).getSourceResources();
+                if (sourceResources.size() == 1) {
+                    resource = sourceResources.get(0);
+                    continue;
+                }
+                break;
+            }
+
+            return resource;
         }
 
-        @Override
-        public void registerOriginalResourceName(String resourceName, String originalResourceName) {
-            newOriginalResourceNames.putIfAbsent(resourceName, originalResourceName);
-        }
 
         @Override
         public <RESULT> Optional<RESULT> executeOptional(ImmediateTask<RESULT> task) {
@@ -312,8 +331,13 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         }
 
         @Override
-        public <RESULT> RESULT execute(ImmediateTask<RESULT> task) {
-            return tasksExecutor.get().execute(task);
+        public boolean markTaskAsProcessed(QueuedTask task) {
+            return tasksExecutor.get().markAsProcessed(task);
+        }
+
+        @Override
+        public boolean hasTaskQueued(Predicate<? super QueuedTask> predicate) {
+            return tasksExecutor.get().hasTaskQueued(predicate);
         }
 
         @Override
@@ -321,6 +345,10 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
             tasksExecutor.get().queue(task);
         }
 
+        @Override
+        public ClassesRelocatorConfig getConfig() {
+            return config;
+        }
 
         @Override
         @Unmodifiable

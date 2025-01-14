@@ -4,8 +4,8 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.groupingBy;
+import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.toClassInternalName;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.ResourceKey.resourceKeyFor;
-import static name.remal.gradle_plugins.classes_relocation.relocator.utils.AsmUtils.toClassInternalName;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyListProxy;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyMapProxy;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazySetProxy;
@@ -24,7 +24,7 @@ import lombok.AccessLevel;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.relocator.utils.AsmUtils;
+import name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils;
 import name.remal.gradle_plugins.toolkit.ClosablesContainer;
 import org.jetbrains.annotations.Unmodifiable;
 

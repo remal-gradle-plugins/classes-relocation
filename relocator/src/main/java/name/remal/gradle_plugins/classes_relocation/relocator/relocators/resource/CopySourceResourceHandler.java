@@ -3,7 +3,7 @@ package name.remal.gradle_plugins.classes_relocation.relocator.relocators.resour
 import static name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandlerResult.TASK_HANDLED;
 import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandlerResult;
 

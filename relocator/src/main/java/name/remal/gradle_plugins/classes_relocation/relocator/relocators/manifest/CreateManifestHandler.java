@@ -15,8 +15,9 @@ import java.util.jar.Manifest;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.relocator.classpath.GeneratedResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandlerResult;
 
@@ -46,6 +47,7 @@ public class CreateManifestHandler implements QueuedTaskHandler<CreateManifest> 
         } else {
             manifestResource = newGeneratedResource(builder -> builder
                 .withName(MANIFEST_NAME)
+                .withoutMultiReleaseVersion()
                 .withEmptyContent()
             );
         }
@@ -86,7 +88,12 @@ public class CreateManifestHandler implements QueuedTaskHandler<CreateManifest> 
         manifest.write(out);
         val modifiedContent = out.toByteArray();
 
-        context.writeToOutput(manifestResource, modifiedContent);
+        manifestResource = GeneratedResource.builder()
+            .withSourceResource(manifestResource)
+            .withContent(modifiedContent)
+            .build();
+
+        context.writeToOutput(manifestResource);
 
         return TASK_HANDLED;
     }

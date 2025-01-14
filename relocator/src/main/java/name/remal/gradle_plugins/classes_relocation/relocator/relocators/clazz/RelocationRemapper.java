@@ -1,28 +1,34 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz;
 
+import static org.objectweb.asm.Opcodes.H_PUTSTATIC;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
+import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant.ProcessStringConstant;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.type_constant.ProcessTypeConstant;
+import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
 
 @RequiredArgsConstructor
+@CustomLog
 class RelocationRemapper extends Remapper {
 
     private final String classInternalName;
     private final Resource classResource;
     private final RelocationContext context;
 
-
     @Override
     public String map(String internalName) {
         if (context.isRelocationClassInternalName(internalName)) {
-            context.queue(new RelocateClass(internalName));
+            if (!classInternalName.equals(internalName)) {
+                context.queue(new RelocateClass(internalName));
+            }
             return context.getRelocatedClassInternalNamePrefix() + internalName;
         }
 
@@ -30,6 +36,7 @@ class RelocationRemapper extends Remapper {
     }
 
     private final Map<String, String> mappedStrings = new LinkedHashMap<>();
+    private final Map<Type, Type> mappedTypes = new LinkedHashMap<>();
 
     @Override
     public Object mapValue(Object value) {
@@ -42,7 +49,21 @@ class RelocationRemapper extends Remapper {
 
         if (value instanceof Type) {
             val type = (Type) value;
-            value = context.execute(new ProcessTypeConstant(type, classResource), type);
+            value = mappedTypes.computeIfAbsent(type, curType ->
+                context.execute(new ProcessTypeConstant(curType, classResource), curType)
+            );
+        }
+
+        if (value instanceof Handle) {
+            val handle = (Handle) value;
+            if (context.isRelocationClassInternalName(handle.getOwner())) {
+                val isFieldHandle = handle.getTag() <= H_PUTSTATIC;
+                if (isFieldHandle) {
+                    context.queue(new RelocateField(handle.getOwner(), handle.getName()));
+                } else {
+                    context.queue(new RelocateMethod(handle.getOwner(), handle.getName(), handle.getDesc()));
+                }
+            }
         }
 
         return super.mapValue(value);

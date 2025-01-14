@@ -8,10 +8,10 @@ import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTask;
 
 @Value
-@With
 @EqualsAndHashCode(cacheStrategy = CacheStrategy.LAZY)
 public class ProcessStringConstant implements ImmediateTask<String> {
 
+    @With
     String string;
 
     String classInternalName;

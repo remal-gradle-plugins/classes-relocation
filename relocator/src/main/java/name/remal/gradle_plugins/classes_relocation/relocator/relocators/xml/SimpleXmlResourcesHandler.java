@@ -16,8 +16,8 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource.RelocateResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.resource.BaseResourcesHandler;
 
