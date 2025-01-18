@@ -10,7 +10,7 @@ dependencies {
     classesRelocation 'org.json:json:20250107'
 
     compileOnly 'org.apiguardian:apiguardian-api:1.1.2'
-    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.8.6'
+    compileOnly 'com.github.spotbugs:spotbugs-annotations:4.9.0'
 
     optional 'org.ow2.asm:asm-util'
 
