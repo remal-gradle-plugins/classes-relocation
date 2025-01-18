@@ -151,6 +151,8 @@ The classic Gradle plugin for fat-JAR creation.
 
 ## Version 1.* to 2.*
 
+The minimum Java version is 11.
+
 The `name.remal.gradle_plugins.classes_relocation.ClassesRelocationExtension` project extension should be used
 instead of `name.remal.gradle_plugins.plugins.classes_relocation.ClassesRelocationExtension`.
 
