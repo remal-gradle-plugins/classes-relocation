@@ -1,6 +1,5 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.class_info;
 
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.toList;
 import static name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey.methodKeyOf;
@@ -14,6 +13,7 @@ import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -91,7 +91,7 @@ public class ClassInfoComponent
                         parentClassInternalNames.add(superName);
                     }
                     if (interfaces != null) {
-                        parentClassInternalNames.addAll(asList(interfaces));
+                        parentClassInternalNames.addAll(List.of(interfaces));
                     }
 
                     super.visit(version, access, name, signature, superName, interfaces);

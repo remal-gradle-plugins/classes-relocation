@@ -1,7 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation;
 
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 import static name.remal.gradle_plugins.classes_relocation.TaskClasspathConfigurers.TASK_CLASSPATH_CONFIGURERS;
 import static name.remal.gradle_plugins.toolkit.AttributeContainerUtils.javaApiLibrary;
 import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.getModuleVersionIdentifiersForFilesIn;
@@ -17,6 +16,7 @@ import static org.gradle.api.plugins.JavaPlugin.JAR_TASK_NAME;
 import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 import lombok.CustomLog;
@@ -204,7 +204,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
     private void setLibraryElementToJar(Project project) {
         var sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         sourceSets.configureEach(sourceSet -> {
-            var configurationNames = asList(
+            var configurationNames = List.of(
                 sourceSet.getCompileClasspathConfigurationName(),
                 sourceSet.getRuntimeClasspathConfigurationName()
             );

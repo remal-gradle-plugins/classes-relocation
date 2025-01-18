@@ -5,7 +5,6 @@ import static java.io.File.pathSeparator;
 import static java.lang.ClassLoader.getSystemClassLoader;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.createTempDirectory;
-import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.list;
 import static java.util.stream.Collectors.toUnmodifiableList;
@@ -275,7 +274,7 @@ public abstract class ClassesRelocatorTestBase {
         try (
             var relocator = ClassesRelocator.builder()
                 .sourceJarPath(sourceJarPath)
-                .relocationClasspathPaths(asList(relocationLibraries))
+                .relocationClasspathPaths(List.of(relocationLibraries))
                 .reachabilityMetadataClasspathPaths(getLibraryFilePaths("graalvm-reachability-metadata"))
                 .targetJarPath(targetJarPath)
                 .basePackageForRelocatedClasses("relocated")

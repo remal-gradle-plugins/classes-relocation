@@ -1,6 +1,5 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.api;
 
-import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
 import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.toClassInternalName;
 import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
@@ -8,6 +7,7 @@ import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
@@ -70,7 +70,7 @@ public final class ResourcesFilter {
 
     @CanIgnoreReturnValue
     public ResourcesFilter include(String... includes) {
-        return include(asList(includes));
+        return include(List.of(includes));
     }
 
     @CanIgnoreReturnValue
@@ -85,7 +85,7 @@ public final class ResourcesFilter {
 
     @CanIgnoreReturnValue
     public ResourcesFilter exclude(String... excludes) {
-        return exclude(asList(excludes));
+        return exclude(List.of(excludes));
     }
 
 
@@ -99,7 +99,7 @@ public final class ResourcesFilter {
 
     @CanIgnoreReturnValue
     public ResourcesFilter includeClass(String... classNames) {
-        return includeClasses(asList(classNames));
+        return includeClasses(List.of(classNames));
     }
 
     @CanIgnoreReturnValue
@@ -112,7 +112,7 @@ public final class ResourcesFilter {
 
     @CanIgnoreReturnValue
     public ResourcesFilter excludeClass(String... classNames) {
-        return excludeClasses(asList(classNames));
+        return excludeClasses(List.of(classNames));
     }
 
 
@@ -126,7 +126,7 @@ public final class ResourcesFilter {
 
     @CanIgnoreReturnValue
     public ResourcesFilter includePackage(String... packageNames) {
-        return includePackages(asList(packageNames));
+        return includePackages(List.of(packageNames));
     }
 
     @CanIgnoreReturnValue
@@ -139,7 +139,7 @@ public final class ResourcesFilter {
 
     @CanIgnoreReturnValue
     public ResourcesFilter excludePackage(String... packageNames) {
-        return excludePackages(asList(packageNames));
+        return excludePackages(List.of(packageNames));
     }
 
 

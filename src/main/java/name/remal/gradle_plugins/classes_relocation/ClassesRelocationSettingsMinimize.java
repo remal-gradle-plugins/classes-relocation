@@ -1,8 +1,8 @@
 package name.remal.gradle_plugins.classes_relocation;
 
-import static java.util.Arrays.asList;
 import static name.remal.gradle_plugins.build_time_constants.api.BuildTimeConstants.getStringProperty;
 
+import java.util.List;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassReachabilityConfig;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassReachabilityConfig.ClassReachabilityConfigBuilder;
 import org.gradle.api.Action;
@@ -23,7 +23,7 @@ public abstract class ClassesRelocationSettingsMinimize {
     }
 
     public void keepClasses(String... classNamePatterns) {
-        keepClasses(asList(classNamePatterns));
+        keepClasses(List.of(classNamePatterns));
     }
 
 
