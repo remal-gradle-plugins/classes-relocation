@@ -5,6 +5,7 @@ import static com.google.common.io.ByteStreams.toByteArray;
 import com.google.errorprone.annotations.MustBeClosed;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import javax.annotation.Nullable;
 import lombok.val;
 
@@ -24,6 +25,11 @@ public interface Resource extends Comparable<Resource> {
         try (val in = open()) {
             return toByteArray(in);
         }
+    }
+
+    default String readText(Charset charset) throws IOException {
+        val bytes = readAllBytes();
+        return new String(bytes, charset);
     }
 
 

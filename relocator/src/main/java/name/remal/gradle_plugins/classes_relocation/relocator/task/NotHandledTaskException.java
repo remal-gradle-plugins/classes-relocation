@@ -6,7 +6,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocationE
 
 public class NotHandledTaskException extends ClassesRelocationException {
 
-    NotHandledTaskException(ImmediateTask<?> task) {
+    public NotHandledTaskException(ImmediateTask<?> task) {
         super(format(
             "Task of type %s can't be handled by any handler: %s",
             task.getClass().getName(),
@@ -14,7 +14,7 @@ public class NotHandledTaskException extends ClassesRelocationException {
         ));
     }
 
-    NotHandledTaskException(QueuedTask task) {
+    public NotHandledTaskException(QueuedTask task) {
         super(format(
             "Task of type %s can't be handled by any handler: %s",
             task.getClass().getName(),

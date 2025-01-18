@@ -3,8 +3,9 @@ package name.remal.gradle_plugins.classes_relocation.relocator.relocators.meta_i
 import static java.lang.String.join;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.toList;
+import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.toClassInternalName;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.GeneratedResource.newGeneratedResource;
-import static name.remal.gradle_plugins.classes_relocation.relocator.utils.AsmUtils.toClassInternalName;
+import static name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.RelocateMethod.relocateNoArgConstructor;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.ResourceNameUtils.resourceNameWithFileNamePrefix;
 import static name.remal.gradle_plugins.toolkit.FunctionUtils.toSubstringedBefore;
 import static name.remal.gradle_plugins.toolkit.InputOutputStreamUtils.readStringFromStream;
@@ -20,10 +21,9 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ClasspathElement;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
-import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.RelocateClass;
 import name.remal.gradle_plugins.classes_relocation.relocator.resource.BaseResourcesHandler;
 import name.remal.gradle_plugins.toolkit.ObjectUtils;
 
@@ -109,7 +109,7 @@ public class MetaInfServicesResourcesHandler extends BaseResourcesHandler {
     private static String relocateServiceImplementation(String serviceImplClassName, RelocationContext context) {
         val serviceImplClassInternalName = toClassInternalName(serviceImplClassName);
         if (context.isRelocationClassInternalName(serviceImplClassInternalName)) {
-            context.queue(new RelocateClass(serviceImplClassInternalName));
+            context.queue(relocateNoArgConstructor(serviceImplClassInternalName));
             return context.getRelocatedClassNamePrefix() + serviceImplClassName;
         }
 

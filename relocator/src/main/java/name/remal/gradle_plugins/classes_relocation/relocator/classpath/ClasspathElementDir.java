@@ -13,6 +13,7 @@ import java.util.Collection;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import lombok.val;
+import name.remal.gradle_plugins.toolkit.LazyValue;
 
 class ClasspathElementDir extends ClasspathElementBase {
 
@@ -41,10 +42,14 @@ class ClasspathElementDir extends ClasspathElementBase {
     private class ResourceFile extends ResourceBase {
 
         private final Path path;
+        private final LazyValue<Long> lastModifiedMillis;
 
         public ResourceFile(String name) {
             super(name);
             this.path = getPath().resolve(name);
+            this.lastModifiedMillis = LazyValue.lazyValue(() ->
+                getLastModifiedTime(path).toMillis()
+            );
         }
 
         @Nullable
@@ -56,7 +61,7 @@ class ClasspathElementDir extends ClasspathElementBase {
         @Override
         @SneakyThrows
         public long getLastModifiedMillis() {
-            return getLastModifiedTime(path).toMillis();
+            return lastModifiedMillis.get();
         }
 
         @Override

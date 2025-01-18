@@ -5,6 +5,7 @@ import static java.nio.file.Files.readAllBytes;
 import static java.util.Collections.list;
 import static java.util.jar.JarFile.MANIFEST_NAME;
 import static java.util.stream.Collectors.toList;
+import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.ClasspathUtils.MAX_ARCHIVE_FILE_SIZE_TO_LOAD_IN_HEAP_BYTES;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.MultiReleaseUtils.MULTI_RELEASE;
 import static name.remal.gradle_plugins.toolkit.LazyValue.lazyValue;
 import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
@@ -24,9 +25,6 @@ import org.apache.commons.compress.archivers.zip.ZipFile;
 
 class ClasspathElementJar extends ClasspathElementBase {
 
-    private static final long MAX_FILE_SIZE_TO_LOAD_IN_HEAP_BYTES = 1024 * 1024L;
-
-
     private final LazyValue<ZipFile> zipFile;
     private final LazyValue<Boolean> multiRelease;
 
@@ -35,7 +33,7 @@ class ClasspathElementJar extends ClasspathElementBase {
         this.zipFile = lazyValue(() -> {
             val zipFileBuilder = ZipFile.builder().setPath(path);
             val fileSize = Files.size(path);
-            if (fileSize <= MAX_FILE_SIZE_TO_LOAD_IN_HEAP_BYTES) {
+            if (fileSize <= MAX_ARCHIVE_FILE_SIZE_TO_LOAD_IN_HEAP_BYTES) {
                 val bytes = readAllBytes(path);
                 zipFileBuilder.setByteArray(bytes);
             }

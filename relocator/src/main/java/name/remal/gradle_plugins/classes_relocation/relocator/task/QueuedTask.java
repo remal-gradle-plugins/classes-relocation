@@ -1,6 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.task;
 
-import static java.lang.System.identityHashCode;
+import static name.remal.gradle_plugins.classes_relocation.relocator.utils.ComparatorUtils.compareClasses;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.doNotInline;
 
 import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
@@ -14,6 +14,14 @@ public interface QueuedTask extends Comparable<QueuedTask> {
 
     int getPhase();
 
+    default void onHandled() {
+        // do nothing
+    }
+
+    default void onNotHandled() {
+        throw new NotHandledTaskException(this);
+    }
+
     @Override
     @OverridingMethodsMustInvokeSuper
     default int compareTo(QueuedTask other) {
@@ -22,16 +30,7 @@ public interface QueuedTask extends Comparable<QueuedTask> {
             return result;
         }
 
-        if (getClass() != other.getClass()) {
-            result = getClass().getName().compareTo(other.getClass().getName());
-            if (result != 0) {
-                return result;
-            }
-
-            result = Integer.compare(identityHashCode(getClass()), identityHashCode(other.getClass()));
-        }
-
-        return result;
+        return compareClasses(this.getClass(), other.getClass());
     }
 
 }

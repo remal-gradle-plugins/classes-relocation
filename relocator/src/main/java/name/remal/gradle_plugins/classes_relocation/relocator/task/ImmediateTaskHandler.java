@@ -4,11 +4,12 @@ import com.google.common.reflect.TypeToken;
 import java.lang.reflect.ParameterizedType;
 import java.util.Optional;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorLifecycleComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorOrderedComponent;
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 
 public interface ImmediateTaskHandler<RESULT, TASK extends ImmediateTask<RESULT>>
-    extends ClassesRelocatorOrderedComponent, BaseWithSupportedTaskClass<TASK> {
+    extends ClassesRelocatorOrderedComponent, ClassesRelocatorLifecycleComponent, BaseWithSupportedTaskClass<TASK> {
 
     @Override
     default Class<TASK> getSupportedTaskClass() {

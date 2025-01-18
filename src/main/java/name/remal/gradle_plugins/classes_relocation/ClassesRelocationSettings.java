@@ -11,6 +11,13 @@ interface ClassesRelocationSettings {
     Property<String> getBasePackageForRelocatedClasses();
 
     @Nested
+    ClassesRelocationSettingsMinimize getMinimize();
+
+    default void minimize(Action<? super ClassesRelocationSettingsMinimize> action) {
+        action.execute(getMinimize());
+    }
+
+    @Nested
     ClassRelocationForkOptions getForkOptions();
 
     default void forkOptions(Action<? super ClassRelocationForkOptions> action) {

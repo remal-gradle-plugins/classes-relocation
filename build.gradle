@@ -1,4 +1,15 @@
+import static java.nio.charset.StandardCharsets.UTF_8
 import static java.util.stream.Collectors.toList
+
+import java.nio.file.Files
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassVisitor
+import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.commons.ClassRemapper
+import org.objectweb.asm.commons.Remapper
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -8,7 +19,10 @@ buildscript {
     String rootSnapshotVersion = project.ext.rootSnapshotVersion = '2-SNAPSHOT'
     dependencies {
         //classpath("$rootGroupId:$rootArtifactId:$rootSnapshotVersion") { version { strictly(rootSnapshotVersion) } }
-        classpath 'name.remal.gradle-plugins.toolkit:build-logic:0.70.6'
+        classpath 'name.remal.gradle-plugins.toolkit:build-logic:0.71.0'
+
+        classpath platform("org.ow2.asm:asm-bom:9.7.1")
+        classpath 'org.ow2.asm:asm-commons'
     }
     repositories {
         mavenCentral()
@@ -38,6 +52,10 @@ gradlePlugin {
             description = property('repository-description')
         }
     }
+}
+
+buildTimeConstants {
+    property('graalvm-reachability-metadata.version', providers.gradleProperty('graalvm-reachability-metadata.version'))
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
@@ -110,20 +128,112 @@ tasks.named(functionalTestSourceSet.name, Test) {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-tasks.withType(JacocoReportBase).configureEach { JacocoReportBase task ->
-    task.onlyIf {
-        logger.warn('Remove included files filtering when a new version of toolkit is released')
-        Closure filterOutIncludedFiles = { ConfigurableFileCollection fileCollection ->
-            fileCollection.setFrom(
-                fileCollection.files
-                    .findAll { !relocatorProject.sourceSets.main.allSource.srcDirs.contains(it) }
-                    .findAll { !relocatorProject.sourceSets.main.output.contains(it) }
-                    .findAll { relocatorProject.tasks.jar.archiveFile.get().asFile != it }
-            )
+allprojects {
+    Attribute<String> artifactType = Attribute.of('artifactType', String)
+    Attribute<Boolean> unprocessedHashMap = Attribute.of('unprocessedHashMap', Boolean)
+    dependencies {
+        attributesSchema {
+            attribute(unprocessedHashMap)
         }
-        filterOutIncludedFiles(task.sourceDirectories)
-        filterOutIncludedFiles(task.classDirectories)
-        filterOutIncludedFiles(task.additionalClassDirs)
-        return true
+        artifactTypes.getByName('jar') {
+            attributes.attribute(unprocessedHashMap, false)
+        }
     }
+
+    configurations.all { Configuration conf ->
+        if (conf.state != Configuration.State.UNRESOLVED
+            || !conf.canBeResolved
+        ) {
+            return
+        }
+
+        Closure<Boolean> shouldProcessHashMap = { String notation ->
+            return notation == 'org.json:json'
+        }
+
+        conf.resolutionStrategy.dependencySubstitution { DependencySubstitutions substitutions ->
+            substitutions.all { DependencySubstitution substitution ->
+                if (!(substitution.requested instanceof ModuleComponentSelector)) {
+                    return
+                }
+
+                ModuleComponentSelector requested = (ModuleComponentSelector) substitution.requested
+                if (shouldProcessHashMap("${requested.group}:${requested.module}")) {
+                    ComponentSelector target = substitutions.variant(requested) { VariantSelectionDetails details ->
+                        details.attributes {
+                            attribute(unprocessedHashMap, true)
+                        }
+                    }
+                    substitution.useTarget(target)
+                }
+            }
+        }
+    }
+
+    dependencies {
+        registerTransform(ProcessHashMap) {
+            from.attribute(unprocessedHashMap, false).attribute(artifactType, 'jar')
+            to.attribute(unprocessedHashMap, true).attribute(artifactType, 'jar')
+        }
+    }
+}
+
+abstract class ProcessHashMap implements TransformAction<ProcessHashMapParameters> {
+
+    interface ProcessHashMapParameters extends TransformParameters {}
+
+    @InputArtifact
+    abstract Provider<FileSystemLocation> getInputArtifact()
+
+    @Override
+    void transform(TransformOutputs outputs) {
+        File file = inputArtifact.get().asFile
+        File outputFile = outputs.file(file.name)
+        if (outputFile.exists() && outputFile.lastModified() >= rootProject.buildFile.lastModified()) {
+            return
+        }
+
+        Files.createDirectories(outputFile.parentFile.toPath())
+        new ZipInputStream(new FileInputStream(file), UTF_8).withCloseable { ZipInputStream inputStream ->
+            new ZipOutputStream(new FileOutputStream(outputFile), UTF_8).withCloseable { ZipOutputStream outputStream ->
+                while (true) {
+                    ZipEntry zipEntry = inputStream.nextEntry
+                    if (zipEntry == null) {
+                        break
+                    }
+
+                    if (zipEntry.directory) {
+                        continue
+                    }
+
+                    outputStream.putNextEntry(zipEntry)
+
+                    if (!zipEntry.name.endsWith('.class')) {
+                        outputStream << inputStream
+                        continue
+                    }
+
+                    ClassVisitor classVisitor
+                    ClassWriter classWriter = classVisitor = new ClassWriter(0)
+
+                    Remapper remapper = new Remapper() {
+                        @Override
+                        String map(String internalName) {
+                            if (internalName == 'java/util/HashMap') {
+                                return 'java/util/LinkedHashMap'
+                            }
+
+                            return internalName
+                        }
+                    }
+                    classVisitor = new ClassRemapper(classVisitor, remapper)
+
+                    new ClassReader(inputStream).accept(classVisitor, 0)
+
+                    outputStream << classWriter.toByteArray()
+                }
+            }
+        }
+    }
+
 }

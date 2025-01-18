@@ -9,11 +9,13 @@
 Usage:
 
 <!--plugin-usage:name.remal.classes-relocation-->
+
 ```groovy
 plugins {
-    id 'name.remal.classes-relocation' version '2.0.0-rc-2'
+  id 'name.remal.classes-relocation' version '2.0.0-rc-2'
 }
 ```
+
 <!--/plugin-usage-->
 
 &nbsp;
@@ -27,11 +29,11 @@ but you need to ensure that these dependencies do not interfere with those in pr
 By using this plugin, you can better manage dependency versions,
 leading to more reliable and predictable behavior of your Java applications across different environments.
 
-Configuration:
+Base configuration:
 
 ```groovy
 classesRelocation {
-  basePackageForRelocatedClasses = 'you.base.project.relocated' // specify the base projects for relocated dependencies
+  basePackageForRelocatedClasses = 'your.project.relocated' // specify the base package for relocated dependencies
 }
 
 dependencies {
@@ -40,6 +42,68 @@ dependencies {
   }
 }
 ```
+
+## Minimization
+
+This plugin can automatically remove all classes of relocated dependencies that are not used by the project,
+minimizing the result JAR file.
+The minimization is implemented via extensive bytecode analysis.
+
+These class members are **always** relocated:
+
+* Static initializer
+  * It means that all initialized static fields will always be kept
+  * See #37
+* `serialVersionUID` static field
+* `writeObject(ObjectOutputStream)` method
+* `readObject(ObjectInputStream)` method
+* `readObjectNoData()` method
+* `writeReplace()` method
+* `readResolve()` method
+
+If you relocate a dependency that doesn't use reflection (`Class.getMethod()`, `Class.getField()`, etc),
+you don't need to configure minimization.
+
+To avoid removal of necessary code, the plugin uses [GraalVM's Reachability Metadata](https://www.graalvm.org/latest/reference-manual/native-image/metadata/):
+
+* `META-INF/native-image/<groupId>/<artifactId>/reachability-metadata.json` files in the relocated dependencies are processed
+  * only `$.reflection` field is supported
+  * `$.resources` and `$.bundles` fields are NOT supported, so resource relocation can be broken is some cases
+* `reflect-config.json` files from [oracle/graalvm-reachability-metadata](https://github.com/oracle/graalvm-reachability-metadata) are processed
+
+Full minimization configuration:
+
+```groovy
+classesRelocation {
+  minimize {
+    keepClasses('com.google.common.*') // all classes in the `com.google.common` package will be fully relocated; subpackages (like `com.google.common.base`) will NOT be minimized
+    keepClasses('com.google.common.**') // all classes in the `com.google.common` package in its subpackages (like `com.google.common.base`) will be fully relocated
+
+    graalvmReachabilityMetadataVersion = 'x.x.x' // set release of https://github.com/oracle/graalvm-reachability-metadata
+
+    addClassReachabilityConfig { // add GraalVM's Reachability Metadata programmatically
+      className('package.Class') // for `$.reflection[*].type`
+      onReachedClass('other.package.reached.Class') // for `$.reflection[*].condition.typeReached`
+      field('fieldName') // for `$.reflection[*].fields[*].name`
+      fields(['fieldName1', 'fieldName2']) // for `$.reflection[*].fields[*].name`
+      method('methodName', '(Ljava/lang/String)') // for `$.reflection[*].methods[*].name` and `$.reflection[*].methods[*].parameterTypes`; `(Ljava/lang/String)` is a method descriptor (see https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.3.3), return type is OPTIONAL
+      allDeclaredConstructors(true) // for `$.reflection[*].allDeclaredConstructors`
+      allPublicConstructors(true) // for `$.reflection[*].allPublicConstructors`
+      allDeclaredMethods(true) // for `$.reflection[*].allDeclaredMethods`
+      allPublicMethods(true) // for `$.reflection[*].allPublicMethods`
+      allDeclaredFields(true) // for `$.reflection[*].allDeclaredFields`
+      allPublicFields(true) // for `$.reflection[*].allPublicFields`
+      allPermittedSubclasses(true) // for `$.reflection[*].allPermittedSubclasses`
+    }
+
+    addClassReachabilityConfig { /* ... */ } // add more GraalVM's Reachability Metadata
+  }
+}
+```
+
+Used minimization configuration is stored in the result JAR file.
+So, if the result JAR file is used as a relocated dependency in another project,
+all kept classes/members will be relocated.
 
 ## How the plugin works
 
@@ -73,6 +137,7 @@ The classic Gradle plugin for fat-JAR creation.
 * Simpler configuration.
 * Other projects in Multi-Project builds will consume the relocated JAR file automatically.
 * Publication of the relocated JAR is configured automatically.
+* Minimization is relatively simple and enabled by default
 
 **Benefits of `com.gradleup.shadow`**
 
@@ -80,7 +145,9 @@ The classic Gradle plugin for fat-JAR creation.
 * Can be used not only for classes relocation but for creating fat-JARs.
 * Extendable (be implementing `com.github.jengelman.gradle.plugins.shadow.transformers.Transformer`)
 * More configuration options. For example, a capability of excluding specific files and packages from relocation.
-* Minimization capabilities
+* Minimization requires tests to be written (by default, classes not used in **test** will be removed)
+  * Code coverage should be very high to work properly
+  * Build will fail if there is a dependency like this: `:prod - main source set` (with relocation) > `:test-utils - main source set` (depends on `:prod`) > `:prod > test source set` (prod's tests depend on `:test-utils`)
 
 # Migration guide
 

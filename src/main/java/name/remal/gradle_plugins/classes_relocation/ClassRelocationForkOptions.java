@@ -1,5 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation;
 
+import static name.remal.gradle_plugins.build_time_constants.api.BuildTimeConstants.getStringProperty;
+import static name.remal.gradle_plugins.toolkit.DebugUtils.isDebugEnabled;
 import static name.remal.gradle_plugins.toolkit.InTestFlags.isInTest;
 
 import lombok.Getter;
@@ -11,14 +13,18 @@ import org.gradle.api.tasks.Internal;
 @Setter
 public abstract class ClassRelocationForkOptions {
 
-    static final boolean IS_FORK_ENABLED_DEFAULT = !isInTest();
-
-
     @Internal
     public abstract Property<Boolean> getEnabled();
 
     {
-        getEnabled().convention(IS_FORK_ENABLED_DEFAULT);
+        boolean isEnabledByDefault = true;
+        if (isInTest()) {
+            isEnabledByDefault = false;
+        }
+        if (isDebugEnabled() && getStringProperty("project.version").endsWith("-SNAPSHOT")) {
+            isEnabledByDefault = false;
+        }
+        getEnabled().convention(isEnabledByDefault);
     }
 
 

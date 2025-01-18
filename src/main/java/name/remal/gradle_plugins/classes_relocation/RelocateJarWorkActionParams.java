@@ -12,15 +12,22 @@ interface RelocateJarWorkActionParams extends WorkParameters {
 
     ConfigurableFileCollection getRelocationClasspath();
 
+    ConfigurableFileCollection getCompileAndRuntimeClasspath();
+
+    ConfigurableFileCollection getSystemClasspath();
+
+    ConfigurableFileCollection getReachabilityMetadataClasspath();
+
     MapProperty<String, String> getModuleIdentifiers();
 
 
     RegularFileProperty getTargetJarFile();
 
-    Property<String> getBasePackageForRelocatedClasses();
-
     Property<String> getMetadataCharset();
 
     Property<Boolean> getPreserveFileTimestamps();
+
+
+    Property<ClassesRelocationSettings> getSettings();
 
 }

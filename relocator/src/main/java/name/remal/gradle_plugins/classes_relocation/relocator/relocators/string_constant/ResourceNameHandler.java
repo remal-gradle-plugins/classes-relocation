@@ -1,5 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant;
 
+import static java.util.jar.JarFile.MANIFEST_NAME;
 import static java.util.stream.Collectors.toList;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.ResourceNameUtils.canBePartOfResourceName;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.ResourceNameUtils.getNamePrefixOfResourceName;
@@ -8,7 +9,7 @@ import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 import java.util.Optional;
 import java.util.function.Predicate;
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource.RelocateResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
 
@@ -98,7 +99,8 @@ public class ResourceNameHandler implements ImmediateTaskHandler<String, Process
     }
 
     private static boolean isExcludedResource(String resourceName) {
-        return resourceName.equals("module-info.class");
+        return resourceName.equals("module-info.class")
+            || resourceName.equals(MANIFEST_NAME);
     }
 
     @Override

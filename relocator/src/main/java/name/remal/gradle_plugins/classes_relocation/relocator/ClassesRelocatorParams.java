@@ -1,6 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation.relocator;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocatorObjectFactoryDefault.DEFAULT_OBJECT_FACTORY;
 
 import java.net.URI;
 import java.nio.charset.Charset;
@@ -11,8 +12,10 @@ import lombok.Builder.Default;
 import lombok.NonNull;
 import lombok.Singular;
 import lombok.experimental.SuperBuilder;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorConfig;
+import org.jetbrains.annotations.Unmodifiable;
 
-@SuperBuilder
+@SuperBuilder(toBuilder = true)
 @SuppressWarnings({"cast", "java:S1170"})
 public abstract class ClassesRelocatorParams {
 
@@ -22,9 +25,23 @@ public abstract class ClassesRelocatorParams {
     @NonNull
     protected final Path sourceJarPath;
 
+    @Unmodifiable
     @Singular
     protected final List<Path> relocationClasspathPaths;
 
+    @Unmodifiable
+    @Singular
+    protected final List<Path> compileAndRuntimeClasspathPaths;
+
+    @Unmodifiable
+    @Singular
+    protected final List<Path> systemClasspathPaths;
+
+    @Unmodifiable
+    @Singular
+    protected final List<Path> reachabilityMetadataClasspathPaths;
+
+    @Unmodifiable
     @Singular
     protected final Map<URI, String> moduleIdentifiers;
 
@@ -44,7 +61,10 @@ public abstract class ClassesRelocatorParams {
 
 
     @Default
-    protected final ClassesRelocatorObjectFactory objectFactory =
-        ClassesRelocatorObjectFactoryDefault.DEFAULT_OBJECT_FACTORY;
+    protected final ClassesRelocatorConfig config = ClassesRelocatorConfig.builder().build();
+
+
+    @Default
+    protected final ClassesRelocatorObjectFactory objectFactory = DEFAULT_OBJECT_FACTORY;
 
 }

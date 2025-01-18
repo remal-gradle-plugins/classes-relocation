@@ -3,16 +3,16 @@ package name.remal.gradle_plugins.classes_relocation.relocator.relocators.meta_i
 import static java.util.jar.JarFile.MANIFEST_NAME;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.GeneratedResource.newGeneratedResource;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.ResourceNameUtils.resourceNameWithRelocationSource;
-import static name.remal.gradle_plugins.toolkit.ObjectUtils.isNotEmpty;
+import static name.remal.gradle_plugins.toolkit.ObjectUtils.isEmpty;
 
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import lombok.val;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ClasspathElement;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.resource.BaseResourcesHandler;
 
 public class MetaInfClasspathElementResourcesHandler extends BaseResourcesHandler {
@@ -51,7 +51,7 @@ public class MetaInfClasspathElementResourcesHandler extends BaseResourcesHandle
         }
 
         val relocationSource = context.getRelocationSource(classpathElementResource);
-        if (isNotEmpty(relocationSource)) {
+        if (isEmpty(relocationSource)) {
             return Optional.empty();
         }
 
@@ -60,6 +60,17 @@ public class MetaInfClasspathElementResourcesHandler extends BaseResourcesHandle
             .withName(resourceNameWithRelocationSource(originalResourceName, relocationSource))
             .withMultiReleaseVersion(multiReleaseVersion)
         ));
+    }
+
+    @Override
+    protected Optional<Resource> processResourceImpl(
+        String resourceName,
+        String originalResourceName,
+        @Nullable Integer multiReleaseVersion,
+        Resource resource,
+        RelocationContext context
+    ) {
+        return Optional.of(resource);
     }
 
 }

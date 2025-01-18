@@ -1,11 +1,11 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant;
 
+import static name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.RelocateMethod.relocateNoArgConstructor;
 import static name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant.StringHandlerUtils.isClassInternalName;
 
 import java.util.Optional;
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
-import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.RelocateClass;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
 
 public class ClassDescriptorHandler implements ImmediateTaskHandler<String, ProcessStringConstant> {
@@ -40,7 +40,7 @@ public class ClassDescriptorHandler implements ImmediateTaskHandler<String, Proc
             return Optional.empty();
         }
 
-        context.queue(new RelocateClass(classInternalName));
+        context.queue(relocateNoArgConstructor(classInternalName));
 
         return Optional.of(
             string.substring(0, startPos)

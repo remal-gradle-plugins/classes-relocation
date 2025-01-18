@@ -2,7 +2,6 @@ package name.remal.gradle_plugins.classes_relocation;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.Collections.emptyMap;
 import static name.remal.gradle_plugins.classes_relocation.TaskClasspathConfigurers.TASK_CLASSPATH_CONFIGURERS;
 import static name.remal.gradle_plugins.toolkit.AttributeContainerUtils.javaApiLibrary;
 import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.getModuleVersionIdentifiersForFilesIn;
@@ -28,7 +27,9 @@ import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
-import org.gradle.api.artifacts.dsl.ArtifactHandler;
+import org.gradle.api.artifacts.dsl.DependencyHandler;
+import org.gradle.api.artifacts.dsl.RepositoryHandler;
+import org.gradle.api.artifacts.repositories.IvyArtifactRepository.MetadataSources;
 import org.gradle.api.attributes.LibraryElements;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.model.ObjectFactory;
@@ -48,6 +49,16 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
     public static final String CLASSES_RELOCATION_CONFIGURATION_NAME = doNotInline("classesRelocation");
     public static final String CLASSES_RELOCATION_CLASSPATH_CONFIGURATION_NAME =
         doNotInline("classesRelocationClasspath");
+
+    public static final String GRAALVM_REACHABILITY_METADATA_REPOSITORY_NAME =
+        doNotInline("graalvmReachabilityMetadata");
+    public static final String GRAALVM_REACHABILITY_METADATA_REPOSITORY_URL =
+        doNotInline("https://github.com");
+    public static final String GRAALVM_REACHABILITY_METADATA_REPOSITORY_ARTIFACT_PATTERN =
+        doNotInline("[organisation]/[module]/releases/download/[revision]/[artifact]-[revision].[ext]");
+
+    public static final String REACHABILITY_METADATA_CONFIGURATION_NAME =
+        doNotInline("classesRelocationReachabilityMetadata");
 
     @Override
     @SuppressWarnings("Slf4jFormatShouldBeConst")
@@ -74,7 +85,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
                         CLASSES_RELOCATION_CONFIGURATION_NAME,
                         CLASSES_RELOCATION_LEGACY_CONFIGURATION_NAME
                     );
-                    @SuppressWarnings("UnstableApiUsage") val exception = new ClassesRelocationException(message);
+                    val exception = new ClassesRelocationException(message);
                     logger.warn(exception.toString(), exception);
                 });
             }
@@ -107,8 +118,40 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         );
 
 
+        val graalvmReachabilityMetadataRepo = getRepositories().ivy(repo -> {
+            repo.setName(GRAALVM_REACHABILITY_METADATA_REPOSITORY_NAME);
+            repo.setUrl(GRAALVM_REACHABILITY_METADATA_REPOSITORY_URL);
+            repo.patternLayout(layout -> {
+                layout.artifact(GRAALVM_REACHABILITY_METADATA_REPOSITORY_ARTIFACT_PATTERN);
+                layout.setM2compatible(false);
+            });
+            repo.metadataSources(MetadataSources::artifact);
+        });
+        getRepositories().exclusiveContent(exclusive -> exclusive
+            .forRepositories(graalvmReachabilityMetadataRepo)
+            .filter(content -> content.includeModule("oracle", "graalvm-reachability-metadata"))
+        );
+
+        val reachabilityMetadataConfProvider = getConfigurations().register(
+            REACHABILITY_METADATA_CONFIGURATION_NAME,
+            conf -> {
+                conf.setVisible(false);
+                conf.setCanBeConsumed(false);
+                conf.setCanBeResolved(true);
+                conf.setDescription("GraalVM reachability metadata");
+                conf.withDependencies(deps -> {
+                    val dependencyVersion = extension.getMinimize().getGraalvmReachabilityMetadataVersion().get();
+                    deps.add(getDependencies().create(format(
+                        "oracle:graalvm-reachability-metadata:%s@zip",
+                        dependencyVersion
+                    )));
+                });
+            }
+        );
+
+
         project.getPluginManager().withPlugin("java", __ -> {
-            configureJavaProject(project, extension, depsConfProvider, confProvider);
+            configureJavaProject(project, extension, depsConfProvider, confProvider, reachabilityMetadataConfProvider);
         });
     }
 
@@ -117,7 +160,8 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         Project project,
         ClassesRelocationExtension extension,
         NamedDomainObjectProvider<Configuration> relocationDepsConfProvider,
-        NamedDomainObjectProvider<Configuration> relocationConfProvider
+        NamedDomainObjectProvider<Configuration> relocationConfProvider,
+        NamedDomainObjectProvider<Configuration> reachabilityMetadataConfProvider
     ) {
         setLibraryElementToJar(project);
         extendCompileClasspathConfiguration(relocationDepsConfProvider);
@@ -135,9 +179,17 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
             copyManagedProperties(ClassesRelocationSettings.class, extension, action);
 
             action.getRelocationClasspath().from(relocationConfProvider);
-            action.getModuleIdentifiers().putAll(retrieveModuleIdentifiers(mainSourceSetProvider
-                .map(SourceSet::getCompileClasspath)
-            ));
+            action.getCompileAndRuntimeClasspath().from(getObjects().fileCollection()
+                .from(mainSourceSetProvider
+                    .map(SourceSet::getCompileClasspath)
+                )
+                .from(mainSourceSetProvider
+                    .map(SourceSet::getRuntimeClasspathConfigurationName)
+                    .flatMap(getConfigurations()::named)
+                )
+            );
+            action.getReachabilityMetadataClasspath().from(reachabilityMetadataConfProvider);
+            action.getModuleIdentifiers().putAll(retrieveModuleIdentifiers(action.getCompileAndRuntimeClasspath()));
 
             action.getJavaLauncher().convention(getJavaLauncherProviderFor(project));
 
@@ -193,15 +245,8 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         });
     }
 
-    private Provider<Map<String, String>> retrieveModuleIdentifiers(
-        Provider<? extends FileCollection> fileCollectionProvider
-    ) {
+    private Provider<Map<String, String>> retrieveModuleIdentifiers(FileCollection fileCollection) {
         return getProviders().provider(() -> {
-            val fileCollection = fileCollectionProvider.getOrNull();
-            if (fileCollection == null) {
-                return emptyMap();
-            }
-
             val moduleIdentifiers = new LinkedHashMap<String, String>();
             getModuleVersionIdentifiersForFilesIn(fileCollection).forEach((file, id) -> {
                 moduleIdentifiers.putIfAbsent(
@@ -223,10 +268,13 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
     protected abstract ConfigurationContainer getConfigurations();
 
     @Inject
-    protected abstract TaskContainer getTasks();
+    protected abstract RepositoryHandler getRepositories();
 
     @Inject
-    protected abstract ArtifactHandler getArtifacts();
+    protected abstract DependencyHandler getDependencies();
+
+    @Inject
+    protected abstract TaskContainer getTasks();
 
     @Inject
     protected abstract ObjectFactory getObjects();

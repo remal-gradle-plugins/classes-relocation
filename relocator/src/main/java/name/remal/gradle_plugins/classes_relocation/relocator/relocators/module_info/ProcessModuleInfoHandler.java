@@ -3,7 +3,7 @@ package name.remal.gradle_plugins.classes_relocation.relocator.relocators.module
 import static name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandlerResult.TASK_HANDLED;
 
 import lombok.val;
-import name.remal.gradle_plugins.classes_relocation.relocator.context.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandlerResult;
 

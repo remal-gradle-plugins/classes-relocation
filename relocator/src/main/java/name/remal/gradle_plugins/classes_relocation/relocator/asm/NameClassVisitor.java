@@ -1,6 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.asm;
 
-import static name.remal.gradle_plugins.classes_relocation.relocator.utils.AsmUtils.getLatestAsmApi;
+import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.getLatestAsmApi;
 import static name.remal.gradle_plugins.toolkit.LateInit.lateInit;
 
 import java.util.function.Consumer;

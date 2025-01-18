@@ -1,7 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.asm;
 
 import static java.util.Arrays.asList;
-import static name.remal.gradle_plugins.classes_relocation.relocator.utils.AsmUtils.getLatestAsmApi;
+import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.getLatestAsmApi;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.isNotEmpty;
 
 import com.google.common.collect.ImmutableSet;
