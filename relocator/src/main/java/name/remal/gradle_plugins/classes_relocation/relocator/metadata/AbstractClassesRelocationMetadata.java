@@ -13,7 +13,6 @@ import java.util.Objects;
 import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorLifecycleComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
@@ -63,10 +62,10 @@ public abstract class AbstractClassesRelocationMetadata<Type, Storage>
     @Override
     @OverridingMethodsMustInvokeSuper
     public void prepareRelocation(RelocationContext context) {
-        val resources = context.getRelocationClasspath().getResources(getResourceName());
+        var resources = context.getRelocationClasspath().getResources(getResourceName());
         resources.forEach(context::markResourceAsProcessed);
 
-        val storages = resources.stream()
+        var storages = resources.stream()
             .map(this::deserializeStorage)
             .filter(Objects::nonNull)
             .collect(toList());
@@ -74,7 +73,7 @@ public abstract class AbstractClassesRelocationMetadata<Type, Storage>
             return;
         }
 
-        val storage = storages.size() == 1
+        var storage = storages.size() == 1
             ? storages.get(0)
             : mergeStorages(storages);
 
@@ -88,9 +87,9 @@ public abstract class AbstractClassesRelocationMetadata<Type, Storage>
             return;
         }
 
-        val storage = createAndPopulateStorage();
-        val bytes = serializeStorage(storage);
-        val resource = newGeneratedResource(builder -> builder
+        var storage = createAndPopulateStorage();
+        var bytes = serializeStorage(storage);
+        var resource = newGeneratedResource(builder -> builder
             .withName(getResourceName())
             .withoutMultiReleaseVersion()
             .withContent(bytes)

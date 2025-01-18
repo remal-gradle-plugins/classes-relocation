@@ -3,7 +3,6 @@ package name.remal.gradle_plugins.classes_relocation.relocator;
 import static java.lang.String.format;
 import static java.util.Comparator.naturalOrder;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import lombok.Getter;
 import lombok.experimental.Delegate;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.class_info.ClassInfoComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.metadata.OriginalResourceNames;
@@ -104,12 +102,12 @@ class Implementations extends AbstractClosablesContainer {
     @SuppressWarnings({"unchecked", "rawtypes", "java:S3776"})
     public <T> List<T> getImplementations(Class<? extends ClassesRelocatorComponent> type) {
         return (List<T>) implementationsCache.computeIfAbsent(type, clazz -> {
-            val impls = new ArrayList(componentClasses.size());
-            for (val componentClass : componentClasses) {
+            var impls = new ArrayList(componentClasses.size());
+            for (var componentClass : componentClasses) {
                 if (clazz.isAssignableFrom(componentClass)) {
                     Object impl = getComponentFor(componentClass);
                     if (!clazz.isInstance(impl) && impl instanceof WithDelegate<?>) {
-                        val delegate = ((WithDelegate<?>) impl).delegate();
+                        var delegate = ((WithDelegate<?>) impl).delegate();
                         if (clazz.isInstance(delegate)) {
                             impl = delegate;
                         }
@@ -120,7 +118,7 @@ class Implementations extends AbstractClosablesContainer {
             if (Comparable.class.isAssignableFrom(clazz)) {
                 impls.sort(naturalOrder());
             }
-            return ImmutableList.copyOf(impls);
+            return List.copyOf(impls);
         });
     }
 

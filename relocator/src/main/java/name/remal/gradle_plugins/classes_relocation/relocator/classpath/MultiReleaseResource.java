@@ -11,7 +11,6 @@ import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import org.gradle.api.Action;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -20,13 +19,13 @@ import org.jetbrains.annotations.Unmodifiable;
 public class MultiReleaseResource {
 
     public static MultiReleaseResource buildMultiReleaseResources(Action<Consumer<Resource>> builder) {
-        val sortedResources = new TreeMap<Integer, Resource>();
+        var sortedResources = new TreeMap<Integer, Resource>();
         builder.execute(resource -> {
-            val multiReleaseVersion = defaultValue(resource.getMultiReleaseVersion(), -1);
+            var multiReleaseVersion = defaultValue(resource.getMultiReleaseVersion(), -1);
             sortedResources.putIfAbsent(multiReleaseVersion, resource);
         });
 
-        val resources = new LinkedHashMap<Integer, Resource>();
+        var resources = new LinkedHashMap<Integer, Resource>();
         sortedResources.forEach((multiReleaseVersion, resource) ->
             resources.putIfAbsent(
                 multiReleaseVersion > 0 ? multiReleaseVersion : null,

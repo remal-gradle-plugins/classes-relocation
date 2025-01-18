@@ -3,7 +3,6 @@ package name.remal.gradle_plugins.classes_relocation.relocator.relocators.type_c
 import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.toClassName;
 
 import java.util.Optional;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource.RelocateResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
@@ -13,9 +12,9 @@ public class ProcessTypeConstantHandler implements ImmediateTaskHandler<Type, Pr
 
     @Override
     public Optional<Type> handle(ProcessTypeConstant task, RelocationContext context) throws Throwable {
-        val type = task.getType();
+        var type = task.getType();
         if (type.getSort() == Type.OBJECT) {
-            val internalName = type.getInternalName();
+            var internalName = type.getInternalName();
             if (context.isRelocationClassInternalName(internalName)
                 && !internalName.equals("org/codehaus/groovy/runtime/ExtensionModule")
             ) {

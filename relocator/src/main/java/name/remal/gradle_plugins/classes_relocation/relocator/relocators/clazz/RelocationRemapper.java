@@ -6,7 +6,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant.ProcessStringConstant;
@@ -41,23 +40,23 @@ class RelocationRemapper extends Remapper {
     @Override
     public Object mapValue(Object value) {
         if (value instanceof String) {
-            val string = (String) value;
+            var string = (String) value;
             value = mappedStrings.computeIfAbsent(string, str ->
                 context.execute(new ProcessStringConstant(str, classInternalName, classResource), str)
             );
         }
 
         if (value instanceof Type) {
-            val type = (Type) value;
+            var type = (Type) value;
             value = mappedTypes.computeIfAbsent(type, curType ->
                 context.execute(new ProcessTypeConstant(curType, classResource), curType)
             );
         }
 
         if (value instanceof Handle) {
-            val handle = (Handle) value;
+            var handle = (Handle) value;
             if (context.isRelocationClassInternalName(handle.getOwner())) {
-                val isFieldHandle = handle.getTag() <= H_PUTSTATIC;
+                var isFieldHandle = handle.getTag() <= H_PUTSTATIC;
                 if (isFieldHandle) {
                     context.queue(new RelocateField(handle.getOwner(), handle.getName()));
                 } else {

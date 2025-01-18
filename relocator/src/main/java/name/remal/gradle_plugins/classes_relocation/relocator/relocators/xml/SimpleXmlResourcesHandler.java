@@ -8,14 +8,13 @@ import static javax.xml.stream.XMLInputFactory.IS_VALIDATING;
 import static javax.xml.stream.XMLInputFactory.SUPPORT_DTD;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.ResourceNameUtils.getNamePrefixOfResourceName;
 
-import com.google.common.collect.ImmutableList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource.RelocateResource;
@@ -26,7 +25,7 @@ public class SimpleXmlResourcesHandler extends BaseResourcesHandler {
     private static final XMLInputFactory XML_INPUT_FACTORY;
 
     static {
-        val factory = XMLInputFactory.newFactory();
+        var factory = XMLInputFactory.newFactory();
         factory.setProperty(IS_NAMESPACE_AWARE, false);
         factory.setProperty(IS_VALIDATING, false);
         factory.setProperty(IS_COALESCING, false);
@@ -39,10 +38,10 @@ public class SimpleXmlResourcesHandler extends BaseResourcesHandler {
 
     public SimpleXmlResourcesHandler() {
         super(
-            ImmutableList.of(
+            List.of(
                 "**/*.xml"
             ),
-            ImmutableList.of(
+            List.of(
             )
         );
     }
@@ -56,22 +55,22 @@ public class SimpleXmlResourcesHandler extends BaseResourcesHandler {
         Resource resource,
         RelocationContext context
     ) throws Throwable {
-        val resourceNamePrefix = getNamePrefixOfResourceName(resourceName);
+        var resourceNamePrefix = getNamePrefixOfResourceName(resourceName);
 
-        try (val inputStream = resource.open()) {
-            val events = XML_INPUT_FACTORY.createXMLEventReader(
+        try (var inputStream = resource.open()) {
+            var events = XML_INPUT_FACTORY.createXMLEventReader(
                 resource.toString(),
                 inputStream
             );
             try {
                 while (events.hasNext()) {
-                    val untypedEvent = events.nextEvent();
+                    var untypedEvent = events.nextEvent();
                     if (untypedEvent.isStartElement()) {
                         StartElement event = untypedEvent.asStartElement();
                         Iterator<Attribute> attrs = event.getAttributes();
                         while (attrs.hasNext()) {
                             Attribute attr = attrs.next();
-                            val string = attr.getValue();
+                            var string = attr.getValue();
                             if (context.isRelocationResourceName(resourceNamePrefix + string)) {
                                 context.executeOptional(new RelocateResource(
                                     resourceNamePrefix + string,
@@ -82,12 +81,12 @@ public class SimpleXmlResourcesHandler extends BaseResourcesHandler {
                     }
 
                     if (untypedEvent.isCharacters()) {
-                        val event = untypedEvent.asCharacters();
+                        var event = untypedEvent.asCharacters();
                         if (event.isWhiteSpace()) {
                             continue;
                         }
 
-                        val string = event.getData();
+                        var string = event.getData();
                         if (context.isRelocationResourceName(resourceNamePrefix + string)) {
                             context.executeOptional(new RelocateResource(
                                 resourceNamePrefix + string,

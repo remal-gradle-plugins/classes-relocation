@@ -6,7 +6,6 @@ import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTask;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskTransformer;
@@ -25,8 +24,8 @@ public class RelocateClassTaskTransformer implements QueuedTaskTransformer {
             return Optional.empty();
         }
 
-        val relocateClassTask = (RelocateClassTask) task;
-        val currentRelocateClassCombinedTask = currentRelocateClassCombinedTasks.computeIfAbsent(
+        var relocateClassTask = (RelocateClassTask) task;
+        var currentRelocateClassCombinedTask = currentRelocateClassCombinedTasks.computeIfAbsent(
             relocateClassTask.getClassInternalName(),
             internalClassName -> new RelocateClassCombined(internalClassName) {
                 @Override
@@ -37,12 +36,12 @@ public class RelocateClassTaskTransformer implements QueuedTaskTransformer {
         );
 
         if (relocateClassTask instanceof RelocateField) {
-            val relocateField = (RelocateField) relocateClassTask;
+            var relocateField = (RelocateField) relocateClassTask;
             currentRelocateClassCombinedTask.getFields().add(relocateField.getFieldName());
         }
 
         if (relocateClassTask instanceof RelocateMethod) {
-            val relocateMethod = (RelocateMethod) relocateClassTask;
+            var relocateMethod = (RelocateMethod) relocateClassTask;
             currentRelocateClassCombinedTask.getMethods().add(relocateMethod.getMethodKey());
         }
 

@@ -6,7 +6,6 @@ import static org.jetbrains.annotations.ApiStatus.Internal;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import javax.annotation.Nullable;
-import lombok.val;
 import org.apiguardian.api.API;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
@@ -44,14 +43,14 @@ public class RelocationAnnotationsClassVisitor extends ClassVisitor {
         super.visit(version, access, name, signature, superName, interfaces);
 
         {
-            val av = super.visitAnnotation(GENERATED_DESCRIPTOR, false);
+            var av = super.visitAnnotation(GENERATED_DESCRIPTOR, false);
             if (av != null) {
                 av.visitEnd();
             }
         }
 
         {
-            val av = super.visitAnnotation(RELOCATED_CLASS_DESCRIPTOR, false);
+            var av = super.visitAnnotation(RELOCATED_CLASS_DESCRIPTOR, false);
             if (av != null) {
                 if (relocationSource != null && !relocationSource.isEmpty()) {
                     av.visit("source", relocationSource);
@@ -61,14 +60,14 @@ public class RelocationAnnotationsClassVisitor extends ClassVisitor {
         }
 
         {
-            val av = super.visitAnnotation(JETBRAINS_INTERNAL_DESCRIPTOR, false);
+            var av = super.visitAnnotation(JETBRAINS_INTERNAL_DESCRIPTOR, false);
             if (av != null) {
                 av.visitEnd();
             }
         }
 
         {
-            val av = super.visitAnnotation(APIGUARDIAN_API_DESCRIPTOR, false);
+            var av = super.visitAnnotation(APIGUARDIAN_API_DESCRIPTOR, false);
             if (av != null) {
                 av.visitEnum("status", getClassDescriptor(API.Status.class), "INTERNAL");
                 av.visitEnd();
@@ -76,7 +75,7 @@ public class RelocationAnnotationsClassVisitor extends ClassVisitor {
         }
 
         {
-            val av = super.visitAnnotation(SUPPRESS_FB_WARNINGS_DESCRIPTOR, false);
+            var av = super.visitAnnotation(SUPPRESS_FB_WARNINGS_DESCRIPTOR, false);
             if (av != null) {
                 av.visit("justification", "relocated class");
                 av.visitEnd();

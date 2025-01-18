@@ -14,7 +14,6 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import javax.annotation.Nullable;
-import lombok.val;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -26,10 +25,10 @@ class ResourceContainerZip extends ResourceContainerBase {
     public ResourceContainerZip(Path path) {
         super(path);
         this.zipFile = lazyValue(() -> {
-            val zipFileBuilder = ZipFile.builder().setPath(path);
-            val fileSize = Files.size(path);
+            var zipFileBuilder = ZipFile.builder().setPath(path);
+            var fileSize = Files.size(path);
             if (fileSize <= MAX_ARCHIVE_FILE_SIZE_TO_LOAD_IN_HEAP_BYTES) {
-                val bytes = readAllBytes(path);
+                var bytes = readAllBytes(path);
                 zipFileBuilder.setByteArray(bytes);
             }
             return closables.registerCloseable(zipFileBuilder.get());
@@ -38,7 +37,7 @@ class ResourceContainerZip extends ResourceContainerBase {
 
     @Override
     protected Collection<Resource> readClasspathElementResources() {
-        val processedEntryNames = new LinkedHashSet<>();
+        var processedEntryNames = new LinkedHashSet<>();
         return list(zipFile.get().getEntries()).stream()
             .filter(not(ZipArchiveEntry::isDirectory))
             .filter(entry -> processedEntryNames.add(entry.getName()))

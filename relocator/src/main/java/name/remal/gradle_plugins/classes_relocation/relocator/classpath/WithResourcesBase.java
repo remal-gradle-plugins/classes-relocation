@@ -1,9 +1,9 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.toClassInternalName;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.ResourceKey.resourceKeyFor;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyListProxy;
@@ -23,7 +23,6 @@ import java.util.Set;
 import lombok.AccessLevel;
 import lombok.CustomLog;
 import lombok.Getter;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils;
 import name.remal.gradle_plugins.toolkit.ClosablesContainer;
 import org.jetbrains.annotations.Unmodifiable;
@@ -44,7 +43,7 @@ abstract class WithResourcesBase extends WithIdentityEqualsHashCode implements W
 
     @Unmodifiable
     private final List<Resource> allResources = asLazyListProxy(() ->
-        readResources().stream().collect(toImmutableList())
+        readResources().stream().collect(toUnmodifiableList())
     );
 
     protected abstract Collection<Resource> readResources() throws Exception;
@@ -52,19 +51,19 @@ abstract class WithResourcesBase extends WithIdentityEqualsHashCode implements W
 
     @Unmodifiable
     private final Map<String, @Unmodifiable List<Resource>> resources = asLazyMapProxy(() -> {
-        val map = getAllResources().stream()
-            .collect(groupingBy(Resource::getName, LinkedHashMap::new, toImmutableList()));
+        var map = getAllResources().stream()
+            .collect(groupingBy(Resource::getName, LinkedHashMap::new, toUnmodifiableList()));
         return ImmutableMap.copyOf(map);
     });
 
 
     private final Map<String, List<Resource>> internalClassNameToResources = asLazyMapProxy(() -> {
-        val builder = ImmutableMap.<String, List<Resource>>builder();
-        val processedResourceKeys = new LinkedHashSet<ResourceKey>();
-        for (val internalClassName : getClassInternalNames()) {
-            val classResources = getResources(internalClassName + ".class").stream()
+        var builder = ImmutableMap.<String, List<Resource>>builder();
+        var processedResourceKeys = new LinkedHashSet<ResourceKey>();
+        for (var internalClassName : getClassInternalNames()) {
+            var classResources = getResources(internalClassName + ".class").stream()
                 .filter(resource -> processedResourceKeys.add(resourceKeyFor(resource)))
-                .collect(toImmutableList());
+                .collect(toUnmodifiableList());
             builder.put(internalClassName, classResources);
         }
         return builder.build();
@@ -73,7 +72,7 @@ abstract class WithResourcesBase extends WithIdentityEqualsHashCode implements W
     @Override
     @Unmodifiable
     public List<Resource> getClassResources(String classNameOrInternalName) {
-        val internalClassName = toClassInternalName(classNameOrInternalName);
+        var internalClassName = toClassInternalName(classNameOrInternalName);
         return defaultValue(internalClassNameToResources.get(internalClassName), emptyList());
     }
 

@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.objectweb.asm.Type.getType;
 
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocatorTestLogic;
 import org.objectweb.asm.Type;
 
@@ -13,23 +12,23 @@ public class GuavaClassDescriptorTestLogic implements ClassesRelocatorTestLogic 
     @Override
     public void assertTestLogic() {
         {
-            val classDescriptor = "Lcom/google/common/base/Functions;";
-            val type = getType(classDescriptor);
+            var classDescriptor = "Lcom/google/common/base/Functions;";
+            var type = getType(classDescriptor);
             assertEquals(Type.OBJECT, type.getSort());
-            val internalClassName = type.getInternalName();
-            val className = internalClassName.replace('/', '.');
+            var internalClassName = type.getInternalName();
+            var className = internalClassName.replace('/', '.');
             assertDoesNotThrow(() -> Class.forName(className));
         }
 
         {
-            val classDescriptor = "[[Lcom/google/common/base/Optional;";
+            var classDescriptor = "[[Lcom/google/common/base/Optional;";
             Type type = getType(classDescriptor);
             assertEquals(Type.ARRAY, type.getSort());
             assertEquals(2, type.getDimensions());
             type = type.getElementType();
             assertEquals(Type.OBJECT, type.getSort());
-            val internalClassName = type.getInternalName();
-            val className = internalClassName.replace('/', '.');
+            var internalClassName = type.getInternalName();
+            var className = internalClassName.replace('/', '.');
             assertDoesNotThrow(() -> Class.forName(className));
         }
     }

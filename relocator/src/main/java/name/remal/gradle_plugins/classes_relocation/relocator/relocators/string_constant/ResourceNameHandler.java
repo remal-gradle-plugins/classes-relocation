@@ -8,7 +8,6 @@ import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 
 import java.util.Optional;
 import java.util.function.Predicate;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource.RelocateResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
@@ -18,11 +17,11 @@ public class ResourceNameHandler implements ImmediateTaskHandler<String, Process
     @Override
     @SuppressWarnings("java:S3776")
     public Optional<String> handle(ProcessStringConstant task, RelocationContext context) {
-        val string = task.getString();
+        var string = task.getString();
 
         if (string.startsWith("classpath:")) {
-            val newTask = task.withString(string.substring("classpath:".length()));
-            val result = handle(newTask, context);
+            var newTask = task.withString(string.substring("classpath:".length()));
+            var result = handle(newTask, context);
             if (result.isPresent()) {
                 return result;
             }
@@ -41,8 +40,8 @@ public class ResourceNameHandler implements ImmediateTaskHandler<String, Process
 
 
         {
-            val resourceName = string.substring(startPos);
-            val relocatedResourcesNames = context.getRelocationClasspath().getResources().keySet().stream()
+            var resourceName = string.substring(startPos);
+            var relocatedResourcesNames = context.getRelocationClasspath().getResources().keySet().stream()
                 .filter(byResourceName(resourceName))
                 .filter(not(ResourceNameHandler::isExcludedResource))
                 .map(currentResourceName -> context.executeOptional(new RelocateResource(
@@ -57,7 +56,7 @@ public class ResourceNameHandler implements ImmediateTaskHandler<String, Process
             } else if (relocatedResourcesNames.size() == 1) {
                 return Optional.of((absolute ? "/" : "") + relocatedResourcesNames.get(0));
             } else {
-                val hasNamesStartedWithRelocatedResourceNamePrefix = relocatedResourcesNames.stream()
+                var hasNamesStartedWithRelocatedResourceNamePrefix = relocatedResourcesNames.stream()
                     .anyMatch(name -> name.startsWith(context.getRelocatedResourceNamePrefix()));
                 if (hasNamesStartedWithRelocatedResourceNamePrefix) {
                     return Optional.of(
@@ -70,9 +69,9 @@ public class ResourceNameHandler implements ImmediateTaskHandler<String, Process
         }
 
         if (!absolute) {
-            val classInternalName = task.getClassInternalName();
-            val resourceNamePrefix = getNamePrefixOfResourceName(classInternalName);
-            val resourceName = resourceNamePrefix + string;
+            var classInternalName = task.getClassInternalName();
+            var resourceNamePrefix = getNamePrefixOfResourceName(classInternalName);
+            var resourceName = resourceNamePrefix + string;
             if (isExcludedResource(resourceName)) {
                 return Optional.of(string);
             }

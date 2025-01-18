@@ -5,7 +5,6 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.relocators.
 import static name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant.StringHandlerUtils.isClassName;
 
 import java.util.Optional;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
 
@@ -13,14 +12,14 @@ public class ClassNameHandler implements ImmediateTaskHandler<String, ProcessStr
 
     @Override
     public Optional<String> handle(ProcessStringConstant task, RelocationContext context) {
-        val className = task.getString();
+        var className = task.getString();
         if (!isClassName(className)
             || !context.isRelocationClassName(className)
         ) {
             return Optional.empty();
         }
 
-        val classInternalName = toClassInternalName(className);
+        var classInternalName = toClassInternalName(className);
         context.queue(relocateNoArgConstructor(classInternalName));
 
         return Optional.of(context.getRelocatedClassNamePrefix() + className);

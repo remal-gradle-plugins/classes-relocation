@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.util.Collection;
 import lombok.CustomLog;
 import lombok.Getter;
-import lombok.val;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 
 @Getter
@@ -38,7 +37,7 @@ abstract class ClasspathElementBase extends WithResourcesBase implements Classpa
 
 
     private final LazyValue<String> moduleName = lazyValue(() -> {
-        val moduleName = parseModuleName(
+        var moduleName = parseModuleName(
             () -> getResources(MODULE_INFO_NAME).stream()
                 .findFirst()
                 .map(sneakyThrows(Resource::open))

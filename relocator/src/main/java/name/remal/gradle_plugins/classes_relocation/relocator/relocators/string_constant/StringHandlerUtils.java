@@ -5,7 +5,6 @@ import static java.lang.Character.isJavaIdentifierStart;
 import static lombok.AccessLevel.PRIVATE;
 
 import lombok.NoArgsConstructor;
-import lombok.val;
 
 @NoArgsConstructor(access = PRIVATE)
 abstract class StringHandlerUtils {
@@ -30,19 +29,19 @@ abstract class StringHandlerUtils {
 
         int startPos = 0;
         while (startPos < string.length()) {
-            val delimPos = string.indexOf(delimiter, startPos);
-            val endPos = delimPos >= 0 ? delimPos : string.length();
+            var delimPos = string.indexOf(delimiter, startPos);
+            var endPos = delimPos >= 0 ? delimPos : string.length();
             if (startPos >= endPos) {
                 return false;
             }
 
-            val firstCh = string.charAt(startPos);
+            var firstCh = string.charAt(startPos);
             if (!isJavaIdentifierStart(firstCh)) {
                 return false;
             }
 
             for (int i = startPos + 1; i < endPos; i++) {
-                val ch = string.charAt(i);
+                var ch = string.charAt(i);
                 if (!isJavaIdentifierPart(ch)) {
                     return false;
                 }

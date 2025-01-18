@@ -1,8 +1,8 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.reachability;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static name.remal.gradle_plugins.classes_relocation.relocator.reachability.ClassReachabilityConfigUtils.convertClassReachabilityConfigToMap;
 import static name.remal.gradle_plugins.classes_relocation.relocator.reachability.ClassReachabilityConfigUtils.convertMapToClassReachabilityConfig;
 import static name.remal.gradle_plugins.classes_relocation.relocator.reachability.ClassReachabilityConfigUtils.groupClassReachabilityConfigs;
@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 import javax.annotation.Nullable;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassReachabilityConfig;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
@@ -31,14 +30,14 @@ public class ClassReachabilityConfigs
     public List<ClassReachabilityConfig> getClassReachabilityConfigs(String classInternalName) {
         return getCurrent().stream()
             .filter(config -> config.getClassInternalName().equals(classInternalName))
-            .collect(toImmutableList());
+            .collect(toUnmodifiableList());
     }
 
     @Unmodifiable
     public List<ClassReachabilityConfig> getClassReachabilityConfigsEnabledByClass(String enablingClassInternalName) {
         return getCurrent().stream()
             .filter(config -> enablingClassInternalName.equals(config.getOnReachedClassInternalName()))
-            .collect(toImmutableList());
+            .collect(toUnmodifiableList());
     }
 
 
@@ -54,7 +53,7 @@ public class ClassReachabilityConfigs
             return null;
         }
 
-        val map = (Map<?, ?>) element;
+        var map = (Map<?, ?>) element;
         return convertMapToClassReachabilityConfig(map);
     }
 
@@ -82,7 +81,7 @@ public class ClassReachabilityConfigs
     }
 
     private void loadGeneralMetadataResources(RelocationContext context) {
-        val generalMetadataResources = Stream.concat(
+        var generalMetadataResources = Stream.concat(
             context.getReachabilityMetadataResourceContainer()
                 .getAllResources(filter -> filter.include(
                     "**/reachability-metadata.json"
@@ -94,13 +93,13 @@ public class ClassReachabilityConfigs
                 )).stream()
         ).collect(toList());
 
-        for (val resource : generalMetadataResources) {
-            val generalMetadata = parseJsonObject(resource);
+        for (var resource : generalMetadataResources) {
+            var generalMetadata = parseJsonObject(resource);
             if (generalMetadata == null) {
                 continue;
             }
 
-            val reflectMetadata = castOrWarn(
+            var reflectMetadata = castOrWarn(
                 generalMetadata.get("reflection"),
                 collectionClass(),
                 "reflection",
@@ -111,13 +110,13 @@ public class ClassReachabilityConfigs
     }
 
     private void loadReflectMetadataResources(RelocationContext context) {
-        val reflectMetadataResources = context.getReachabilityMetadataResourceContainer()
+        var reflectMetadataResources = context.getReachabilityMetadataResourceContainer()
             .getAllResources(filter -> filter.include(
                 "**/reflect-config.json"
             ));
 
-        for (val resource : reflectMetadataResources) {
-            val reflectMetadata = parseJsonArray(resource);
+        for (var resource : reflectMetadataResources) {
+            var reflectMetadata = parseJsonArray(resource);
             loadReflectMetadata(reflectMetadata, resource);
         }
     }
@@ -127,13 +126,13 @@ public class ClassReachabilityConfigs
             return;
         }
 
-        for (val reflection : reflectMetadata) {
-            val reflectionMap = castOrWarn(
+        for (var reflection : reflectMetadata) {
+            var reflectionMap = castOrWarn(
                 reflection,
                 mapClass(),
                 resource
             );
-            val config = convertMapToClassReachabilityConfig(reflectionMap);
+            var config = convertMapToClassReachabilityConfig(reflectionMap);
             if (config != null) {
                 getCurrent().add(config);
             }
@@ -142,18 +141,18 @@ public class ClassReachabilityConfigs
 
 
     private void addClassReachabilityConfigsFromMinimizationExclusions(RelocationContext context) {
-        val exclusionFilter = context.getConfig().getMinimization().getResourcesFilter();
+        var exclusionFilter = context.getConfig().getMinimization().getResourcesFilter();
         if (exclusionFilter.isEmpty()) {
             return;
         }
 
-        val excludedResources = context.getRelocationClasspath()
+        var excludedResources = context.getRelocationClasspath()
             .getAllResources(filter -> filter
                 .copyFrom(exclusionFilter)
                 .negate()
             );
 
-        val excludedClassInternalNames = excludedResources.stream()
+        var excludedClassInternalNames = excludedResources.stream()
             .map(Resource::getName)
             .filter(resourceName -> resourceName.endsWith(".class"))
             .map(resourceName -> resourceName.substring(0, resourceName.length() - ".class".length()))

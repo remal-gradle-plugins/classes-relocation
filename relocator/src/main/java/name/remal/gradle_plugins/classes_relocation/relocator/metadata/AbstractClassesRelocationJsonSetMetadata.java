@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import javax.annotation.Nullable;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 
 public abstract class AbstractClassesRelocationJsonSetMetadata<Element>
@@ -33,7 +32,7 @@ public abstract class AbstractClassesRelocationJsonSetMetadata<Element>
     @Nullable
     @Override
     protected Set<Object> deserializeStorage(Resource resource) {
-        val jsonArray = parseJsonArray(resource);
+        var jsonArray = parseJsonArray(resource);
         return jsonArray != null ? new LinkedHashSet<>(jsonArray) : null;
     }
 
@@ -68,7 +67,7 @@ public abstract class AbstractClassesRelocationJsonSetMetadata<Element>
 
     @Override
     protected byte[] serializeStorage(Set<Object> list) {
-        val text = writeJsonArrayToString(list);
+        var text = writeJsonArrayToString(list);
         return text.getBytes(UTF_8);
     }
 

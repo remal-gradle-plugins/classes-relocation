@@ -10,7 +10,6 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.utils.Resou
 import static name.remal.gradle_plugins.toolkit.FunctionUtils.toSubstringedBefore;
 import static name.remal.gradle_plugins.toolkit.InputOutputStreamUtils.readStringFromStream;
 
-import com.google.common.collect.ImmutableList;
 import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -20,7 +19,6 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ClasspathElement;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
@@ -34,10 +32,10 @@ public class MetaInfServicesResourcesHandler extends BaseResourcesHandler {
 
     public MetaInfServicesResourcesHandler() {
         super(
-            ImmutableList.of(
+            List.of(
                 "META-INF/services/*"
             ),
-            ImmutableList.of(
+            List.of(
                 "META-INF/services/org.codehaus.groovy.runtime.ExtensionModule"
             )
         );
@@ -55,7 +53,7 @@ public class MetaInfServicesResourcesHandler extends BaseResourcesHandler {
         return Optional.of(newGeneratedResource(builder -> builder
             .withSourceResources(candidateResources)
             .withContent(() -> {
-                val mergedServices = parseServices(candidateResources);
+                var mergedServices = parseServices(candidateResources);
                 return join("\n", mergedServices).getBytes(CHARSET);
             })
         ));
@@ -69,16 +67,16 @@ public class MetaInfServicesResourcesHandler extends BaseResourcesHandler {
         Resource resource,
         RelocationContext context
     ) {
-        val updatedResourceName = resourceNameWithFileNamePrefix(
+        var updatedResourceName = resourceNameWithFileNamePrefix(
             resource,
             context.getRelocatedClassNamePrefix()
         );
 
-        val services = parseServices(ImmutableList.of(resource));
-        val relocatedServices = services.stream()
+        var services = parseServices(List.of(resource));
+        var relocatedServices = services.stream()
             .map(serviceImpl -> relocateServiceImplementation(serviceImpl, context))
             .collect(toList());
-        val content = join("\n", relocatedServices).getBytes(CHARSET);
+        var content = join("\n", relocatedServices).getBytes(CHARSET);
 
         return Optional.of(newGeneratedResource(builder -> builder
             .withSourceResource(resource)
@@ -90,10 +88,10 @@ public class MetaInfServicesResourcesHandler extends BaseResourcesHandler {
 
     @SneakyThrows
     private static Set<String> parseServices(Collection<? extends Resource> resources) {
-        val services = new LinkedHashSet<String>();
-        for (val resource : resources) {
+        var services = new LinkedHashSet<String>();
+        for (var resource : resources) {
             final String content;
-            try (val inputStream = resource.open()) {
+            try (var inputStream = resource.open()) {
                 content = readStringFromStream(inputStream, CHARSET);
             }
 
@@ -107,7 +105,7 @@ public class MetaInfServicesResourcesHandler extends BaseResourcesHandler {
     }
 
     private static String relocateServiceImplementation(String serviceImplClassName, RelocationContext context) {
-        val serviceImplClassInternalName = toClassInternalName(serviceImplClassName);
+        var serviceImplClassInternalName = toClassInternalName(serviceImplClassName);
         if (context.isRelocationClassInternalName(serviceImplClassInternalName)) {
             context.queue(relocateNoArgConstructor(serviceImplClassInternalName));
             return context.getRelocatedClassNamePrefix() + serviceImplClassName;

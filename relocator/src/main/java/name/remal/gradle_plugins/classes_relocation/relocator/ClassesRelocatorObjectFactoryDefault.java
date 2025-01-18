@@ -6,7 +6,6 @@ import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.isPri
 import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.makeAccessible;
 
 import lombok.NoArgsConstructor;
-import lombok.val;
 
 @NoArgsConstructor(access = PRIVATE)
 class ClassesRelocatorObjectFactoryDefault implements ClassesRelocatorObjectFactory {
@@ -16,7 +15,7 @@ class ClassesRelocatorObjectFactoryDefault implements ClassesRelocatorObjectFact
 
     @Override
     public <T> T create(Class<T> clazz) throws Throwable {
-        val ctor = clazz.getDeclaredConstructor();
+        var ctor = clazz.getDeclaredConstructor();
         if (isPrivate(ctor)) {
             throw new AssertionError("Can't use private constructor for instantiation: " + ctor);
         } else if (isPackagePrivate(ctor)) {

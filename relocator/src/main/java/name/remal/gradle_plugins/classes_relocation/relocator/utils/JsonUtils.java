@@ -12,7 +12,6 @@ import javax.annotation.Nullable;
 import lombok.CustomLog;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import org.gradle.api.logging.LogLevel;
 import org.intellij.lang.annotations.Language;
@@ -37,13 +36,13 @@ public abstract class JsonUtils {
 
     @Language("JSON")
     public static String writeJsonObjectToString(Map<String, ?> map) {
-        val jsonObject = new JSONObject(map);
+        var jsonObject = new JSONObject(map);
         return jsonObject.toString(JSON_INDENT);
     }
 
     @Language("JSON")
     public static String writeJsonArrayToString(Collection<?> collection) {
-        val jsonObject = new JSONArray(collection);
+        var jsonObject = new JSONArray(collection);
         return jsonObject.toString(JSON_INDENT);
     }
 
@@ -56,9 +55,9 @@ public abstract class JsonUtils {
             return null;
         }
 
-        val content = resource.readText(UTF_8);
+        var content = resource.readText(UTF_8);
         try {
-            val jsonObject = new JSONObject(content, JSON_PARSER_CONFIGURATION);
+            var jsonObject = new JSONObject(content, JSON_PARSER_CONFIGURATION);
             removeJsonNullValues(jsonObject);
             return jsonObject.toMap();
 
@@ -80,9 +79,9 @@ public abstract class JsonUtils {
             return null;
         }
 
-        val content = resource.readText(UTF_8);
+        var content = resource.readText(UTF_8);
         try {
-            val jsonArray = new JSONArray(content, JSON_PARSER_CONFIGURATION);
+            var jsonArray = new JSONArray(content, JSON_PARSER_CONFIGURATION);
             removeJsonNullValues(jsonArray);
             return jsonArray.toList();
 
@@ -109,8 +108,8 @@ public abstract class JsonUtils {
     }
 
     private static void removeJsonNullValues(JSONObject jsonObject) {
-        for (val key : new ArrayList<>(jsonObject.keySet())) {
-            val value = jsonObject.opt(key);
+        for (var key : new ArrayList<>(jsonObject.keySet())) {
+            var value = jsonObject.opt(key);
             if (isNullJsonValue(value)) {
                 jsonObject.remove(key);
                 continue;
@@ -123,7 +122,7 @@ public abstract class JsonUtils {
     @SuppressWarnings("java:S127")
     private static void removeJsonNullValues(JSONArray jsonArray) {
         for (int i = 0; i < jsonArray.length(); i++) {
-            val value = jsonArray.opt(i);
+            var value = jsonArray.opt(i);
             if (isNullJsonValue(value)) {
                 jsonArray.remove(i);
                 --i;

@@ -8,14 +8,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import java.time.Instant;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocatorTestLogic;
 
 public class JacksonJavaTimeTestLogic implements ClassesRelocatorTestLogic {
 
     @Override
     public void assertTestLogic() throws Throwable {
-        val objectMapper = JsonMapper.builder()
+        var objectMapper = JsonMapper.builder()
             .findAndAddModules()
             .disable(ADJUST_DATES_TO_CONTEXT_TIME_ZONE)
             .disable(WRITE_DATES_WITH_CONTEXT_TIME_ZONE)
@@ -23,7 +22,7 @@ public class JacksonJavaTimeTestLogic implements ClassesRelocatorTestLogic {
             .disable(READ_DATE_TIMESTAMPS_AS_NANOSECONDS)
             .build();
 
-        val instant = Instant.parse("2024-11-13T17:03:05Z");
+        var instant = Instant.parse("2024-11-13T17:03:05Z");
 
         // serialization:
         assertEquals(

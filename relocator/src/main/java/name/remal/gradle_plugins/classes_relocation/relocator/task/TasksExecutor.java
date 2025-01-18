@@ -11,7 +11,6 @@ import java.util.Set;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 
 @RequiredArgsConstructor
@@ -30,7 +29,7 @@ public class TasksExecutor {
     public <RESULT> Optional<RESULT> executeOptional(ImmediateTask<RESULT> task) {
         for (ImmediateTaskHandler handler : context.getRelocationComponents(ImmediateTaskHandler.class)) {
             if (handler.getSupportedTaskClass().isAssignableFrom(task.getClass())) {
-                val result = handler.handle(task, context);
+                var result = handler.handle(task, context);
                 if (result.isPresent()) {
                     return result;
                 }
@@ -64,10 +63,10 @@ public class TasksExecutor {
             return;
         }
 
-        for (val transformer : context.getRelocationComponents(QueuedTaskTransformer.class)) {
-            val transformed = transformer.transform(task, context);
+        for (var transformer : context.getRelocationComponents(QueuedTaskTransformer.class)) {
+            var transformed = transformer.transform(task, context);
             if (transformed.isPresent()) {
-                for (val newTask : transformed.get()) {
+                for (var newTask : transformed.get()) {
                     queue(newTask);
                 }
                 return;
@@ -80,7 +79,7 @@ public class TasksExecutor {
 
     public void executeQueuedTasks() {
         while (true) {
-            val task = queuedTasks.poll();
+            var task = queuedTasks.poll();
             if (task == null) {
                 break;
             }
@@ -94,7 +93,7 @@ public class TasksExecutor {
     private void executeQueuedTask(QueuedTask task) {
         for (QueuedTaskHandler handler : context.getRelocationComponents(QueuedTaskHandler.class)) {
             if (handler.getSupportedTaskClass().isAssignableFrom(task.getClass())) {
-                val result = handler.handle(task, context);
+                var result = handler.handle(task, context);
                 if (result == TASK_HANDLED) {
                     task.onHandled();
                     return;

@@ -18,7 +18,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
-import lombok.val;
 import name.remal.gradle_plugins.generate_sources.generators.java_like.JavaLikeContent;
 import name.remal.gradle_plugins.toolkit.testkit.functional.GradleProject;
 import name.remal.gradle_plugins.toolkit.testkit.functional.SuppressedMessage;
@@ -449,15 +448,15 @@ class ClassesRelocationPluginFunctionalTest {
         Path publishedJarPath = getPublishedJarPath();
         assertThat(publishedJarPath).isRegularFile();
 
-        try (val classLoader = new URLClassLoader(new URL[]{publishedJarPath.toUri().toURL()}, null)) {
+        try (var classLoader = new URLClassLoader(new URL[]{publishedJarPath.toUri().toURL()}, null)) {
             assertThrows(ClassNotFoundException.class, () ->
                 // this class should NOT be available in the ClassLoader
                 classLoader.loadClass("com.google.common.collect.ImmutableList")
             );
 
-            val logic = classLoader.loadClass("pkg.Logic");
-            val testMethod = logic.getMethod("execute");
-            @SuppressWarnings("unchecked") val testList = (List<String>) testMethod.invoke(null);
+            var logic = classLoader.loadClass("pkg.Logic");
+            var testMethod = logic.getMethod("execute");
+            @SuppressWarnings("unchecked") var testList = (List<String>) testMethod.invoke(null);
             assertThat(testList).containsExactly("a", "b", "c");
         }
     }
@@ -480,7 +479,7 @@ class ClassesRelocationPluginFunctionalTest {
     }
 
     private static Collection<Path> getLibraryFilePaths(String libraryName) {
-        val classpathString = System.getProperty(libraryName + "-classpath");
+        var classpathString = System.getProperty(libraryName + "-classpath");
         if (classpathString == null) {
             throw new IllegalStateException("Unknown library: " + libraryName);
         }

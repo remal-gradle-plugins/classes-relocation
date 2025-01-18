@@ -7,7 +7,6 @@ import java.util.Queue;
 import java.util.Set;
 import lombok.EqualsAndHashCode;
 import lombok.experimental.Delegate;
-import lombok.val;
 
 @EqualsAndHashCode
 public class UniqueArrayQueue<E> implements Queue<E> {
@@ -29,7 +28,7 @@ public class UniqueArrayQueue<E> implements Queue<E> {
     @Override
     public boolean addAll(Collection<? extends E> collection) {
         boolean result = false;
-        for (val element : collection) {
+        for (var element : collection) {
             result |= add(element);
         }
         return result;

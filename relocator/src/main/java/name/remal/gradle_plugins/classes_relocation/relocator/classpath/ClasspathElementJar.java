@@ -18,7 +18,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.jar.Manifest;
 import javax.annotation.Nullable;
-import lombok.val;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -31,23 +30,23 @@ class ClasspathElementJar extends ClasspathElementBase {
     public ClasspathElementJar(Path path) {
         super(path);
         this.zipFile = lazyValue(() -> {
-            val zipFileBuilder = ZipFile.builder().setPath(path);
-            val fileSize = Files.size(path);
+            var zipFileBuilder = ZipFile.builder().setPath(path);
+            var fileSize = Files.size(path);
             if (fileSize <= MAX_ARCHIVE_FILE_SIZE_TO_LOAD_IN_HEAP_BYTES) {
-                val bytes = readAllBytes(path);
+                var bytes = readAllBytes(path);
                 zipFileBuilder.setByteArray(bytes);
             }
             return closables.registerCloseable(zipFileBuilder.get());
         });
         this.multiRelease = lazyValue(() -> {
-            val zipFile = this.zipFile.get();
-            val manifestEntry = zipFile.getEntry(MANIFEST_NAME);
+            var zipFile = this.zipFile.get();
+            var manifestEntry = zipFile.getEntry(MANIFEST_NAME);
             if (manifestEntry == null) {
                 return false;
             }
 
-            val manifest = new Manifest();
-            try (val in = zipFile.getInputStream(manifestEntry)) {
+            var manifest = new Manifest();
+            try (var in = zipFile.getInputStream(manifestEntry)) {
                 manifest.read(in);
             }
 
@@ -62,7 +61,7 @@ class ClasspathElementJar extends ClasspathElementBase {
 
     @Override
     protected Collection<Resource> readClasspathElementResources() {
-        val processedEntryNames = new LinkedHashSet<>();
+        var processedEntryNames = new LinkedHashSet<>();
         return list(zipFile.get().getEntries()).stream()
             .filter(not(ZipArchiveEntry::isDirectory))
             .filter(entry -> processedEntryNames.add(entry.getName()))

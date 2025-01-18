@@ -6,7 +6,6 @@ import com.google.errorprone.annotations.ForOverride;
 import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 
 @Getter
 @RequiredArgsConstructor
@@ -18,7 +17,7 @@ abstract class ResourceBase extends WithIdentityEqualsHashCode implements Resour
     private final Integer multiReleaseVersion;
 
     protected ResourceBase(String name) {
-        val multiReleaseResourceName = parseMultiReleaseResourceName(name);
+        var multiReleaseResourceName = parseMultiReleaseResourceName(name);
         this.name = multiReleaseResourceName.getName();
         this.multiReleaseVersion = multiReleaseResourceName.getMultiReleaseVersion();
     }
@@ -31,9 +30,9 @@ abstract class ResourceBase extends WithIdentityEqualsHashCode implements Resour
 
     @Override
     public String toString() {
-        val sb = new StringBuilder();
+        var sb = new StringBuilder();
 
-        val classpathElement = getClasspathElement();
+        var classpathElement = getClasspathElement();
         if (classpathElement != null) {
             sb
                 .append(classpathElement)
@@ -49,7 +48,7 @@ abstract class ResourceBase extends WithIdentityEqualsHashCode implements Resour
                 .append(']');
         }
 
-        val multiReleaseVersion = getMultiReleaseVersion();
+        var multiReleaseVersion = getMultiReleaseVersion();
         if (multiReleaseVersion != null) {
             sb
                 .append("[multiReleaseVersion=")

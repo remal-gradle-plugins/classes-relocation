@@ -1,11 +1,11 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.reachability;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.String.format;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static lombok.AccessLevel.PRIVATE;
 import static name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey.methodKeyOf;
 import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.toClassInternalName;
@@ -34,9 +34,10 @@ import static org.objectweb.asm.Type.getArgumentTypes;
 import static org.objectweb.asm.Type.getMethodDescriptor;
 import static org.objectweb.asm.Type.getType;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -46,7 +47,6 @@ import javax.annotation.Nullable;
 import lombok.CustomLog;
 import lombok.NoArgsConstructor;
 import lombok.Value;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassReachabilityConfig;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey;
 import name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils;
@@ -84,9 +84,9 @@ public abstract class ClassReachabilityConfigUtils {
                     return configs.get(0);
                 }
 
-                val builder = configs.get(0).toBuilder();
+                var builder = configs.get(0).toBuilder();
                 for (int i = 1; i < configs.size(); i++) {
-                    val config = configs.get(i);
+                    var config = configs.get(i);
                     builder.fields(config.getFields());
                     builder.methodsKeys(config.getMethodsKeys());
                     if (config.isAllDeclaredConstructors()) {
@@ -113,7 +113,7 @@ public abstract class ClassReachabilityConfigUtils {
                 }
                 return builder.build();
             })
-            .collect(toImmutableList());
+            .collect(toUnmodifiableList());
     }
 
     @Value
@@ -125,29 +125,28 @@ public abstract class ClassReachabilityConfigUtils {
     }
 
 
-    @Unmodifiable
     public static Map<String, Object> convertClassReachabilityConfigToMap(ClassReachabilityConfig config) {
-        val map = ImmutableMap.<String, Object>builder();
+        var map = new LinkedHashMap<String, Object>();
         map.put("type", toClassName(config.getClassInternalName()));
         if (ObjectUtils.isNotEmpty(config.getOnReachedClassInternalName())) {
             map.put("condition", ImmutableMap.of("typeReached", toClassName(config.getOnReachedClassInternalName())));
         }
         if (!config.getFields().isEmpty()) {
-            val array = ImmutableList.builder();
-            for (val name : config.getFields()) {
+            var array = new ArrayList<>();
+            for (var name : config.getFields()) {
                 array.add(ImmutableMap.of("name", name));
             }
-            map.put("fields", array.build());
+            map.put("fields", array);
         }
         if (!config.getMethodsKeys().isEmpty()) {
-            val array = ImmutableList.builder();
-            for (val method : config.getMethodsKeys()) {
+            var array = new ArrayList<>();
+            for (var method : config.getMethodsKeys()) {
                 array.add(ImmutableMap.of(
                     "name", method.getName(),
                     "parameterTypes", methodKeyToParamTypes(method)
                 ));
             }
-            map.put("methods", array.build());
+            map.put("methods", array);
         }
         if (config.isAllDeclaredConstructors()) {
             map.put("allDeclaredConstructors", true);
@@ -170,7 +169,7 @@ public abstract class ClassReachabilityConfigUtils {
         if (config.isAllPermittedSubclasses()) {
             map.put("allPermittedSubclasses", true);
         }
-        return map.build();
+        return map;
     }
 
     /**
@@ -197,7 +196,7 @@ public abstract class ClassReachabilityConfigUtils {
         remove(map, "allSigners", "queryAllSigners");
         remove(map, "unsafeAllocated");
 
-        val classInternalName = Optional.ofNullable(remove(map, "type", "name"))
+        var classInternalName = Optional.ofNullable(remove(map, "type", "name"))
             .map(Object::toString)
             .filter(ObjectUtils::isNotEmpty)
             .map(ClassReachabilityConfigUtils::paramTypeToType)
@@ -211,7 +210,7 @@ public abstract class ClassReachabilityConfigUtils {
             return null;
         }
 
-        val builder = ClassReachabilityConfig.builder();
+        var builder = ClassReachabilityConfig.builder();
 
         builder.classInternalName(classInternalName);
 
@@ -262,7 +261,7 @@ public abstract class ClassReachabilityConfigUtils {
         builder.allPermittedSubclasses(removeBool(map, "allPermittedSubclasses", "queryAllPermittedSubclasses"));
 
         if (!map.isEmpty()) {
-            val message = format(
+            var message = format(
                 "Unsupported fields of %s class reachability metadata: %s",
                 classInternalName,
                 map.keySet().stream()
@@ -280,10 +279,10 @@ public abstract class ClassReachabilityConfigUtils {
     }
 
     private static List<String> methodKeyToParamTypes(MethodKey methodKey) {
-        val args = getArgumentTypes(methodKey.getParamsDescriptor() + "V");
+        var args = getArgumentTypes(methodKey.getParamsDescriptor() + "V");
         return stream(args)
             .map(ClassReachabilityConfigUtils::typeToParamType)
-            .collect(toImmutableList());
+            .collect(toUnmodifiableList());
     }
 
     private static String typeToParamType(Type type) {
@@ -315,16 +314,16 @@ public abstract class ClassReachabilityConfigUtils {
     @Nullable
     @SuppressWarnings("unchecked")
     private static MethodKey parseMethodKey(Map<Object, Object> map, String classInternalName) {
-        val nameUntyped = map.remove("name");
+        var nameUntyped = map.remove("name");
         if (!(nameUntyped instanceof String)) {
             return null;
         }
-        val name = (String) nameUntyped;
+        var name = (String) nameUntyped;
         if (name.isEmpty()) {
             return null;
         }
 
-        val parameterTypesUntyped = map.remove("parameterTypes");
+        var parameterTypesUntyped = map.remove("parameterTypes");
         if (!(parameterTypesUntyped instanceof List)) {
             logger.log(
                 IN_TEST ? LogLevel.WARN : LogLevel.DEBUG,
@@ -334,19 +333,19 @@ public abstract class ClassReachabilityConfigUtils {
             );
             return null;
         }
-        val parameterTypes = (List<Object>) parameterTypesUntyped;
+        var parameterTypes = (List<Object>) parameterTypesUntyped;
         if (parameterTypes.isEmpty()) {
             return methodKeyOf(name, "()");
         }
 
-        val asmTypes = new Type[parameterTypes.size()];
+        var asmTypes = new Type[parameterTypes.size()];
         for (int i = 0; i < asmTypes.length; i++) {
-            val parameterType = parameterTypes.get(i).toString();
-            val asmType = paramTypeToType(parameterType);
+            var parameterType = parameterTypes.get(i).toString();
+            var asmType = paramTypeToType(parameterType);
             asmTypes[i] = asmType;
         }
 
-        val descriptor = getMethodDescriptor(VOID_TYPE, asmTypes);
+        var descriptor = getMethodDescriptor(VOID_TYPE, asmTypes);
         return methodKeyOf(name, descriptor);
     }
 
@@ -377,8 +376,8 @@ public abstract class ClassReachabilityConfigUtils {
     @Nullable
     private static Object remove(Map<?, ?> map, String... keys) {
         Object result = null;
-        for (val key : keys) {
-            val value = map.remove(key);
+        for (var key : keys) {
+            var value = map.remove(key);
             if (value != null) {
                 result = value;
             }
@@ -388,10 +387,10 @@ public abstract class ClassReachabilityConfigUtils {
 
     private static boolean removeBool(Map<?, ?> map, String... keys) {
         boolean result = false;
-        for (val key : keys) {
-            val value = map.remove(key);
+        for (var key : keys) {
+            var value = map.remove(key);
             if (value != null) {
-                val boolValue = parseBoolean(value.toString());
+                var boolValue = parseBoolean(value.toString());
                 if (boolValue) {
                     result = true;
                 }

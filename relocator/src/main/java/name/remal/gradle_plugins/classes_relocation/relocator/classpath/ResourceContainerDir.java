@@ -12,7 +12,6 @@ import java.nio.file.Path;
 import java.util.Collection;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
-import lombok.val;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 
 class ResourceContainerDir extends ResourceContainerBase {
@@ -23,8 +22,8 @@ class ResourceContainerDir extends ResourceContainerBase {
 
     @Override
     protected Collection<Resource> readClasspathElementResources() throws Exception {
-        val dirPath = getPath();
-        try (val paths = walk(dirPath)) {
+        var dirPath = getPath();
+        try (var paths = walk(dirPath)) {
             return paths
                 .filter(Files::isRegularFile)
                 .map(filePath -> filePath.relativize(dirPath).toString())

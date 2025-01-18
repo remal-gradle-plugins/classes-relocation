@@ -1,6 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyListProxy;
 
 import java.util.Collection;
@@ -22,7 +22,7 @@ class ClasspathComposite extends ClasspathBase {
                 .map(Classpath::getElements)
                 .flatMap(Collection::stream)
                 .distinct()
-                .collect(toImmutableList())
+                .collect(toUnmodifiableList())
         ));
     }
 

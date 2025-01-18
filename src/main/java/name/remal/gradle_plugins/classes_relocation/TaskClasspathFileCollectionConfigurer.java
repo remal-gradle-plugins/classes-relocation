@@ -3,7 +3,6 @@ package name.remal.gradle_plugins.classes_relocation;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 import javax.annotation.Nullable;
-import lombok.val;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
@@ -51,8 +50,8 @@ class TaskClasspathFileCollectionConfigurer<T extends Task> extends TaskClasspat
         NamedDomainObjectProvider<SourceSet> sourceSetProvider,
         TaskProvider<Jar> jarProvider
     ) {
-        val classpath = getter.apply(task);
-        val modifiedClasspath = createModifiedClasspath(
+        var classpath = getter.apply(task);
+        var modifiedClasspath = createModifiedClasspath(
             task,
             classpath,
             sourceSetProvider,

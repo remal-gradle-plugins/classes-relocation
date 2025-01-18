@@ -5,7 +5,6 @@ import static name.remal.gradle_plugins.toolkit.TaskUtils.doBeforeTaskExecution;
 
 import com.google.errorprone.annotations.ForOverride;
 import javax.annotation.Nullable;
-import lombok.val;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -73,18 +72,18 @@ abstract class TaskClasspathConfigurer<T extends Task> {
         NamedDomainObjectProvider<SourceSet> sourceSetProvider,
         TaskProvider<Jar> jarProvider
     ) {
-        val classpath = getClasspath(task);
+        var classpath = getClasspath(task);
         if (classpath == null) {
             return emptyList();
         }
 
-        val classpathFiles = classpath.getFiles();
+        var classpathFiles = classpath.getFiles();
         if (classpathFiles.isEmpty()) {
             return emptyList();
         }
 
-        val sourceSetOutputFiles = sourceSetProvider.get().getOutput().getFiles();
-        val hasSourceSetOutputFiles = classpathFiles.stream()
+        var sourceSetOutputFiles = sourceSetProvider.get().getOutput().getFiles();
+        var hasSourceSetOutputFiles = classpathFiles.stream()
             .anyMatch(sourceSetOutputFiles::contains);
         if (hasSourceSetOutputFiles) {
             return jarProvider;
@@ -104,15 +103,15 @@ abstract class TaskClasspathConfigurer<T extends Task> {
             return null;
         }
 
-        val classpathFiles = classpath.getFiles();
+        var classpathFiles = classpath.getFiles();
         if (classpathFiles.isEmpty()) {
             return null;
         }
 
         boolean foundSourceSetOutput = false;
-        val modifiedClasspath = task.getProject().getObjects().fileCollection();
-        val sourceSetOutputFiles = sourceSetProvider.get().getOutput().getFiles();
-        for (val file : classpathFiles) {
+        var modifiedClasspath = task.getProject().getObjects().fileCollection();
+        var sourceSetOutputFiles = sourceSetProvider.get().getOutput().getFiles();
+        for (var file : classpathFiles) {
             if (sourceSetOutputFiles.contains(file)) {
                 if (!foundSourceSetOutput) {
                     modifiedClasspath

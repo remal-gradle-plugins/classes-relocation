@@ -8,7 +8,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ResourceContainer;
@@ -68,17 +67,17 @@ public interface RelocationContext extends TaskTransformContext {
 
     @Nullable
     default String getRelocationSource(Resource resource) {
-        val source = getOriginalResourceSource(resource);
+        var source = getOriginalResourceSource(resource);
         if (source != null) {
             return source;
         }
 
-        val classpathElement = resource.getClasspathElement();
+        var classpathElement = resource.getClasspathElement();
         if (classpathElement == null) {
             return null;
         }
 
-        val moduleIdentifier = getModuleIdentifier(resource);
+        var moduleIdentifier = getModuleIdentifier(resource);
         if (isNotEmpty(moduleIdentifier)) {
             return moduleIdentifier;
         }
@@ -119,7 +118,7 @@ public interface RelocationContext extends TaskTransformContext {
     }
 
     default void registerOriginalResourceSource(Resource resource, String relocationSource) {
-        val currentSource = getOriginalResourceSource(resource);
+        var currentSource = getOriginalResourceSource(resource);
         if (currentSource != null) {
             relocationSource = currentSource;
         }
@@ -139,7 +138,7 @@ public interface RelocationContext extends TaskTransformContext {
     }
 
     default void registerOriginalResourceName(Resource resource, String originalResourceName) {
-        val resourceName = resource.getName();
+        var resourceName = resource.getName();
         originalResourceName = getOriginalResourceName(originalResourceName);
         if (!resourceName.equals(originalResourceName)) {
             getRelocationComponent(OriginalResourceNames.class)
@@ -153,7 +152,7 @@ public interface RelocationContext extends TaskTransformContext {
             return;
         }
 
-        val relocationSource = getRelocationSource(originalResource);
+        var relocationSource = getRelocationSource(originalResource);
         if (relocationSource != null) {
             registerOriginalResourceSource(resource, relocationSource);
         }
@@ -193,7 +192,7 @@ public interface RelocationContext extends TaskTransformContext {
     <T extends ClassesRelocatorComponent> List<T> getRelocationComponents(Class<T> type);
 
     default <T extends ClassesRelocatorComponent> T getRelocationComponent(Class<T> type) {
-        val impls = getRelocationComponents(type);
+        var impls = getRelocationComponents(type);
         if (impls.isEmpty()) {
             throw new IllegalStateException("No component of " + type);
         } else if (impls.size() == 1) {

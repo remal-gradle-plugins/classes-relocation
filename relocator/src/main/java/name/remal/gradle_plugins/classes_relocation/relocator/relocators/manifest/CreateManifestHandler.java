@@ -14,7 +14,6 @@ import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 import java.util.stream.Stream;
 import lombok.SneakyThrows;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.GeneratedResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
@@ -26,17 +25,17 @@ public class CreateManifestHandler implements QueuedTaskHandler<CreateManifest> 
     @Override
     @SneakyThrows
     public QueuedTaskHandlerResult handle(CreateManifest task, RelocationContext context) {
-        val manifest = new Manifest();
-        val mainAttrs = manifest.getMainAttributes();
+        var manifest = new Manifest();
+        var mainAttrs = manifest.getMainAttributes();
 
         Resource manifestResource = context.getSourceClasspath().getResources(MANIFEST_NAME)
             .stream().findFirst().orElse(null);
         if (manifestResource != null) {
-            try (val in = manifestResource.open()) {
+            try (var in = manifestResource.open()) {
                 manifest.read(in);
             }
 
-            val manifestVersion = mainAttrs.getValue(MANIFEST_VERSION);
+            var manifestVersion = mainAttrs.getValue(MANIFEST_VERSION);
             if (!"1.0".equals(manifestVersion)) {
                 throw new IllegalStateException(format(
                     "%s: manifest version version `%s`, that's not supported by the plugin",
@@ -52,7 +51,7 @@ public class CreateManifestHandler implements QueuedTaskHandler<CreateManifest> 
             );
         }
 
-        val allEntryAttrs = manifest.getEntries().values();
+        var allEntryAttrs = manifest.getEntries().values();
 
         Stream.concat(
             Stream.of(mainAttrs),
@@ -63,7 +62,7 @@ public class CreateManifestHandler implements QueuedTaskHandler<CreateManifest> 
                     return true;
                 }
 
-                val key = keyObject != null ? keyObject.toString().toUpperCase(ENGLISH) : "";
+                var key = keyObject != null ? keyObject.toString().toUpperCase(ENGLISH) : "";
                 return key.isEmpty()
                     || key.endsWith("-DIGEST")
                     || key.endsWith("-DIGEST-MANIFEST");
@@ -72,21 +71,19 @@ public class CreateManifestHandler implements QueuedTaskHandler<CreateManifest> 
 
         allEntryAttrs.removeIf(Attributes::isEmpty);
 
-        if (!mainAttrs.containsKey(MANIFEST_VERSION)) {
-            mainAttrs.put(MANIFEST_VERSION, "1.0");
-        }
+        mainAttrs.putIfAbsent(MANIFEST_VERSION, "1.0");
 
         if (!mainAttrs.containsKey(MULTI_RELEASE)) {
-            val isMultiRelease = context.getProcessedResources().stream()
+            var isMultiRelease = context.getProcessedResources().stream()
                 .anyMatch(resource -> resource.getMultiReleaseVersion() != null);
             if (isMultiRelease) {
                 mainAttrs.put(MULTI_RELEASE, "true");
             }
         }
 
-        val out = new ByteArrayOutputStream();
+        var out = new ByteArrayOutputStream();
         manifest.write(out);
-        val modifiedContent = out.toByteArray();
+        var modifiedContent = out.toByteArray();
 
         manifestResource = GeneratedResource.builder()
             .withSourceResource(manifestResource)

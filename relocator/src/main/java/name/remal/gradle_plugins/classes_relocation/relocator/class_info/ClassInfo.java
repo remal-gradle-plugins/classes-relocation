@@ -20,7 +20,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.Singular;
 import lombok.ToString;
 import lombok.experimental.FieldDefaults;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 import org.jetbrains.annotations.Unmodifiable;
@@ -102,10 +101,10 @@ public class ClassInfo {
 
     @Unmodifiable
     private Set<ClassInfo> getAllClasses(Function<ClassInfo, Set<ClassInfo>> getter) {
-        val result = new LinkedHashSet<ClassInfo>();
-        val queue = new ArrayDeque<>(getter.apply(this));
+        var result = new LinkedHashSet<ClassInfo>();
+        var queue = new ArrayDeque<>(getter.apply(this));
         while (true) {
-            val parentClass = queue.poll();
+            var parentClass = queue.poll();
             if (parentClass == null) {
                 break;
             }

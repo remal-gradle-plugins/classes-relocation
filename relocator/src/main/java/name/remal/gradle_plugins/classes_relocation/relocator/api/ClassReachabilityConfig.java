@@ -26,7 +26,6 @@ import lombok.NonNull;
 import lombok.Singular;
 import lombok.Value;
 import lombok.experimental.Tolerate;
-import lombok.val;
 import org.gradle.api.tasks.Input;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -97,7 +96,7 @@ public class ClassReachabilityConfig implements Serializable {
     private static final long serialVersionUID = 1;
 
     private Object writeReplace() throws ObjectStreamException {
-        val map = convertClassReachabilityConfigToMap(this);
+        var map = convertClassReachabilityConfigToMap(this);
         return new SerializableValueHolder(map);
     }
 
@@ -118,8 +117,8 @@ public class ClassReachabilityConfig implements Serializable {
         }
 
         private Object readResolve() {
-            val map = requireNonNull(this.map);
-            val config = convertMapToClassReachabilityConfig(map);
+            var map = requireNonNull(this.map);
+            var config = convertMapToClassReachabilityConfig(map);
             return requireNonNull(config);
         }
 

@@ -1,7 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyListProxy;
 
 import java.util.Collection;
@@ -18,7 +18,7 @@ class ResourceContainerComposite extends WithResourcesBase implements ResourceCo
         this.containers = asLazyListProxy(() -> closables.registerCloseables(
             containers.stream()
                 .filter(Objects::nonNull)
-                .collect(toImmutableList())
+                .collect(toUnmodifiableList())
         ));
     }
 

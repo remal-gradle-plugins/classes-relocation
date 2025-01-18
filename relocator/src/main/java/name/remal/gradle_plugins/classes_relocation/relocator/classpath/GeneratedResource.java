@@ -1,13 +1,11 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 
-import com.google.common.collect.ImmutableList;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
 import java.util.function.Consumer;
 import javax.annotation.Nullable;
 import lombok.Getter;
-import lombok.val;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -20,7 +18,7 @@ public final class GeneratedResource
     }
 
     public static GeneratedResource newGeneratedResource(Consumer<GeneratedResourceBuilder> configurer) {
-        val builder = builder();
+        var builder = builder();
         configurer.accept(builder);
         return builder.build();
     }
@@ -36,14 +34,14 @@ public final class GeneratedResource
     private final LazyValue<byte[]> content;
 
     GeneratedResource(
-        ImmutableList<Resource> sourceResources,
+        List<Resource> sourceResources,
         String name,
         @Nullable Integer multiReleaseVersion,
         long lastModifiedMillis,
         LazyValue<byte[]> content
     ) {
         super(name, multiReleaseVersion);
-        this.sourceResources = sourceResources;
+        this.sourceResources = List.copyOf(sourceResources);
         this.lastModifiedMillis = lastModifiedMillis;
         this.content = content;
     }

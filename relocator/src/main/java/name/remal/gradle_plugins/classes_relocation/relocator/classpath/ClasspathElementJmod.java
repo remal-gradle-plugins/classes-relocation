@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import javax.annotation.Nullable;
-import lombok.val;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
@@ -26,14 +25,14 @@ class ClasspathElementJmod extends ClasspathElementBase {
     public ClasspathElementJmod(Path path) {
         super(path);
         this.zipFile = lazyValue(() -> {
-            val zipFileBuilder = ZipFile.builder().setPath(path);
+            var zipFileBuilder = ZipFile.builder().setPath(path);
             return closables.registerCloseable(zipFileBuilder.get());
         });
     }
 
     @Override
     protected Collection<Resource> readClasspathElementResources() throws Exception {
-        val processedEntryNames = new LinkedHashSet<>();
+        var processedEntryNames = new LinkedHashSet<>();
         return list(zipFile.get().getEntries()).stream()
             .filter(not(ZipArchiveEntry::isDirectory))
             .filter(entry -> entry.getName().startsWith(CLASSES_RESOURCE_NAME_PREFIX))

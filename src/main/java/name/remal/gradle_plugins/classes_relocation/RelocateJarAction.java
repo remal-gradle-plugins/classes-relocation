@@ -11,7 +11,6 @@ import java.nio.file.Paths;
 import javax.inject.Inject;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import lombok.val;
 import org.gradle.api.Action;
 import org.gradle.api.Task;
 import org.gradle.api.file.ConfigurableFileCollection;
@@ -48,7 +47,7 @@ abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSetti
 
     {
         getSystemClasspath().from(getProviders().provider(() -> {
-            val installationDir = getJavaLauncher()
+            var installationDir = getJavaLauncher()
                 .map(JavaLauncher::getMetadata)
                 .map(JavaInstallationMetadata::getInstallationPath)
                 .map(Directory::getAsFile)
@@ -57,7 +56,7 @@ abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSetti
                 return getSystemClasspathPaths(installationDir);
             }
 
-            val javaHome = getProviders().systemProperty("java.home").get();
+            var javaHome = getProviders().systemProperty("java.home").get();
             return getSystemClasspathPaths(Paths.get(javaHome));
         }));
     }
@@ -85,8 +84,8 @@ abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSetti
             return;
         }
 
-        val jarFile = task.getArchiveFile().get().getAsFile().getAbsoluteFile();
-        val renamedJarFile = new File(
+        var jarFile = task.getArchiveFile().get().getAsFile().getAbsoluteFile();
+        var renamedJarFile = new File(
             jarFile.getParentFile(),
             "pre-relocation-" + jarFile.getName()
         );
@@ -94,7 +93,7 @@ abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSetti
 
         final WorkQueue workQueue;
         {
-            val isForkEnabled = getForkOptions().getEnabled().get();
+            boolean isForkEnabled = getForkOptions().getEnabled().get();
             if (isForkEnabled) {
                 workQueue = getWorkerExecutor().processIsolation(spec -> {
                     spec.getForkOptions().setExecutable(getJavaLauncher().get()
@@ -126,7 +125,7 @@ abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSetti
             params.getMetadataCharset().set(task.getMetadataCharset());
             params.getPreserveFileTimestamps().set(task.isPreserveFileTimestamps());
 
-            val settings = getObjects().newInstance(ClassesRelocationSettings.class);
+            var settings = getObjects().newInstance(ClassesRelocationSettings.class);
             copyManagedProperties(ClassesRelocationSettings.class, this, settings);
             params.getSettings().set(settings);
         });

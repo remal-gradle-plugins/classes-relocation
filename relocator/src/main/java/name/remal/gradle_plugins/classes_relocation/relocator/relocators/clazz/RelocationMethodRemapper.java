@@ -5,7 +5,6 @@ import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 import static org.objectweb.asm.Type.getMethodType;
 
 import javax.annotation.Nullable;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.class_info.ClassInfoComponent;
 import org.objectweb.asm.Handle;
@@ -81,12 +80,12 @@ class RelocationMethodRemapper extends MethodRemapper {
                 break;
             }
 
-            val ownerInternalName = getMethodType(descriptor).getReturnType().getInternalName();
+            var ownerInternalName = getMethodType(descriptor).getReturnType().getInternalName();
             if (!context.isRelocationClassInternalName(ownerInternalName)) {
                 break;
             }
 
-            val classInfo = context.getRelocationComponent(ClassInfoComponent.class)
+            var classInfo = context.getRelocationComponent(ClassInfoComponent.class)
                 .getClassInfo(ownerInternalName, context);
 
             if (DEFAULT_LAMBDA_BOOSTRAP_METHOD_HANDLE.equals(bootstrapMethodHandle)
@@ -94,8 +93,8 @@ class RelocationMethodRemapper extends MethodRemapper {
                 && bootstrapMethodArguments[0] instanceof Type
                 && ((Type) bootstrapMethodArguments[0]).getSort() == Type.METHOD
             ) {
-                val methodDescriptor = ((Type) bootstrapMethodArguments[0]).getDescriptor();
-                val methodKey = methodKeyOf(name, methodDescriptor);
+                var methodDescriptor = ((Type) bootstrapMethodArguments[0]).getDescriptor();
+                var methodKey = methodKeyOf(name, methodDescriptor);
                 if (classInfo.getMethods().contains(methodKey)) {
                     context.queue(new RelocateMethod(ownerInternalName, methodKey));
                     break;

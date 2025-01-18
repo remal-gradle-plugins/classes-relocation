@@ -8,7 +8,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.Nullable;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 
 public abstract class AbstractClassesRelocationJsonMapMetadata<Type>
@@ -22,14 +21,14 @@ public abstract class AbstractClassesRelocationJsonMapMetadata<Type>
 
     @Override
     protected Map<String, Object> mergeStorages(List<Map<String, ?>> maps) {
-        val result = new LinkedHashMap<String, Object>();
+        var result = new LinkedHashMap<String, Object>();
         maps.forEach(map -> map.forEach(result::putIfAbsent));
         return result;
     }
 
     @Override
     protected byte[] serializeStorage(Map<String, ?> map) {
-        val text = writeJsonObjectToString(map);
+        var text = writeJsonObjectToString(map);
         return text.getBytes(UTF_8);
     }
 

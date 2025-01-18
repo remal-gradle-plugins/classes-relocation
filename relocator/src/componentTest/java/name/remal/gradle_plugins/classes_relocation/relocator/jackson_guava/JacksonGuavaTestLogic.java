@@ -5,14 +5,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocatorTestLogic;
 
+@SuppressWarnings("java:S4738")
 public class JacksonGuavaTestLogic implements ClassesRelocatorTestLogic {
 
     @Override
     public void assertTestLogic() throws Throwable {
-        val objectMapper = JsonMapper.builder()
+        var objectMapper = JsonMapper.builder()
             .findAndAddModules()
             .build();
 

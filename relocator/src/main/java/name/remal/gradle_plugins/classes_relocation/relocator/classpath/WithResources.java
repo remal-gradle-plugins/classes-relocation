@@ -1,7 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Collections.emptyList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.defaultValue;
 
 import java.io.Closeable;
@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ResourcesFilter;
 import org.jetbrains.annotations.Unmodifiable;
 
@@ -20,14 +19,14 @@ interface WithResources extends Closeable {
 
     @Unmodifiable
     default List<Resource> getAllResources(Consumer<ResourcesFilter> filterConfigurer) {
-        val filter = new ResourcesFilter();
+        var filter = new ResourcesFilter();
         filterConfigurer.accept(filter);
         if (filter.isEmpty()) {
             return getAllResources();
         } else {
             return getAllResources().stream()
                 .filter(filter::matches)
-                .collect(toImmutableList());
+                .collect(toUnmodifiableList());
         }
     }
 

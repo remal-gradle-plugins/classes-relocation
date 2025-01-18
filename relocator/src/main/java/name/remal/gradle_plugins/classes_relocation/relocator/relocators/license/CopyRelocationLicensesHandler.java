@@ -11,7 +11,6 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.GeneratedResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
@@ -29,7 +28,7 @@ public class CopyRelocationLicensesHandler implements QueuedTaskHandler<CopyRelo
 
     @Override
     public QueuedTaskHandlerResult handle(CopyRelocationLicenses task, RelocationContext context) {
-        val licenseResources = context.getRelocationClasspath().getAllResources().stream()
+        var licenseResources = context.getRelocationClasspath().getAllResources().stream()
             .filter(context::isResourceProcessed)
             .map(Resource::getClasspathElement)
             .filter(Objects::nonNull)
@@ -39,11 +38,11 @@ public class CopyRelocationLicensesHandler implements QueuedTaskHandler<CopyRelo
                     .filter(resource -> LICENSE_RESOURCE_NAME_PATTERN.matcher(resource.getName()).matches())
             )
             .collect(toList());
-        for (val resource : licenseResources) {
-            val originalResourceName = context.getOriginalResourceName(resource);
-            val relocationSource = context.getRelocationSource(resource);
-            val updatedResourceName = resourceNameWithRelocationSource(originalResourceName, relocationSource);
-            val newResource = GeneratedResource.newGeneratedResource(builder -> builder
+        for (var resource : licenseResources) {
+            var originalResourceName = context.getOriginalResourceName(resource);
+            var relocationSource = context.getRelocationSource(resource);
+            var updatedResourceName = resourceNameWithRelocationSource(originalResourceName, relocationSource);
+            var newResource = GeneratedResource.newGeneratedResource(builder -> builder
                 .withSourceResource(resource)
                 .withName(updatedResourceName)
             );

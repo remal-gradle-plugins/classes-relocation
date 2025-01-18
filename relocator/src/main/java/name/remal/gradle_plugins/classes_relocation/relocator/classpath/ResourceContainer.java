@@ -7,26 +7,25 @@ import static java.util.stream.Collectors.toList;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyListProxy;
 import static name.remal.gradle_plugins.toolkit.SneakyThrowUtils.sneakyThrowsFunction;
 
-import com.google.common.collect.ImmutableList;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.List;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
-import lombok.val;
 
 public interface ResourceContainer extends WithResources {
 
     @SafeVarargs
     @SuppressWarnings("varargs")
     static ResourceContainer newResourceContainerPaths(Iterable<Path>... paths) {
-        val combinedPaths = stream(paths)
+        var combinedPaths = stream(paths)
             .filter(Objects::nonNull)
             .flatMap(it -> StreamSupport.stream(it.spliterator(), false))
             .filter(Objects::nonNull)
             .collect(toImmutableSet());
 
-        val containers = asLazyListProxy(() ->
+        var containers = asLazyListProxy(() ->
             combinedPaths.stream()
                 .map(sneakyThrowsFunction(path -> {
                     final BasicFileAttributes attrs;
@@ -51,7 +50,7 @@ public interface ResourceContainer extends WithResources {
 
 
     default ResourceContainer plus(ResourceContainer container) {
-        return new ResourceContainerComposite(ImmutableList.of(this, container));
+        return new ResourceContainerComposite(List.of(this, container));
     }
 
 }

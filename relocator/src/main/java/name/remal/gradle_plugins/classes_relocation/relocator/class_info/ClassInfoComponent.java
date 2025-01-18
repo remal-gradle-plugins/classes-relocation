@@ -20,7 +20,6 @@ import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import lombok.SneakyThrows;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
@@ -50,7 +49,7 @@ public class ClassInfoComponent
     @SneakyThrows
     @SuppressWarnings("java:S3776")
     private ClassInfo retrieveClassInfo(String internalClassName, RelocationContext context) {
-        val classResources = Stream.of(
+        var classResources = Stream.of(
                 context.getRelocationClasspath(),
                 context.getSourceClasspath(),
                 context.getCompileAndRuntimeClasspath(),
@@ -67,18 +66,18 @@ public class ClassInfoComponent
                 .build();
         }
 
-        val parentClassInternalNames = new LinkedHashSet<String>();
-        val fields = new LinkedHashSet<String>();
-        val accessibleFields = new LinkedHashSet<String>();
-        val constructors = new LinkedHashSet<MethodKey>();
-        val accessibleConstructors = new LinkedHashSet<MethodKey>();
-        val methods = new LinkedHashSet<MethodKey>();
-        val accessibleMethods = new LinkedHashSet<MethodKey>();
-        val overrideableMethods = new LinkedHashSet<MethodKey>();
-        val permittedSubclassInternalNames = new LinkedHashSet<String>();
+        var parentClassInternalNames = new LinkedHashSet<String>();
+        var fields = new LinkedHashSet<String>();
+        var accessibleFields = new LinkedHashSet<String>();
+        var constructors = new LinkedHashSet<MethodKey>();
+        var accessibleConstructors = new LinkedHashSet<MethodKey>();
+        var methods = new LinkedHashSet<MethodKey>();
+        var accessibleMethods = new LinkedHashSet<MethodKey>();
+        var overrideableMethods = new LinkedHashSet<MethodKey>();
+        var permittedSubclassInternalNames = new LinkedHashSet<String>();
 
-        for (val classResource : classResources) {
-            val classVisitor = new ClassVisitor(getLatestAsmApi(), null) {
+        for (var classResource : classResources) {
+            var classVisitor = new ClassVisitor(getLatestAsmApi(), null) {
                 @Override
                 public void visit(
                     int version,
@@ -125,7 +124,7 @@ public class ClassInfoComponent
                     @Nullable String signature,
                     @Nullable String[] exceptions
                 ) {
-                    val methodKey = methodKeyOf(name, descriptor);
+                    var methodKey = methodKeyOf(name, descriptor);
                     if (name.equals("<init>")) {
                         constructors.add(methodKey);
 
@@ -159,16 +158,16 @@ public class ClassInfoComponent
                 }
             };
 
-            try (val in = classResource.open()) {
+            try (var in = classResource.open()) {
                 new ClassReader(in).accept(classVisitor, SKIP_CODE | SKIP_DEBUG);
             }
         }
 
-        val parentClasses = parentClassInternalNames.stream()
+        var parentClasses = parentClassInternalNames.stream()
             .map(it -> getClassInfo(it, context))
             .collect(toList());
 
-        val classInfo = ClassInfo.builder()
+        var classInfo = ClassInfo.builder()
             .internalClassName(internalClassName)
             .fields(fields)
             .accessibleFields(accessibleFields)

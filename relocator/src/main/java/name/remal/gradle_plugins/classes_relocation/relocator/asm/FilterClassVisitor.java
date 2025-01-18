@@ -5,7 +5,6 @@ import static org.objectweb.asm.Type.getType;
 
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
-import lombok.val;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -58,7 +57,7 @@ public class FilterClassVisitor extends ClassVisitor {
     @Override
     @Nullable
     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-        val internalName = getType(descriptor).getInternalName();
+        var internalName = getType(descriptor).getInternalName();
         if (!classInternalNamePredicate.test(internalName)) {
             return null;
         }
@@ -74,7 +73,7 @@ public class FilterClassVisitor extends ClassVisitor {
         String descriptor,
         boolean visible
     ) {
-        val internalName = getType(descriptor).getInternalName();
+        var internalName = getType(descriptor).getInternalName();
         if (!classInternalNamePredicate.test(internalName)) {
             return null;
         }

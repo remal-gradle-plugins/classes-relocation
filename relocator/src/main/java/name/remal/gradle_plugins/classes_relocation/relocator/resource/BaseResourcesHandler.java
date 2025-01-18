@@ -1,6 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.resource;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 
 import com.google.errorprone.annotations.ForOverride;
 import java.util.Collection;
@@ -47,12 +47,12 @@ public abstract class BaseResourcesHandler implements ResourcesSelector, Resourc
             .filter(Objects::nonNull)
             .map(GlobPattern::compile)
             .distinct()
-            .collect(toImmutableList());
+            .collect(toUnmodifiableList());
         this.exclusions = exclusions.stream()
             .filter(Objects::nonNull)
             .map(GlobPattern::compile)
             .distinct()
-            .collect(toImmutableList());
+            .collect(toUnmodifiableList());
     }
 
     private boolean isIgnored(String resourceName) {

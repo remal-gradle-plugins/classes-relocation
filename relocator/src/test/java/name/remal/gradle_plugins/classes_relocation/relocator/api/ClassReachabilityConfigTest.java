@@ -5,14 +5,13 @@ import static name.remal.gradle_plugins.toolkit.JavaSerializationUtils.deseriali
 import static name.remal.gradle_plugins.toolkit.JavaSerializationUtils.serializeToBytes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import lombok.val;
 import org.junit.jupiter.api.Test;
 
 class ClassReachabilityConfigTest {
 
     @Test
     void serialization() {
-        val config = ClassReachabilityConfig.builder()
+        var config = ClassReachabilityConfig.builder()
             .classInternalName("pkg/Logic")
             .onReachedClassInternalName("pkg/LogicCaller")
             .field("field")
@@ -22,8 +21,8 @@ class ClassReachabilityConfigTest {
             .allDeclaredFields(true)
             .allPermittedSubclasses(true)
             .build();
-        val bytes = serializeToBytes(config);
-        val deserializedConfig = deserializeFrom(bytes, ClassReachabilityConfig.class);
+        var bytes = serializeToBytes(config);
+        var deserializedConfig = deserializeFrom(bytes, ClassReachabilityConfig.class);
         assertEquals(config, deserializedConfig);
     }
 

@@ -14,7 +14,6 @@ import javax.annotation.Nullable;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.toolkit.GlobPattern;
 
@@ -41,7 +40,7 @@ public final class ResourcesFilter {
             return emptyValue;
         }
 
-        for (val pattern : patterns) {
+        for (var pattern : patterns) {
             if (pattern.matches(resourceName)) {
                 return true;
             }
@@ -162,8 +161,8 @@ public final class ResourcesFilter {
             exclude("**/*");
 
         } else {
-            val inclusions = new ArrayList<>(this.inclusions);
-            val exclusions = new ArrayList<>(this.exclusions);
+            var inclusions = new ArrayList<>(this.inclusions);
+            var exclusions = new ArrayList<>(this.exclusions);
 
             this.inclusions.clear();
             this.inclusions.addAll(exclusions);

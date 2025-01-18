@@ -12,7 +12,6 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import java.util.ArrayList;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
-import lombok.val;
 import name.remal.gradle_plugins.toolkit.testkit.MinSupportedGradleVersion;
 import name.remal.gradle_plugins.toolkit.testkit.TaskValidations;
 import org.gradle.api.Project;
@@ -37,17 +36,17 @@ class ClassesRelocationPluginTest {
     @Test
     @MinSupportedGradleVersion("8.0")
     void jarTaskProperties() {
-        val jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
-        val jarInputs = jar.getInputs();
+        var jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
+        var jarInputs = jar.getInputs();
         assertDoesNotThrow(jarInputs::getProperties);
     }
 
     @Test
     void testClasspath() {
-        val testTasks = new ArrayList<>(project.getTasks().withType(org.gradle.api.tasks.testing.Test.class));
-        val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
-        val mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
-        val jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
+        var testTasks = new ArrayList<>(project.getTasks().withType(org.gradle.api.tasks.testing.Test.class));
+        var sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
+        var mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
+        var jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
         assertThat(testTasks).as("testTasks")
             .isNotEmpty()
             .allSatisfy(testTask -> {
@@ -63,10 +62,10 @@ class ClassesRelocationPluginTest {
     void pluginUnderTestMetadataClasspath() {
         project.getPluginManager().apply("java-gradle-plugin");
 
-        val metadataTasks = new ArrayList<>(project.getTasks().withType(PluginUnderTestMetadata.class));
-        val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
-        val mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
-        val jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
+        var metadataTasks = new ArrayList<>(project.getTasks().withType(PluginUnderTestMetadata.class));
+        var sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
+        var mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
+        var jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
         assertThat(metadataTasks).as("metadataTasks")
             .isNotEmpty()
             .allSatisfy(metadataTask -> {
@@ -82,10 +81,10 @@ class ClassesRelocationPluginTest {
     void pluginTasksDoNotHavePropertyProblems() {
         executeAfterEvaluateActions(project);
 
-        val taskClassNamePrefix = packageNameOf(ClassesRelocationPlugin.class) + '.';
+        var taskClassNamePrefix = packageNameOf(ClassesRelocationPlugin.class) + '.';
         project.getTasks().stream()
             .filter(task -> {
-                val taskClass = unwrapGeneratedSubclass(task.getClass());
+                var taskClass = unwrapGeneratedSubclass(task.getClass());
                 return taskClass.getName().startsWith(taskClassNamePrefix);
             })
             .map(TaskValidations::markTaskDependenciesAsSkipped)

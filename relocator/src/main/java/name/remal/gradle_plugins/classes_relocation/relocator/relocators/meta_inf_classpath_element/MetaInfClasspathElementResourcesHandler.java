@@ -5,11 +5,9 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.G
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.ResourceNameUtils.resourceNameWithRelocationSource;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.isEmpty;
 
-import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nullable;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ClasspathElement;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
@@ -19,12 +17,12 @@ public class MetaInfClasspathElementResourcesHandler extends BaseResourcesHandle
 
     public MetaInfClasspathElementResourcesHandler() {
         super(
-            ImmutableList.of(
+            List.of(
                 MANIFEST_NAME,
                 "META-INF/maven/**/pom.xml",
                 "META-INF/maven/**/pom.properties"
             ),
-            ImmutableList.of(
+            List.of(
             )
         );
     }
@@ -42,7 +40,7 @@ public class MetaInfClasspathElementResourcesHandler extends BaseResourcesHandle
             return Optional.empty();
         }
 
-        val classpathElementResource = candidateResources.stream()
+        var classpathElementResource = candidateResources.stream()
             .filter(resource -> classpathElement.equals(resource.getClasspathElement()))
             .findFirst()
             .orElse(null);
@@ -50,7 +48,7 @@ public class MetaInfClasspathElementResourcesHandler extends BaseResourcesHandle
             return Optional.empty();
         }
 
-        val relocationSource = context.getRelocationSource(classpathElementResource);
+        var relocationSource = context.getRelocationSource(classpathElementResource);
         if (isEmpty(relocationSource)) {
             return Optional.empty();
         }

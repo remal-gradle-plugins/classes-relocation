@@ -8,7 +8,6 @@ import com.google.common.collect.ImmutableSet;
 import java.util.Collection;
 import java.util.Set;
 import javax.annotation.Nullable;
-import lombok.val;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -93,7 +92,7 @@ public class UnsupportedAnnotationsClassVisitor extends ClassVisitor {
         @Nullable String signature,
         @Nullable Object value
     ) {
-        val visitor = super.visitField(access, name, descriptor, signature, value);
+        var visitor = super.visitField(access, name, descriptor, signature, value);
         return new FieldVisitor(api, visitor) {
             @Override
             public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
@@ -122,7 +121,7 @@ public class UnsupportedAnnotationsClassVisitor extends ClassVisitor {
         @Nullable String signature,
         @Nullable String[] exceptions
     ) {
-        val visitor = super.visitMethod(access, name, descriptor, signature, exceptions);
+        var visitor = super.visitMethod(access, name, descriptor, signature, exceptions);
         return new MethodVisitor(api, visitor) {
             @Override
             public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
@@ -176,7 +175,7 @@ public class UnsupportedAnnotationsClassVisitor extends ClassVisitor {
 
     @Override
     public RecordComponentVisitor visitRecordComponent(String name, String descriptor, @Nullable String signature) {
-        val visitor = super.visitRecordComponent(name, descriptor, signature);
+        var visitor = super.visitRecordComponent(name, descriptor, signature);
         return new RecordComponentVisitor(api, visitor) {
             @Override
             public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {

@@ -4,7 +4,6 @@ import static java.lang.System.identityHashCode;
 import static lombok.AccessLevel.PRIVATE;
 
 import lombok.NoArgsConstructor;
-import lombok.val;
 
 @NoArgsConstructor(access = PRIVATE)
 public abstract class ComparatorUtils {
@@ -24,8 +23,8 @@ public abstract class ComparatorUtils {
             return result;
         }
 
-        val classLoader1 = clazz1.getClassLoader();
-        val classLoader2 = clazz2.getClassLoader();
+        var classLoader1 = clazz1.getClassLoader();
+        var classLoader2 = clazz2.getClassLoader();
         return Integer.compare(
             classLoader1 != null ? identityHashCode(classLoader1) : 0,
             classLoader2 != null ? identityHashCode(classLoader2) : 0

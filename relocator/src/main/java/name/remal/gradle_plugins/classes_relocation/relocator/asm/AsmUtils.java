@@ -12,7 +12,6 @@ import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
 import java.util.regex.Pattern;
 import java.util.stream.StreamSupport;
 import lombok.NoArgsConstructor;
-import lombok.val;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 import name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils;
 import org.objectweb.asm.Opcodes;
@@ -25,7 +24,7 @@ public abstract class AsmUtils {
     private static final Pattern ASM_API_FIELD_NAME = Pattern.compile("^ASM(\\d+)$");
 
     private static final LazyValue<Integer> LATEST_ASM_API = lazyValue(() -> {
-        val latestAsmApiField = stream(Opcodes.class.getFields())
+        var latestAsmApiField = stream(Opcodes.class.getFields())
             .filter(ReflectionUtils::isStatic)
             .filter(ReflectionUtils::isNotSynthetic)
             .filter(field ->
@@ -33,13 +32,13 @@ public abstract class AsmUtils {
                     && ASM_API_FIELD_NAME.matcher(field.getName()).matches()
             )
             .max(comparingInt(field -> {
-                val matcher = ASM_API_FIELD_NAME.matcher(field.getName());
+                var matcher = ASM_API_FIELD_NAME.matcher(field.getName());
                 if (!matcher.matches()) {
                     throw new AssertionError("unreachable");
                 }
 
-                val apiStr = matcher.group(1);
-                val apiVersion = parseInt(apiStr);
+                var apiStr = matcher.group(1);
+                var apiVersion = parseInt(apiStr);
                 return apiVersion;
             }))
             .orElseThrow(() -> new IllegalStateException("Latest ASM API field not found"));
@@ -65,7 +64,7 @@ public abstract class AsmUtils {
     }
 
     public static String toMethodParamsDescriptor(String methodDescriptorOrParamsDescriptor) {
-        val paramDescEndPos = methodDescriptorOrParamsDescriptor.lastIndexOf(')');
+        var paramDescEndPos = methodDescriptorOrParamsDescriptor.lastIndexOf(')');
         return paramDescEndPos >= 0
             ? methodDescriptorOrParamsDescriptor.substring(0, paramDescEndPos + 1)
             : methodDescriptorOrParamsDescriptor;

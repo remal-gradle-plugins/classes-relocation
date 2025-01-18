@@ -3,7 +3,6 @@ package name.remal.gradle_plugins.classes_relocation;
 import static lombok.AccessLevel.PRIVATE;
 import static org.gradle.api.plugins.ApplicationPlugin.TASK_RUN_NAME;
 
-import com.google.common.collect.ImmutableList;
 import java.util.List;
 import lombok.NoArgsConstructor;
 import org.gradle.api.tasks.JavaExec;
@@ -16,7 +15,7 @@ import org.gradle.testing.jacoco.tasks.JacocoReportBase;
 @NoArgsConstructor(access = PRIVATE)
 abstract class TaskClasspathConfigurers {
 
-    public static final List<TaskClasspathConfigurer<?>> TASK_CLASSPATH_CONFIGURERS = ImmutableList.of(
+    public static final List<TaskClasspathConfigurer<?>> TASK_CLASSPATH_CONFIGURERS = List.of(
         new TaskClasspathFileCollectionConfigurer<>(
             Test.class,
             Test::getClasspath,

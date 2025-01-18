@@ -11,7 +11,6 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import lombok.SneakyThrows;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.GeneratedResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
@@ -47,22 +46,22 @@ public class RelocateResourceHandler implements ImmediateTaskHandler<String, Rel
     @SneakyThrows
     @SuppressWarnings("java:S3776")
     private Optional<String> handleImpl(RelocateResource task, RelocationContext context) {
-        val resourceName = task.getResourceName();
+        var resourceName = task.getResourceName();
         Map<Integer, List<Resource>> allCandidateResources = context.getSourceAndRelocationClasspath()
             .getResources(resourceName)
             .stream()
             .collect(groupingBy(resource -> {
-                val multiReleaseVersion = resource.getMultiReleaseVersion();
+                var multiReleaseVersion = resource.getMultiReleaseVersion();
                 return multiReleaseVersion != null ? multiReleaseVersion : -1;
             }, LinkedHashMap::new, toList()));
         if (allCandidateResources.isEmpty()) {
             return Optional.empty();
         }
 
-        val selectors = context.getRelocationComponents(ResourcesSelector.class);
-        val processors = context.getRelocationComponents(ResourceProcessor.class);
+        var selectors = context.getRelocationComponents(ResourcesSelector.class);
+        var processors = context.getRelocationComponents(ResourceProcessor.class);
 
-        val originalResourceName = context.getOriginalResourceName(resourceName);
+        var originalResourceName = context.getOriginalResourceName(resourceName);
 
         String relocatedName = null;
         for (Entry<Integer, List<Resource>> candidateResourcesEntry : allCandidateResources.entrySet()) {
@@ -71,11 +70,11 @@ public class RelocateResourceHandler implements ImmediateTaskHandler<String, Rel
                 multiReleaseVersion = null;
             }
 
-            val candidateResources = candidateResourcesEntry.getValue();
+            var candidateResources = candidateResourcesEntry.getValue();
 
             Resource selectedResource = null;
-            for (val selector : selectors) {
-                val result = selector.select(
+            for (var selector : selectors) {
+                var result = selector.select(
                     resourceName,
                     originalResourceName,
                     multiReleaseVersion,
@@ -93,8 +92,8 @@ public class RelocateResourceHandler implements ImmediateTaskHandler<String, Rel
             }
 
             Resource processedResource = null;
-            for (val processor : processors) {
-                val result = processor.processResource(
+            for (var processor : processors) {
+                var result = processor.processResource(
                     resourceName,
                     originalResourceName,
                     multiReleaseVersion,

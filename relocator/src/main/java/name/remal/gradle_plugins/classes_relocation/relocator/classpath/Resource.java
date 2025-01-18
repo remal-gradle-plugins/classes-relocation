@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import javax.annotation.Nullable;
-import lombok.val;
 
 public interface Resource extends Comparable<Resource> {
 
@@ -22,13 +21,13 @@ public interface Resource extends Comparable<Resource> {
     InputStream open() throws IOException;
 
     default byte[] readAllBytes() throws IOException {
-        try (val in = open()) {
+        try (var in = open()) {
             return toByteArray(in);
         }
     }
 
     default String readText(Charset charset) throws IOException {
-        val bytes = readAllBytes();
+        var bytes = readAllBytes();
         return new String(bytes, charset);
     }
 
@@ -41,8 +40,8 @@ public interface Resource extends Comparable<Resource> {
     default int compareTo(Resource other) {
         int result = getName().compareTo(other.getName());
         if (result == 0) {
-            val thisVersion = getMultiReleaseVersion();
-            val otherVersion = other.getMultiReleaseVersion();
+            var thisVersion = getMultiReleaseVersion();
+            var otherVersion = other.getMultiReleaseVersion();
             if (thisVersion != null && otherVersion != null) {
                 result = thisVersion.compareTo(otherVersion);
             } else if (thisVersion != null) {

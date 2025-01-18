@@ -27,7 +27,6 @@ import java.util.TreeMap;
 import javax.annotation.Nullable;
 import lombok.CustomLog;
 import lombok.SneakyThrows;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.asm.FilterClassVisitor;
@@ -56,20 +55,20 @@ public class RelocateClassCombinedImmediateHandler
 
     @Override
     public void finalizeRelocation(RelocationContext context) {
-        val relocatedClassInternalNamePrefix = context.getRelocatedClassInternalNamePrefix();
+        var relocatedClassInternalNamePrefix = context.getRelocatedClassInternalNamePrefix();
 
-        val relocatedClassDataList = relocatedClassDataMap.values().stream()
+        var relocatedClassDataList = relocatedClassDataMap.values().stream()
             .flatMap(Collection::stream)
             .collect(toList());
-        for (val data : relocatedClassDataList) {
+        for (var data : relocatedClassDataList) {
             ClassVisitor classVisitor;
-            val classWriter = (ClassWriter) (classVisitor = new ClassWriter(0));
+            var classWriter = (ClassWriter) (classVisitor = new ClassWriter(0));
 
             classVisitor = wrapWithTestClassVisitors(classVisitor);
 
             classVisitor = new FilterClassVisitor(classVisitor, classInternalName -> {
                 if (classInternalName.startsWith(relocatedClassInternalNamePrefix)) {
-                    val originalClassInternalName = classInternalName.substring(
+                    var originalClassInternalName = classInternalName.substring(
                         relocatedClassInternalNamePrefix.length()
                     );
                     if (context.isRelocationClassInternalName(originalClassInternalName)) {
@@ -90,9 +89,9 @@ public class RelocateClassCombinedImmediateHandler
             });
 
             data.getOutputClassNode().accept(classVisitor);
-            val content = classWriter.toByteArray();
+            var content = classWriter.toByteArray();
 
-            val relocatedResource = newGeneratedResource(builder -> builder
+            var relocatedResource = newGeneratedResource(builder -> builder
                 .withSourceResource(data.getResource())
                 .withName(data.getOutputClassInternalName() + ".class")
                 .withContent(content)
@@ -108,30 +107,30 @@ public class RelocateClassCombinedImmediateHandler
         RelocateClassCombined task,
         RelocationContext context
     ) throws Throwable {
-        val fasterContext = new RelocateClassCombinedHandlerRelocationContext(task, relocatedClassDataMap, context);
+        var fasterContext = new RelocateClassCombinedHandlerRelocationContext(task, relocatedClassDataMap, context);
 
-        val relocatedClassDataList = relocatedClassDataMap.computeIfAbsent(
+        var relocatedClassDataList = relocatedClassDataMap.computeIfAbsent(
             task.getClassInternalName(),
             it -> createRelocatedClassDataList(it, fasterContext)
         );
 
-        val classInfo = context.getRelocationComponent(ClassInfoComponent.class)
+        var classInfo = context.getRelocationComponent(ClassInfoComponent.class)
             .getClassInfo(task.getClassInternalName(), context);
 
         while (!task.isEmpty()) {
-            for (val relocatedClassData : relocatedClassDataList) {
-                val remapper = new RelocationRemapper(
+            for (var relocatedClassData : relocatedClassDataList) {
+                var remapper = new RelocationRemapper(
                     relocatedClassData.getInputClassInternalName(),
                     relocatedClassData.getResource(),
                     fasterContext
                 );
 
-                val fieldName = task.getFields().poll();
+                var fieldName = task.getFields().poll();
                 if (fieldName != null) {
                     relocateField(relocatedClassData, fieldName, classInfo, remapper, fasterContext);
                 }
 
-                val methodKey = task.getMethods().poll();
+                var methodKey = task.getMethods().poll();
                 if (methodKey != null) {
                     relocateMethod(relocatedClassData, methodKey, classInfo, remapper, fasterContext);
                 }
@@ -142,7 +141,7 @@ public class RelocateClassCombinedImmediateHandler
     }
 
     private List<RelocatedClassData> createRelocatedClassDataList(String classInternalName, RelocationContext context) {
-        val classResources = context.getRelocationClasspath().getClassResources(classInternalName);
+        var classResources = context.getRelocationClasspath().getClassResources(classInternalName);
         return classResources.stream()
             .map(context::withResourceMarkedAsProcessed)
             .map(resource -> createRelocatedClassData(resource, classInternalName, context))
@@ -154,18 +153,18 @@ public class RelocateClassCombinedImmediateHandler
         String classInternalName,
         RelocationContext context
     ) {
-        val inputClassNode = parseInputClassNode(resource);
+        var inputClassNode = parseInputClassNode(resource);
 
-        val outputClassNode = createOutputClassNode(inputClassNode, resource, context);
+        var outputClassNode = createOutputClassNode(inputClassNode, resource, context);
 
-        val relocatedClassData = new RelocatedClassData(inputClassNode.name, resource, inputClassNode, outputClassNode);
+        var relocatedClassData = new RelocatedClassData(inputClassNode.name, resource, inputClassNode, outputClassNode);
 
         outputClassNode.fields.forEach(fieldNode -> {
             relocatedClassData.getRelocatedFields().add(fieldNode.name);
         });
 
         outputClassNode.methods.forEach(methodNode -> {
-            val methodKey = methodKeyOf(methodNode);
+            var methodKey = methodKeyOf(methodNode);
             if (isOverrideableMethod(methodNode)) {
                 relocatedClassData.getRelocatedOverrideableMethods().add(methodKey);
             } else {
@@ -175,7 +174,7 @@ public class RelocateClassCombinedImmediateHandler
 
 
         // default relocations:
-        val classInfo = context.getRelocationComponent(ClassInfoComponent.class)
+        var classInfo = context.getRelocationComponent(ClassInfoComponent.class)
             .getClassInfo(classInternalName, context);
 
         relocateGeneralMembers(relocatedClassData, classInfo, context);
@@ -189,8 +188,8 @@ public class RelocateClassCombinedImmediateHandler
 
     @SneakyThrows
     private ClassNode parseInputClassNode(Resource resource) {
-        val inputClassNode = new ClassNode();
-        try (val in = resource.open()) {
+        var inputClassNode = new ClassNode();
+        try (var in = resource.open()) {
             new ClassReader(in).accept(inputClassNode, 0);
         }
         return inputClassNode;
@@ -204,10 +203,10 @@ public class RelocateClassCombinedImmediateHandler
         ClassVisitor classVisitor;
         ClassNode outputClassNode = (ClassNode) (classVisitor = new ClassNode());
 
-        val relocationSource = context.getRelocationSource(resource);
+        var relocationSource = context.getRelocationSource(resource);
         classVisitor = new RelocationAnnotationsClassVisitor(classVisitor, relocationSource);
 
-        val remapper = new RelocationRemapper(inputClassNode.name, resource, context);
+        var remapper = new RelocationRemapper(inputClassNode.name, resource, context);
         classVisitor = new RelocationClassRemapper(classVisitor, remapper, context);
 
         classVisitor = new MinimalFieldsAndMethodsClassVisitor(classVisitor);
@@ -233,7 +232,7 @@ public class RelocateClassCombinedImmediateHandler
         ClassInfo classInfo,
         RelocationContext context
     ) {
-        val classInternalName = relocatedClassData.getInputClassInternalName();
+        var classInternalName = relocatedClassData.getInputClassInternalName();
 
         if (!classInfo.areAllResolved()) {
             relocateAllMembers(relocatedClassData, classInfo, context);
@@ -261,7 +260,7 @@ public class RelocateClassCombinedImmediateHandler
         ClassInfo classInfo,
         RelocationContext context
     ) {
-        val classInternalName = relocatedClassData.getInputClassInternalName();
+        var classInternalName = relocatedClassData.getInputClassInternalName();
 
         classInfo.getFields().stream()
             .filter(not(relocatedClassData::hasProcessedField))
@@ -294,14 +293,14 @@ public class RelocateClassCombinedImmediateHandler
         RelocatedClassData relocatedClassData,
         RelocationContext context
     ) {
-        val classInternalName = relocatedClassData.getInputClassInternalName();
+        var classInternalName = relocatedClassData.getInputClassInternalName();
         relocateMembersForToEnabledClassReachability(classInternalName, context);
 
         // relocate classes enabled by this class:
         context.getRelocationComponent(ClassReachabilityConfigs.class)
             .getClassReachabilityConfigsEnabledByClass(classInternalName)
             .forEach(enabledConfig -> {
-                val configClassInternalName = enabledConfig.getClassInternalName();
+                var configClassInternalName = enabledConfig.getClassInternalName();
                 context.queue(new RelocateClass(configClassInternalName));
 
                 // force relocation of members if the enabled class was relocated earlier:
@@ -315,10 +314,10 @@ public class RelocateClassCombinedImmediateHandler
         String classInternalName,
         RelocationContext context
     ) {
-        val classInfo = context.getRelocationComponent(ClassInfoComponent.class)
+        var classInfo = context.getRelocationComponent(ClassInfoComponent.class)
             .getClassInfo(classInternalName, context);
 
-        val classReachabilityConfigs = context.getRelocationComponent(ClassReachabilityConfigs.class);
+        var classReachabilityConfigs = context.getRelocationComponent(ClassReachabilityConfigs.class);
         classReachabilityConfigs.getClassReachabilityConfigs(classInternalName).stream()
             .filter(config -> config.isAlwaysEnabled()
                 || relocatedClassDataMap.containsKey(config.getOnReachedClassInternalName())
@@ -411,7 +410,7 @@ public class RelocateClassCombinedImmediateHandler
             return;
         }
 
-        val inputFieldNode = relocatedClassData.getInputClassNode().fields.stream()
+        var inputFieldNode = relocatedClassData.getInputClassNode().fields.stream()
             .filter(fieldNode -> fieldName.equals(fieldNode.name))
             .findFirst()
             .orElse(null);
@@ -427,7 +426,7 @@ public class RelocateClassCombinedImmediateHandler
             return;
         }
 
-        val classRemapper = new RelocationClassRemapper(relocatedClassData.getOutputClassNode(), remapper, context);
+        var classRemapper = new RelocationClassRemapper(relocatedClassData.getOutputClassNode(), remapper, context);
         inputFieldNode.accept(classRemapper);
 
         relocatedClassData.getRelocatedFields().add(fieldName);
@@ -444,7 +443,7 @@ public class RelocateClassCombinedImmediateHandler
             return;
         }
 
-        val inputMethodNodes = relocatedClassData.getInputClassNode().methods.stream()
+        var inputMethodNodes = relocatedClassData.getInputClassNode().methods.stream()
             .filter(methodKey::matches)
             .collect(toCollection(() -> newSetFromMap(new IdentityHashMap<>())));
         if (inputMethodNodes.isEmpty()) {
@@ -459,11 +458,11 @@ public class RelocateClassCombinedImmediateHandler
             return;
         }
 
-        val classRemapper = new RelocationClassRemapper(relocatedClassData.getOutputClassNode(), remapper, context);
+        var classRemapper = new RelocationClassRemapper(relocatedClassData.getOutputClassNode(), remapper, context);
         inputMethodNodes.forEach(methodNode -> methodNode.accept(classRemapper));
 
 
-        val instanceMethodNodes = inputMethodNodes.stream()
+        var instanceMethodNodes = inputMethodNodes.stream()
             .filter(methodNode -> (methodNode.access & ACC_STATIC) == 0)
             .collect(toList());
         if (instanceMethodNodes.isEmpty()) {
@@ -471,7 +470,7 @@ public class RelocateClassCombinedImmediateHandler
             return;
         }
 
-        val inputOverrideableMethodNodes = inputMethodNodes.stream()
+        var inputOverrideableMethodNodes = inputMethodNodes.stream()
             .filter(RelocateClassCombinedImmediateHandler::isOverrideableMethod)
             .collect(toList());
         if (inputOverrideableMethodNodes.isEmpty()) {
@@ -512,7 +511,7 @@ public class RelocateClassCombinedImmediateHandler
 
 
         // relocate overridden methods in parent classes:
-        val inputOverriddenCandidateMethodNodes = inputMethodNodes.stream()
+        var inputOverriddenCandidateMethodNodes = inputMethodNodes.stream()
             .filter(RelocateClassCombinedImmediateHandler::isOverriddenCandidateMethod)
             .collect(toList());
         if (!inputOverriddenCandidateMethodNodes.isEmpty()) {

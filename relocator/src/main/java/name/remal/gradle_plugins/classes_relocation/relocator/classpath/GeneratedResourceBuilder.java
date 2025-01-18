@@ -5,14 +5,14 @@ import static java.util.stream.Collectors.toList;
 import static lombok.AccessLevel.PACKAGE;
 import static name.remal.gradle_plugins.toolkit.LazyValue.lazyValue;
 
-import com.google.common.collect.ImmutableList;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Collection;
+import java.util.List;
 import javax.annotation.Nullable;
 import lombok.NoArgsConstructor;
-import lombok.val;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Unmodifiable;
 
 @NoArgsConstructor(access = PACKAGE)
 public final class GeneratedResourceBuilder {
@@ -20,7 +20,8 @@ public final class GeneratedResourceBuilder {
     private static final LazyValue<byte[]> EMPTY_CONTENT = lazyValue(() -> new byte[0]);
 
 
-    private ImmutableList<Resource> sourceResources = ImmutableList.of();
+    @Unmodifiable
+    private List<Resource> sourceResources = List.of();
 
     @Nullable
     private String name;
@@ -38,14 +39,14 @@ public final class GeneratedResourceBuilder {
     @CanIgnoreReturnValue
     @Contract("_->this")
     public GeneratedResourceBuilder withSourceResource(Resource sourceResource) {
-        this.sourceResources = ImmutableList.of(sourceResource);
+        this.sourceResources = List.of(sourceResource);
         return this;
     }
 
     @CanIgnoreReturnValue
     @Contract("_->this")
     public GeneratedResourceBuilder withSourceResources(Collection<? extends Resource> sourceResources) {
-        this.sourceResources = ImmutableList.copyOf(sourceResources);
+        this.sourceResources = List.copyOf(sourceResources);
         return this;
     }
 
@@ -82,7 +83,7 @@ public final class GeneratedResourceBuilder {
     @CanIgnoreReturnValue
     @Contract("_->this")
     public GeneratedResourceBuilder withContent(byte[] content) {
-        val clonedContent = content.clone();
+        var clonedContent = content.clone();
         this.content = lazyValue(() -> clonedContent);
         return this;
     }
@@ -109,8 +110,8 @@ public final class GeneratedResourceBuilder {
 
     @SuppressWarnings("java:S3776")
     public GeneratedResource build() {
-        val withoutName = name == null;
-        val withoutMultiReleaseVersion = multiReleaseVersion != null && multiReleaseVersion <= 0;
+        var withoutName = name == null;
+        var withoutMultiReleaseVersion = multiReleaseVersion != null && multiReleaseVersion <= 0;
         if (withoutName || withoutMultiReleaseVersion) {
             if (sourceResources.isEmpty()) {
                 throw new IllegalStateException(
@@ -118,7 +119,7 @@ public final class GeneratedResourceBuilder {
                 );
 
             } else if (sourceResources.size() == 1) {
-                val sourceResource = sourceResources.get(0);
+                var sourceResource = sourceResources.get(0);
                 if (withoutName) {
                     name = sourceResource.getName();
                 }
@@ -127,7 +128,7 @@ public final class GeneratedResourceBuilder {
                 }
 
             } else {
-                val resourceKey = getUniqueResourceKey(sourceResources);
+                var resourceKey = getUniqueResourceKey(sourceResources);
                 if (withoutName) {
                     name = resourceKey.getName();
                 }
@@ -153,7 +154,7 @@ public final class GeneratedResourceBuilder {
                     "Content must be set if sources resources are empty"
                 );
             } else if (sourceResources.size() == 1) {
-                val sourceResource = sourceResources.get(0);
+                var sourceResource = sourceResources.get(0);
                 content = lazyValue(sourceResource::readAllBytes);
             } else {
                 throw new IllegalStateException(
@@ -173,7 +174,7 @@ public final class GeneratedResourceBuilder {
 
 
     private static ResourceKey getUniqueResourceKey(Collection<? extends Resource> sourceResources) {
-        val resourceKeys = sourceResources.stream()
+        var resourceKeys = sourceResources.stream()
             .map(ResourceKey::resourceKeyFor)
             .distinct()
             .collect(toList());

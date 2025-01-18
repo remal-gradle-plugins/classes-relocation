@@ -5,16 +5,15 @@ import static name.remal.gradle_plugins.toolkit.JavaSerializationUtils.deseriali
 import static name.remal.gradle_plugins.toolkit.JavaSerializationUtils.serializeToBytes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import lombok.val;
 import org.junit.jupiter.api.Test;
 
 class MethodKeyTest {
 
     @Test
     void serialization() {
-        val methodKey = methodKeyOf("<init>", "()V");
-        val bytes = serializeToBytes(methodKey);
-        val deserializedMethodKey = deserializeFrom(bytes, MethodKey.class);
+        var methodKey = methodKeyOf("<init>", "()V");
+        var bytes = serializeToBytes(methodKey);
+        var deserializedMethodKey = deserializeFrom(bytes, MethodKey.class);
         assertEquals(methodKey, deserializedMethodKey);
     }
 

@@ -1,6 +1,5 @@
 package name.remal.gradle_plugins.classes_relocation.relocator;
 
-import static com.google.common.collect.ImmutableList.toImmutableList;
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static com.google.common.io.ByteStreams.copy;
 import static java.io.File.pathSeparator;
@@ -10,6 +9,7 @@ import static java.nio.file.Files.createTempDirectory;
 import static java.util.Arrays.asList;
 import static java.util.Arrays.stream;
 import static java.util.Collections.list;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.zip.Deflater.BEST_COMPRESSION;
 import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmTestUtils.wrapWithTestClassVisitors;
 import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.toClassInternalName;
@@ -53,7 +53,6 @@ import java.util.Set;
 import java.util.stream.Stream;
 import lombok.CustomLog;
 import lombok.SneakyThrows;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath;
 import name.remal.gradle_plugins.toolkit.UrlUtils;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
@@ -102,8 +101,8 @@ public abstract class ClassesRelocatorTestBase {
 
         {
             // verify test logic without relocation
-            val testLogicCtor = makeAccessible(logicClass.getDeclaredConstructor());
-            val testLogic = (ClassesRelocatorTestLogic) testLogicCtor.newInstance();
+            var testLogicCtor = makeAccessible(logicClass.getDeclaredConstructor());
+            var testLogic = (ClassesRelocatorTestLogic) testLogicCtor.newInstance();
             try {
                 testLogic.assertTestLogic();
             } catch (Throwable e) {
@@ -111,8 +110,8 @@ public abstract class ClassesRelocatorTestBase {
             }
         }
 
-        val sourceJarPath = createSourceJar(logicClass);
-        val targetJarPath = createParentDirectories(tempDirPath.resolve("target.jar"));
+        var sourceJarPath = createSourceJar(logicClass);
+        var targetJarPath = createParentDirectories(tempDirPath.resolve("target.jar"));
         relocate(sourceJarPath, targetJarPath, relocationLibraries);
         executeRelocatedTestLogic(
             logicClass.getName(),
@@ -120,8 +119,8 @@ public abstract class ClassesRelocatorTestBase {
             "relocation"
         );
 
-        val wrappedSourceJar = createWrappedSourceJar(logicClass);
-        val wrappedTargetJarPath = createParentDirectories(tempDirPath.resolve("wrapped-target.jar"));
+        var wrappedSourceJar = createWrappedSourceJar(logicClass);
+        var wrappedTargetJarPath = createParentDirectories(tempDirPath.resolve("wrapped-target.jar"));
         relocate(wrappedSourceJar, wrappedTargetJarPath, targetJarPath);
         executeRelocatedTestLogic(
             WRAPPED_LOGIC_CLASS_NAME_PREFIX + logicClass.getName(),
@@ -132,30 +131,30 @@ public abstract class ClassesRelocatorTestBase {
 
     @SneakyThrows
     private Path createSourceJar(Class<? extends ClassesRelocatorTestLogic> logicClass) {
-        val sourceJarPath = createParentDirectories(tempDirPath.resolve("source.jar"));
+        var sourceJarPath = createParentDirectories(tempDirPath.resolve("source.jar"));
         try (
-            val testClassesJar = ZipFile.builder().setPath(getTestClassesJarPath()).get();
-            val sourceJar = new ZipArchiveOutputStream(sourceJarPath)
+            var testClassesJar = ZipFile.builder().setPath(getTestClassesJarPath()).get();
+            var sourceJar = new ZipArchiveOutputStream(sourceJarPath)
         ) {
             sourceJar.setMethod(DEFLATED);
             sourceJar.setLevel(BEST_COMPRESSION);
             sourceJar.setUseZip64(Zip64Mode.AsNeeded);
             sourceJar.setEncoding(UTF_8.name());
 
-            val logicPackageResourceNamePrefix = packageNameOf(logicClass).replace('.', '/') + '/';
-            val entriesToCopy = list(testClassesJar.getEntries()).stream()
+            var logicPackageResourceNamePrefix = packageNameOf(logicClass).replace('.', '/') + '/';
+            var entriesToCopy = list(testClassesJar.getEntries()).stream()
                 .filter(not(ZipArchiveEntry::isDirectory))
                 .filter(entry -> {
-                    val resourceName = entry.getName();
+                    var resourceName = entry.getName();
                     return resourceName.startsWith("META-INF/")
                         || resourceName.startsWith(logicPackageResourceNamePrefix);
                 })
-                .collect(toImmutableList());
+                .collect(toUnmodifiableList());
 
-            for (val entryToCopy : entriesToCopy) {
-                val sourceEntry = new ZipArchiveEntry(entryToCopy);
+            for (var entryToCopy : entriesToCopy) {
+                var sourceEntry = new ZipArchiveEntry(entryToCopy);
                 sourceJar.putArchiveEntry(sourceEntry);
-                try (val sourceIn = testClassesJar.getInputStream(entryToCopy)) {
+                try (var sourceIn = testClassesJar.getInputStream(entryToCopy)) {
                     copy(sourceIn, sourceJar);
                 }
                 sourceJar.closeArchiveEntry();
@@ -166,24 +165,24 @@ public abstract class ClassesRelocatorTestBase {
 
     @SneakyThrows
     private Path createWrappedSourceJar(Class<? extends ClassesRelocatorTestLogic> logicClass) {
-        val wrappedSourceJarPath = createParentDirectories(tempDirPath.resolve("wrapped-source.jar"));
-        try (val wrappedSourceJar = new ZipArchiveOutputStream(wrappedSourceJarPath)) {
+        var wrappedSourceJarPath = createParentDirectories(tempDirPath.resolve("wrapped-source.jar"));
+        try (var wrappedSourceJar = new ZipArchiveOutputStream(wrappedSourceJarPath)) {
             wrappedSourceJar.setMethod(DEFLATED);
             wrappedSourceJar.setLevel(BEST_COMPRESSION);
             wrappedSourceJar.setUseZip64(Zip64Mode.AsNeeded);
             wrappedSourceJar.setEncoding(UTF_8.name());
 
-            val classNode = new ClassNode();
+            var classNode = new ClassNode();
             classNode.version = V1_8;
             classNode.access = ACC_PUBLIC;
             classNode.name = toClassInternalName(WRAPPED_LOGIC_CLASS_NAME_PREFIX) + getInternalName(logicClass);
             classNode.superName = getInternalName(Object.class);
-            classNode.interfaces = ImmutableList.of(getInternalName(ClassesRelocatorTestLogic.class));
+            classNode.interfaces = List.of(getInternalName(ClassesRelocatorTestLogic.class));
             classNode.fields = new ArrayList<>();
             classNode.methods = new ArrayList<>();
 
             {
-                val methodNode = new MethodNode(
+                var methodNode = new MethodNode(
                     ACC_PUBLIC,
                     "<init>",
                     getMethodDescriptor(
@@ -194,7 +193,7 @@ public abstract class ClassesRelocatorTestBase {
                 );
                 classNode.methods.add(methodNode);
 
-                val instructions = methodNode.instructions = new InsnList();
+                var instructions = methodNode.instructions = new InsnList();
 
                 instructions.add(new VarInsnNode(ALOAD, 0));
                 instructions.add(new MethodInsnNode(
@@ -210,9 +209,9 @@ public abstract class ClassesRelocatorTestBase {
             }
 
             {
-                val assertTestLogicMethod = ClassesRelocatorTestLogic.class.getMethod("assertTestLogic");
+                var assertTestLogicMethod = ClassesRelocatorTestLogic.class.getMethod("assertTestLogic");
 
-                val methodNode = new MethodNode(
+                var methodNode = new MethodNode(
                     ACC_PUBLIC,
                     assertTestLogicMethod.getName(),
                     getMethodDescriptor(assertTestLogicMethod),
@@ -221,7 +220,7 @@ public abstract class ClassesRelocatorTestBase {
                 );
                 classNode.methods.add(methodNode);
 
-                val instructions = methodNode.instructions = new InsnList();
+                var instructions = methodNode.instructions = new InsnList();
 
                 instructions.add(new TypeInsnNode(NEW, getInternalName(logicClass)));
                 instructions.add(new InsnNode(DUP));
@@ -244,7 +243,7 @@ public abstract class ClassesRelocatorTestBase {
                 instructions.add(new InsnNode(RETURN));
             }
 
-            val classWriter = new ClassWriter(COMPUTE_MAXS | COMPUTE_FRAMES);
+            var classWriter = new ClassWriter(COMPUTE_MAXS | COMPUTE_FRAMES);
             classNode.accept(wrapWithTestClassVisitors(classWriter));
 
             wrappedSourceJar.putArchiveEntry(new ZipArchiveEntry(classNode.name + ".class"));
@@ -275,7 +274,7 @@ public abstract class ClassesRelocatorTestBase {
         Path... relocationLibraries
     ) {
         try (
-            val relocator = ClassesRelocator.builder()
+            var relocator = ClassesRelocator.builder()
                 .sourceJarPath(sourceJarPath)
                 .relocationClasspathPaths(asList(relocationLibraries))
                 .reachabilityMetadataClasspathPaths(getLibraryFilePaths("graalvm-reachability-metadata"))
@@ -293,11 +292,11 @@ public abstract class ClassesRelocatorTestBase {
         Path targetJarPath,
         String description
     ) {
-        val classLoaderUrls = Stream.of(targetJarPath)
+        var classLoaderUrls = Stream.of(targetJarPath)
             .map(UrlUtils::toUrl)
             .toArray(URL[]::new);
-        val prevContextClassLoader = Thread.currentThread().getContextClassLoader();
-        try (val classLoader = new TestLogicClassLoader(classLoaderUrls)) {
+        var prevContextClassLoader = Thread.currentThread().getContextClassLoader();
+        try (var classLoader = new TestLogicClassLoader(classLoaderUrls)) {
             Thread.currentThread().setContextClassLoader(classLoader);
 
             try {
@@ -307,9 +306,9 @@ public abstract class ClassesRelocatorTestBase {
                 // OK
             }
 
-            val relocatedTestLogicClass = classLoader.loadClass(logicClassName);
-            val relocatedTestLogicCtor = makeAccessible(relocatedTestLogicClass.getDeclaredConstructor());
-            val relocatedTestLogic = (ClassesRelocatorTestLogic) relocatedTestLogicCtor.newInstance();
+            var relocatedTestLogicClass = classLoader.loadClass(logicClassName);
+            var relocatedTestLogicCtor = makeAccessible(relocatedTestLogicClass.getDeclaredConstructor());
+            var relocatedTestLogic = (ClassesRelocatorTestLogic) relocatedTestLogicCtor.newInstance();
             try {
                 relocatedTestLogic.assertTestLogic();
             } catch (Throwable e) {
@@ -322,7 +321,7 @@ public abstract class ClassesRelocatorTestBase {
     }
 
 
-    private static final List<String> ALWAYS_AVAILABLE_LIBRARIES = ImmutableList.of(
+    private static final List<String> ALWAYS_AVAILABLE_LIBRARIES = List.of(
         "junit-jupiter-api",
         "assertj-core",
         "asm"
@@ -331,7 +330,7 @@ public abstract class ClassesRelocatorTestBase {
     private static final Set<String> TEST_LOGIC_CLASS_NAMES;
 
     static {
-        val testLogicClassNames = new LinkedHashSet<String>();
+        var testLogicClassNames = new LinkedHashSet<String>();
 
         Stream.of(
             ClassesRelocatorTestLogic.class
@@ -349,8 +348,8 @@ public abstract class ClassesRelocatorTestBase {
 
 
     private static Path getTestClassesJarPath() {
-        val property = "test-classes-jar";
-        val path = System.getProperty(property);
+        var property = "test-classes-jar";
+        var path = System.getProperty(property);
         if (path == null || path.isEmpty()) {
             throw new IllegalStateException("System property not set: " + property);
         }
@@ -359,7 +358,7 @@ public abstract class ClassesRelocatorTestBase {
     }
 
     private static Collection<Path> getLibraryFilePaths(String libraryName) {
-        val classpathString = System.getProperty(libraryName + "-classpath");
+        var classpathString = System.getProperty(libraryName + "-classpath");
         if (classpathString == null) {
             throw new IllegalStateException("Unknown library: " + libraryName);
         }

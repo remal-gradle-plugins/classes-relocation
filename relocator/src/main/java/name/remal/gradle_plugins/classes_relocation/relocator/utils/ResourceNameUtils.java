@@ -7,7 +7,6 @@ import static name.remal.gradle_plugins.toolkit.ObjectUtils.isEmpty;
 
 import javax.annotation.Nullable;
 import lombok.NoArgsConstructor;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 
 @NoArgsConstructor(access = PRIVATE)
@@ -18,7 +17,7 @@ public abstract class ResourceNameUtils {
     }
 
     public static String getFileNameOfResourceName(String resourceName) {
-        val delimPos = resourceName.lastIndexOf('/');
+        var delimPos = resourceName.lastIndexOf('/');
         return delimPos >= 0 ? resourceName.substring(delimPos + 1) : resourceName;
     }
 
@@ -28,7 +27,7 @@ public abstract class ResourceNameUtils {
     }
 
     public static String getNamePrefixOfResourceName(String resourceName) {
-        val delimPos = resourceName.lastIndexOf('/');
+        var delimPos = resourceName.lastIndexOf('/');
         return delimPos >= 0 ? resourceName.substring(0, delimPos + 1) : "";
     }
 
@@ -42,8 +41,8 @@ public abstract class ResourceNameUtils {
             return resourceName;
         }
 
-        val resourceNamePrefix = getNamePrefixOfResourceName(resourceName);
-        val resourceFileName = resourceName.substring(resourceNamePrefix.length());
+        var resourceNamePrefix = getNamePrefixOfResourceName(resourceName);
+        var resourceFileName = resourceName.substring(resourceNamePrefix.length());
         return resourceNamePrefix + fileNamePrefix + resourceFileName;
     }
 
@@ -72,7 +71,7 @@ public abstract class ResourceNameUtils {
         }
 
         for (int index = 0; index < string.length(); index++) {
-            val ch = string.charAt(index);
+            var ch = string.charAt(index);
             if (binarySearch(FORBIDDEN_RESOURCE_NAME_CHARS, ch) >= 0) {
                 return false;
             }
@@ -90,9 +89,9 @@ public abstract class ResourceNameUtils {
     }
 
     private static String escapeRelocationSource(String name) {
-        val result = new StringBuilder(name.length());
+        var result = new StringBuilder(name.length());
         for (int index = 0; index < name.length(); index++) {
-            val ch = name.charAt(index);
+            var ch = name.charAt(index);
             if (binarySearch(FORBIDDEN_RESOURCE_FILE_NAME_CHARS, ch) >= 0) {
                 result.append('-');
             } else if (ch < 32 || ch > 126) {

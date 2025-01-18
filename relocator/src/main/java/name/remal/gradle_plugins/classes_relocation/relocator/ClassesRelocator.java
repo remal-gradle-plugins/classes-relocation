@@ -31,7 +31,6 @@ import lombok.CustomLog;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.experimental.SuperBuilder;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorConfig;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorLifecycleComponent;
@@ -111,12 +110,12 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
     public void relocate() {
         checkThatNoSourceResourcesAreInRelocationPackages();
 
-        val start = nanoTime();
+        var start = nanoTime();
         try {
             relocateImpl();
 
         } finally {
-            val millis = NANOSECONDS.toMillis(nanoTime() - start);
+            var millis = NANOSECONDS.toMillis(nanoTime() - start);
             logger.log(
                 IN_FUNCTIONAL_TEST ? LogLevel.QUIET : LogLevel.INFO,
                 "Relocation took {}ms",
@@ -127,15 +126,15 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
 
     @SneakyThrows
     private void relocateImpl() {
-        try (val implementations = new Implementations(objectFactory)) {
-            val context = new RelocationContextImpl();
+        try (var implementations = new Implementations(objectFactory)) {
+            var context = new RelocationContextImpl();
             context.setImplementations(implementations);
 
-            val tasksExecutor = new TasksExecutor(context);
+            var tasksExecutor = new TasksExecutor(context);
             context.setTasksExecutor(tasksExecutor);
 
-            val lifecycleComponents = context.getRelocationComponents(ClassesRelocatorLifecycleComponent.class);
-            for (val lifecycleComponent : lifecycleComponents) {
+            var lifecycleComponents = context.getRelocationComponents(ClassesRelocatorLifecycleComponent.class);
+            for (var lifecycleComponent : lifecycleComponents) {
                 lifecycleComponent.prepareRelocation(context);
             }
 
@@ -160,15 +159,15 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
 
             tasksExecutor.executeQueuedTasks();
 
-            for (val lifecycleComponent : reverse(lifecycleComponents)) {
+            for (var lifecycleComponent : reverse(lifecycleComponents)) {
                 lifecycleComponent.finalizeRelocation(context);
             }
         }
     }
 
     private void checkThatNoSourceResourcesAreInRelocationPackages() {
-        val sourcePackageNamesToRelocate = new LinkedHashSet<>(sourceClasspath.getPackageNames());
-        val relocationPackageNames = relocationClasspath.getPackageNames();
+        var sourcePackageNamesToRelocate = new LinkedHashSet<>(sourceClasspath.getPackageNames());
+        var relocationPackageNames = relocationClasspath.getPackageNames();
         sourcePackageNamesToRelocate.retainAll(relocationPackageNames);
         if (!sourcePackageNamesToRelocate.isEmpty()) {
             throw new SourceResourcesInRelocationPackagesException(sourcePackageNamesToRelocate);
@@ -264,8 +263,8 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
 
             if (resource instanceof WithSourceResources) {
                 boolean result = false;
-                val sourceResources = ((WithSourceResources) resource).getSourceResources();
-                for (val sourceResource : sourceResources) {
+                var sourceResources = ((WithSourceResources) resource).getSourceResources();
+                for (var sourceResource : sourceResources) {
                     if (markResourceAsProcessed(sourceResource)) {
                         result = true;
                     }
@@ -282,15 +281,15 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         public void writeToOutput(Resource resource) {
             markResourceAsProcessed(resource);
 
-            val originalResource = getOriginalResource(resource);
+            var originalResource = getOriginalResource(resource);
             if (originalResource != resource) {
                 registerOriginalResource(resource, originalResource);
             }
 
-            val resourceName = resource.getName();
-            val fullResourceName = withMultiReleasePathPrefix(resourceName, resource.getMultiReleaseVersion());
+            var resourceName = resource.getName();
+            var fullResourceName = withMultiReleasePathPrefix(resourceName, resource.getMultiReleaseVersion());
             if (output.isResourceAdded(fullResourceName)) {
-                val message = format(
+                var message = format(
                     "A resource was already relocated, ignoring duplicated path `%s` (source resource: %s)",
                     fullResourceName,
                     resource
@@ -305,15 +304,15 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
                 return;
             }
 
-            val lastModifiedMillis = resource.getLastModifiedMillis();
-            try (val in = resource.open()) {
+            var lastModifiedMillis = resource.getLastModifiedMillis();
+            try (var in = resource.open()) {
                 output.copy(fullResourceName, lastModifiedMillis, in);
             }
         }
 
         private Resource getOriginalResource(Resource resource) {
             while (resource instanceof WithSourceResources) {
-                val sourceResources = ((WithSourceResources) resource).getSourceResources();
+                var sourceResources = ((WithSourceResources) resource).getSourceResources();
                 if (sourceResources.size() == 1) {
                     resource = sourceResources.get(0);
                     continue;

@@ -18,7 +18,6 @@ import javax.annotation.Nullable;
 import javax.annotation.WillNotClose;
 import lombok.CustomLog;
 import lombok.SneakyThrows;
-import lombok.val;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -87,7 +86,7 @@ class RelocationOutputImpl implements RelocationOutput {
             throw new IllegalStateException("A resource was already relocated, ignoring duplicated path: " + path);
         }
 
-        val archiveEntry = new ZipArchiveEntry(path);
+        var archiveEntry = new ZipArchiveEntry(path);
         archiveEntry.setTime(canonizeLastModified(lastModifiedMillis));
         zipOutputStream.putArchiveEntry(archiveEntry);
         zipOutputStream.write(bytes);
@@ -105,7 +104,7 @@ class RelocationOutputImpl implements RelocationOutput {
             throw new IllegalStateException("A resource was already relocated, ignoring duplicated path: " + path);
         }
 
-        val archiveEntry = new ZipArchiveEntry(path);
+        var archiveEntry = new ZipArchiveEntry(path);
         archiveEntry.setTime(canonizeLastModified(lastModifiedMillis));
         zipOutputStream.putArchiveEntry(archiveEntry);
         ByteStreams.copy(inputStream, zipOutputStream);

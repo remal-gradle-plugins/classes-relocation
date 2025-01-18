@@ -20,7 +20,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import javax.inject.Inject;
 import lombok.CustomLog;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocationException;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
@@ -63,13 +62,13 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
     @Override
     @SuppressWarnings("Slf4jFormatShouldBeConst")
     public void apply(Project project) {
-        val extension = project.getExtensions().create(
+        var extension = project.getExtensions().create(
             CLASSES_RELOCATION_EXTENSION_NAME,
             ClassesRelocationExtension.class
         );
 
 
-        val depsLegacyConfProvider = getConfigurations().register(
+        var depsLegacyConfProvider = getConfigurations().register(
             CLASSES_RELOCATION_LEGACY_CONFIGURATION_NAME,
             conf -> {
                 conf.setVisible(false);
@@ -80,18 +79,18 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
                 );
 
                 conf.getDependencies().configureEach(__ -> {
-                    val message = format(
+                    var message = format(
                         "Use `%s` configuration for classes relocation dependencies instead of the legacy `%s`",
                         CLASSES_RELOCATION_CONFIGURATION_NAME,
                         CLASSES_RELOCATION_LEGACY_CONFIGURATION_NAME
                     );
-                    val exception = new ClassesRelocationException(message);
+                    var exception = new ClassesRelocationException(message);
                     logger.warn(exception.toString(), exception);
                 });
             }
         );
 
-        val depsConfProvider = getConfigurations().register(
+        var depsConfProvider = getConfigurations().register(
             CLASSES_RELOCATION_CONFIGURATION_NAME,
             conf -> {
                 conf.setVisible(false);
@@ -102,7 +101,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
             }
         );
 
-        val confProvider = getConfigurations().register(
+        var confProvider = getConfigurations().register(
             CLASSES_RELOCATION_CLASSPATH_CONFIGURATION_NAME,
             conf -> {
                 conf.setVisible(false);
@@ -118,7 +117,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         );
 
 
-        val graalvmReachabilityMetadataRepo = getRepositories().ivy(repo -> {
+        var graalvmReachabilityMetadataRepo = getRepositories().ivy(repo -> {
             repo.setName(GRAALVM_REACHABILITY_METADATA_REPOSITORY_NAME);
             repo.setUrl(GRAALVM_REACHABILITY_METADATA_REPOSITORY_URL);
             repo.patternLayout(layout -> {
@@ -132,7 +131,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
             .filter(content -> content.includeModule("oracle", "graalvm-reachability-metadata"))
         );
 
-        val reachabilityMetadataConfProvider = getConfigurations().register(
+        var reachabilityMetadataConfProvider = getConfigurations().register(
             REACHABILITY_METADATA_CONFIGURATION_NAME,
             conf -> {
                 conf.setVisible(false);
@@ -140,7 +139,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
                 conf.setCanBeResolved(true);
                 conf.setDescription("GraalVM reachability metadata");
                 conf.withDependencies(deps -> {
-                    val dependencyVersion = extension.getMinimize().getGraalvmReachabilityMetadataVersion().get();
+                    var dependencyVersion = extension.getMinimize().getGraalvmReachabilityMetadataVersion().get();
                     deps.add(getDependencies().create(format(
                         "oracle:graalvm-reachability-metadata:%s@zip",
                         dependencyVersion
@@ -167,12 +166,12 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         extendCompileClasspathConfiguration(relocationDepsConfProvider);
         resolveConsistentlyWithCompileClasspath(relocationConfProvider);
 
-        val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
-        val mainSourceSetProvider = sourceSets.named(MAIN_SOURCE_SET_NAME);
+        var sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
+        var mainSourceSetProvider = sourceSets.named(MAIN_SOURCE_SET_NAME);
 
-        val jarProvider = getTasks().named(JAR_TASK_NAME, Jar.class);
+        var jarProvider = getTasks().named(JAR_TASK_NAME, Jar.class);
         jarProvider.configure(jar -> {
-            val action = getObjects().newInstance(RelocateJarAction.class);
+            var action = getObjects().newInstance(RelocateJarAction.class);
             jar.getOutputs().cacheIf(RelocateJarAction.class.getName(), __ -> true);
             registerTaskProperties(jar, action, RelocateJarAction.class.getSimpleName());
 
@@ -203,9 +202,9 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
     }
 
     private void setLibraryElementToJar(Project project) {
-        val sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
+        var sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         sourceSets.configureEach(sourceSet -> {
-            val configurationNames = asList(
+            var configurationNames = asList(
                 sourceSet.getCompileClasspathConfigurationName(),
                 sourceSet.getRuntimeClasspathConfigurationName()
             );
@@ -235,7 +234,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         NamedDomainObjectProvider<Configuration> relocationConfProvider
     ) {
         relocationConfProvider.configure(conf -> {
-            val compileClasspathConf = getConfigurations().getByName(COMPILE_CLASSPATH_CONFIGURATION_NAME);
+            var compileClasspathConf = getConfigurations().getByName(COMPILE_CLASSPATH_CONFIGURATION_NAME);
             conf.shouldResolveConsistentlyWith(compileClasspathConf);
             conf.setDescription(format(
                 "%s, resolved consistently with `%s` configuration",
@@ -247,7 +246,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
 
     private Provider<Map<String, String>> retrieveModuleIdentifiers(FileCollection fileCollection) {
         return getProviders().provider(() -> {
-            val moduleIdentifiers = new LinkedHashMap<String, String>();
+            var moduleIdentifiers = new LinkedHashMap<String, String>();
             getModuleVersionIdentifiersForFilesIn(fileCollection).forEach((file, id) -> {
                 moduleIdentifiers.putIfAbsent(
                     file.toPath().toUri().toString(),

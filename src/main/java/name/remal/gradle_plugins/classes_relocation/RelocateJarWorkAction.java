@@ -12,7 +12,6 @@ import java.util.Map.Entry;
 import javax.inject.Inject;
 import lombok.CustomLog;
 import lombok.NoArgsConstructor;
-import lombok.val;
 import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocator;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorConfig;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.MinimizationConfig;
@@ -26,11 +25,11 @@ abstract class RelocateJarWorkAction implements WorkAction<RelocateJarWorkAction
 
     @Override
     public void execute() {
-        val params = getParameters();
-        val settings = params.getSettings().get();
-        val minimizeSettings = settings.getMinimize();
+        var params = getParameters();
+        var settings = params.getSettings().get();
+        var minimizeSettings = settings.getMinimize();
         try (
-            val relocator = ClassesRelocator.builder()
+            var relocator = ClassesRelocator.builder()
                 .sourceJarPath(params.getJarFile().get().getAsFile().toPath())
                 .relocationClasspathPaths(params.getRelocationClasspath().getFiles().stream()
                     .map(File::toPath)

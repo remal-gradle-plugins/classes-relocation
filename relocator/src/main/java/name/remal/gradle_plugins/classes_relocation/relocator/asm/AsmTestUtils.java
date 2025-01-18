@@ -6,7 +6,6 @@ import static name.remal.gradle_plugins.toolkit.InTestFlags.isInTest;
 
 import java.io.PrintWriter;
 import lombok.NoArgsConstructor;
-import lombok.val;
 import org.jetbrains.annotations.ApiStatus;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.util.CheckClassAdapter;
@@ -50,7 +49,7 @@ public abstract class AsmTestUtils {
 
         @SuppressWarnings({"java:S106", "DefaultCharset"})
         public static ClassVisitor wrap(ClassVisitor classVisitor) {
-            val writer = new PrintWriter(System.out, true);
+            var writer = new PrintWriter(System.out, true);
             return new TraceClassVisitor(classVisitor, writer);
         }
 

@@ -4,7 +4,6 @@ import static org.objectweb.asm.Type.getType;
 
 import java.util.function.Predicate;
 import javax.annotation.Nullable;
-import lombok.val;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.TypePath;
@@ -21,7 +20,7 @@ class FilterFieldVisitor extends FieldVisitor {
     @Override
     @Nullable
     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-        val internalName = getType(descriptor).getInternalName();
+        var internalName = getType(descriptor).getInternalName();
         if (!classInternalNamePredicate.test(internalName)) {
             return null;
         }
@@ -37,7 +36,7 @@ class FilterFieldVisitor extends FieldVisitor {
         String descriptor,
         boolean visible
     ) {
-        val internalName = getType(descriptor).getInternalName();
+        var internalName = getType(descriptor).getInternalName();
         if (!classInternalNamePredicate.test(internalName)) {
             return null;
         }
