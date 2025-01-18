@@ -6,7 +6,6 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.InternalGra
 import static name.remal.gradle_plugins.toolkit.PathUtils.createParentDirectories;
 import static org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.DEFLATED;
 
-import com.google.common.io.ByteStreams;
 import com.google.errorprone.annotations.concurrent.GuardedBy;
 import java.io.IOException;
 import java.io.InputStream;
@@ -107,7 +106,7 @@ class RelocationOutputImpl implements RelocationOutput {
         var archiveEntry = new ZipArchiveEntry(path);
         archiveEntry.setTime(canonizeLastModified(lastModifiedMillis));
         zipOutputStream.putArchiveEntry(archiveEntry);
-        ByteStreams.copy(inputStream, zipOutputStream);
+        inputStream.transferTo(zipOutputStream);
         zipOutputStream.closeArchiveEntry();
     }
 

@@ -1,7 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation.relocator;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
-import static com.google.common.io.ByteStreams.copy;
 import static java.io.File.pathSeparator;
 import static java.lang.ClassLoader.getSystemClassLoader;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -155,7 +154,7 @@ public abstract class ClassesRelocatorTestBase {
                 var sourceEntry = new ZipArchiveEntry(entryToCopy);
                 sourceJar.putArchiveEntry(sourceEntry);
                 try (var sourceIn = testClassesJar.getInputStream(entryToCopy)) {
-                    copy(sourceIn, sourceJar);
+                    sourceIn.transferTo(sourceJar);
                 }
                 sourceJar.closeArchiveEntry();
             }
