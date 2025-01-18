@@ -1,6 +1,6 @@
-**Tested on Java LTS versions from <!--property:java-runtime.min-version-->8<!--/property--> to <!--property:java-runtime.max-version-->21<!--/property-->.**
+**Tested on Java LTS versions from <!--property:java-runtime.min-version-->11<!--/property--> to <!--property:java-runtime.max-version-->21<!--/property-->.**
 
-**Tested on Gradle versions from <!--property:gradle-api.min-version-->6.8<!--/property--> to <!--property:gradle-api.max-version-->8.12<!--/property-->.**
+**Tested on Gradle versions from <!--property:gradle-api.min-version-->7.5<!--/property--> to <!--property:gradle-api.max-version-->8.12<!--/property-->.**
 
 # `name.remal.classes-relocation` plugin
 
@@ -9,13 +9,11 @@
 Usage:
 
 <!--plugin-usage:name.remal.classes-relocation-->
-
 ```groovy
 plugins {
-  id 'name.remal.classes-relocation' version '2.0.0-rc-2'
+    id 'name.remal.classes-relocation' version '2.0.0-rc-2'
 }
 ```
-
 <!--/plugin-usage-->
 
 &nbsp;
