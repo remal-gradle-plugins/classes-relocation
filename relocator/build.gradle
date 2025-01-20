@@ -51,6 +51,7 @@ dependencies {
     componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     componentTestImplementation 'joda-time:joda-time:2.13.0'
     componentTestImplementation 'net.sf.saxon:Saxon-HE:12.5'
+    componentTestImplementation 'io.github.classgraph:classgraph:4.8.179'
 }
 
 Map<String, String> componentTestRelocationNotations = [
@@ -62,6 +63,7 @@ Map<String, String> componentTestRelocationNotations = [
     'jackson-jsr310': 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310',
     'joda-time': 'joda-time:joda-time',
     'saxon': 'net.sf.saxon:Saxon-HE',
+    'classgraph': 'io.github.classgraph:classgraph',
 
     'junit-jupiter-api': 'org.junit.jupiter:junit-jupiter-api',
     'assertj-core': 'org.assertj:assertj-core',

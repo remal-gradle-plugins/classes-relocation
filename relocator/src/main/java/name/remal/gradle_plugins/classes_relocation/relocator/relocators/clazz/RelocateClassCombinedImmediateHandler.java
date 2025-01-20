@@ -320,6 +320,7 @@ public class RelocateClassCombinedImmediateHandler
         var classReachabilityConfigs = context.getRelocationComponent(ClassReachabilityConfigs.class);
         classReachabilityConfigs.getClassReachabilityConfigs(classInternalName).stream()
             .filter(config -> config.isAlwaysEnabled()
+                || classInternalName.equals(config.getOnReachedClassInternalName())
                 || relocatedClassDataMap.containsKey(config.getOnReachedClassInternalName())
                 || isRelocationQueued(config.getOnReachedClassInternalName(), context)
             )

@@ -36,10 +36,14 @@ import org.jetbrains.annotations.Unmodifiable;
 @SuppressWarnings("java:S1948")
 public class ClassReachabilityConfig implements Serializable {
 
+    private static final String ON_REACHED_SELF = "<| on reached self |>";
+
+
     @NonNull
     String classInternalName;
 
     @Nullable
+    @org.jetbrains.annotations.Nullable
     String onReachedClassInternalName;
 
     @Unmodifiable
@@ -65,8 +69,16 @@ public class ClassReachabilityConfig implements Serializable {
     boolean allPermittedSubclasses;
 
 
+    @Nullable
+    public String getOnReachedClassInternalName() {
+        if (ON_REACHED_SELF.equals(onReachedClassInternalName)) {
+            return getClassInternalName();
+        }
+        return onReachedClassInternalName;
+    }
+
     public boolean isAlwaysEnabled() {
-        return isEmpty(onReachedClassInternalName);
+        return isEmpty(getOnReachedClassInternalName());
     }
 
 
@@ -81,6 +93,11 @@ public class ClassReachabilityConfig implements Serializable {
         @Tolerate
         public ClassReachabilityConfigBuilder onReachedClass(String className) {
             return onReachedClassInternalName(toClassInternalName(className));
+        }
+
+        @Tolerate
+        public ClassReachabilityConfigBuilder onReached() {
+            return onReachedClassInternalName(ON_REACHED_SELF);
         }
 
         @Tolerate

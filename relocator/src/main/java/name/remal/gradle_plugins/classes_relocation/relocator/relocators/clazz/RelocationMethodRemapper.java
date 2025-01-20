@@ -4,7 +4,10 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.api.MethodK
 import static org.objectweb.asm.Opcodes.H_INVOKESTATIC;
 import static org.objectweb.asm.Type.getMethodType;
 
+import com.google.common.collect.ImmutableSet;
+import java.util.Set;
 import javax.annotation.Nullable;
+import lombok.CustomLog;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.class_info.ClassInfoComponent;
 import org.objectweb.asm.Handle;
@@ -13,6 +16,7 @@ import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.MethodRemapper;
 import org.objectweb.asm.commons.Remapper;
 
+@CustomLog
 class RelocationMethodRemapper extends MethodRemapper {
 
     private static final Handle DEFAULT_LAMBDA_BOOSTRAP_METHOD_HANDLE = new Handle(
@@ -31,6 +35,25 @@ class RelocationMethodRemapper extends MethodRemapper {
         false
     );
 
+    private static final Set<String> CLASS_DYNAMIC_REFLECTION_METHOD_NAMES = ImmutableSet.of(
+        "forName",
+        "getFields",
+        "getConstructors",
+        "getMethods",
+        "getField",
+        "getConstructor",
+        "getMethod",
+        "getDeclaredFields",
+        "getDeclaredConstructors",
+        "getDeclaredMethods",
+        "getDeclaredField",
+        "getDeclaredConstructor",
+        "getDeclaredMethod"
+    );
+
+
+    @Nullable
+    private final String classInternalName;
 
     private final RelocationContext context;
 
@@ -38,9 +61,16 @@ class RelocationMethodRemapper extends MethodRemapper {
         int api,
         @Nullable MethodVisitor methodVisitor,
         Remapper remapper,
+        @Nullable String classInternalName,
         RelocationContext context
     ) {
         super(api, methodVisitor, remapper);
+        if (classInternalName == null) {
+            if (remapper instanceof RelocationRemapper) {
+                classInternalName = ((RelocationRemapper) remapper).getClassInternalName();
+            }
+        }
+        this.classInternalName = classInternalName;
         this.context = context;
     }
 
@@ -63,6 +93,20 @@ class RelocationMethodRemapper extends MethodRemapper {
     ) {
         if (context.isRelocationClassInternalName(owner)) {
             context.queue(new RelocateMethod(owner, name, descriptor));
+        }
+
+        if (context.getConfig().isLogDynamicReflectionUsage()
+            && context.isRelocationClassInternalName(classInternalName)
+        ) {
+            if (owner.equals("java/lang/Class") && CLASS_DYNAMIC_REFLECTION_METHOD_NAMES.contains(name)) {
+                logger.warn(
+                    "Class {} calls a dynamic reflection method: {}.{}{}",
+                    classInternalName,
+                    owner,
+                    name,
+                    descriptor
+                );
+            }
         }
 
         super.visitMethodInsn(opcodeAndSource, owner, name, descriptor, isInterface);

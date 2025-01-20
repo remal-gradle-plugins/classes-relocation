@@ -11,6 +11,7 @@ import java.util.Set;
 import java.util.function.Predicate;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocationException;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 
 @RequiredArgsConstructor
@@ -27,13 +28,18 @@ public class TasksExecutor {
     @SneakyThrows
     @SuppressWarnings({"unchecked", "rawtypes"})
     public <RESULT> Optional<RESULT> executeOptional(ImmediateTask<RESULT> task) {
-        for (ImmediateTaskHandler handler : context.getRelocationComponents(ImmediateTaskHandler.class)) {
-            if (handler.getSupportedTaskClass().isAssignableFrom(task.getClass())) {
-                var result = handler.handle(task, context);
-                if (result.isPresent()) {
-                    return result;
+        try {
+            for (ImmediateTaskHandler handler : context.getRelocationComponents(ImmediateTaskHandler.class)) {
+                if (handler.getSupportedTaskClass().isAssignableFrom(task.getClass())) {
+                    var result = handler.handle(task, context);
+                    if (result.isPresent()) {
+                        return result;
+                    }
                 }
             }
+
+        } catch (Throwable e) {
+            throw new ClassesRelocationException("Error occurred while executing immediate task " + task, e);
         }
 
         return Optional.empty();
@@ -63,17 +69,22 @@ public class TasksExecutor {
             return;
         }
 
-        for (var transformer : context.getRelocationComponents(QueuedTaskTransformer.class)) {
-            var transformed = transformer.transform(task, context);
-            if (transformed.isPresent()) {
-                for (var newTask : transformed.get()) {
-                    queue(newTask);
+        try {
+            for (var transformer : context.getRelocationComponents(QueuedTaskTransformer.class)) {
+                var transformed = transformer.transform(task, context);
+                if (transformed.isPresent()) {
+                    for (var newTask : transformed.get()) {
+                        queue(newTask);
+                    }
+                    return;
                 }
-                return;
             }
-        }
 
-        queuedTasks.add(task);
+            queuedTasks.add(task);
+
+        } catch (Throwable e) {
+            throw new ClassesRelocationException("Error occurred while queueing task " + task, e);
+        }
     }
 
 
@@ -91,17 +102,22 @@ public class TasksExecutor {
     @SneakyThrows
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void executeQueuedTask(QueuedTask task) {
-        for (QueuedTaskHandler handler : context.getRelocationComponents(QueuedTaskHandler.class)) {
-            if (handler.getSupportedTaskClass().isAssignableFrom(task.getClass())) {
-                var result = handler.handle(task, context);
-                if (result == TASK_HANDLED) {
-                    task.onHandled();
-                    return;
+        try {
+            for (QueuedTaskHandler handler : context.getRelocationComponents(QueuedTaskHandler.class)) {
+                if (handler.getSupportedTaskClass().isAssignableFrom(task.getClass())) {
+                    var result = handler.handle(task, context);
+                    if (result == TASK_HANDLED) {
+                        task.onHandled();
+                        return;
+                    }
                 }
             }
-        }
 
-        task.onNotHandled();
+            task.onNotHandled();
+
+        } catch (Throwable e) {
+            throw new ClassesRelocationException("Error occurred while executing queued task " + task, e);
+        }
     }
 
 }

@@ -8,6 +8,8 @@ import lombok.Value;
 @Builder(toBuilder = true)
 public class ClassesRelocatorConfig {
 
+    boolean logDynamicReflectionUsage;
+
     @Default
     MinimizationConfig minimization = MinimizationConfig.builder().build();
 

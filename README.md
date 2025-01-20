@@ -51,7 +51,7 @@ These class members are **always** relocated:
 
 * Static initializer
   * It means that all initialized static fields will always be kept
-  * See #37
+  * See issue [#37](https://github.com/remal-gradle-plugins/classes-relocation/issues/37)
 * `serialVersionUID` static field
 * `writeObject(ObjectOutputStream)` method
 * `readObject(ObjectInputStream)` method
@@ -82,6 +82,7 @@ classesRelocation {
     addClassReachabilityConfig { // add GraalVM's Reachability Metadata programmatically
       className('package.Class') // for `$.reflection[*].type`
       onReachedClass('other.package.reached.Class') // for `$.reflection[*].condition.typeReached`
+      onReached() // equals to `onReachedClass()` with the same class name as `className()`
       field('fieldName') // for `$.reflection[*].fields[*].name`
       fields(['fieldName1', 'fieldName2']) // for `$.reflection[*].fields[*].name`
       method('methodName', '(Ljava/lang/String)') // for `$.reflection[*].methods[*].name` and `$.reflection[*].methods[*].parameterTypes`; `(Ljava/lang/String)` is a method descriptor (see https://docs.oracle.com/javase/specs/jvms/se8/html/jvms-4.html#jvms-4.3.3), return type is OPTIONAL

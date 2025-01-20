@@ -54,6 +54,7 @@ abstract class RelocateJarWorkAction implements WorkAction<RelocateJarWorkAction
                 .preserveFileTimestamps(params.getPreserveFileTimestamps().getOrElse(true))
 
                 .config(ClassesRelocatorConfig.builder()
+                    .logDynamicReflectionUsage(settings.getLogDynamicReflectionUsage().getOrElse(false))
                     .minimization(MinimizationConfig.builder()
                         .resourcesFilter(new ResourcesFilter()
                             .excludeClasses(minimizeSettings.getKeepClasses().get())

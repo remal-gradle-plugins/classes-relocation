@@ -18,7 +18,7 @@ class RelocationClassRemapper extends ClassRemapper {
 
     @Override
     protected MethodVisitor createMethodRemapper(MethodVisitor methodVisitor) {
-        return new RelocationMethodRemapper(api, methodVisitor, remapper, context);
+        return new RelocationMethodRemapper(api, methodVisitor, remapper, className, context);
     }
 
 }

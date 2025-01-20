@@ -1,5 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation.relocator;
 
+import name.remal.gradle_plugins.classes_relocation.relocator.classgraph.ClassgraphTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.guava_class_descriptor.GuavaClassDescriptorTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.guava_class_name.GuavaClassNameTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.guava_immutable_list.GuavaImmutableListTestLogic;
@@ -54,6 +55,11 @@ class ClassesRelocatorTest extends ClassesRelocatorTestBase {
     @Test
     void xmlFiles() {
         assertTestLogic(SaxonCatalogsTestLogic.class, "saxon");
+    }
+
+    @Test
+    void classgraph() {
+        assertTestLogic(ClassgraphTestLogic.class, "classgraph");
     }
 
 }

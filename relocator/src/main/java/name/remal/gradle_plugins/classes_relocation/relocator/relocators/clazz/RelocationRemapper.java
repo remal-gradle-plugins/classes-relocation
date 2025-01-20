@@ -5,6 +5,7 @@ import static org.objectweb.asm.Opcodes.H_PUTSTATIC;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.CustomLog;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
@@ -18,8 +19,12 @@ import org.objectweb.asm.commons.Remapper;
 @CustomLog
 class RelocationRemapper extends Remapper {
 
+    @Getter
     private final String classInternalName;
+
+    @Getter
     private final Resource classResource;
+
     private final RelocationContext context;
 
     @Override

@@ -77,7 +77,7 @@ public class RelocationAnnotationsClassVisitor extends ClassVisitor {
         {
             var av = super.visitAnnotation(SUPPRESS_FB_WARNINGS_DESCRIPTOR, false);
             if (av != null) {
-                av.visit("justification", "relocated class");
+                av.visit("justification", "relocated");
                 av.visitEnd();
             }
         }
