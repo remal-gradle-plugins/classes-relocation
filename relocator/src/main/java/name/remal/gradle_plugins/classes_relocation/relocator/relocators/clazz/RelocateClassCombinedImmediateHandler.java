@@ -484,6 +484,20 @@ public class RelocateClassCombinedImmediateHandler
         inputFieldNode.accept(classRemapper);
 
         relocatedClassData.getRelocatedFields().add(fieldName);
+
+
+        if ((inputFieldNode.access & ACC_STATIC) != 0) {
+            return;
+        }
+
+        // if any of the relocated methods are instance methods:
+
+
+        // relocate all constructors if needed
+        relocateAllConstructorsIfNeeded(relocatedClassData, classInfo, context);
+
+        // relocate serialization if needed
+        relocateSerializationMembersIfNeeded(relocatedClassData, classInfo, context);
     }
 
     private void relocateMethod(
@@ -524,6 +538,9 @@ public class RelocateClassCombinedImmediateHandler
             return;
         }
 
+        // if any of the relocated methods are instance methods:
+
+
         var inputOverrideableMethodNodes = inputMethodNodes.stream()
             .filter(RelocateClassCombinedImmediateHandler::isOverrideableMethod)
             .collect(toList());
@@ -532,6 +549,16 @@ public class RelocateClassCombinedImmediateHandler
         } else {
             relocatedClassData.getRelocatedOverrideableMethods().add(methodKey);
         }
+
+
+        // relocate all constructors if needed
+        relocateAllConstructorsIfNeeded(relocatedClassData, classInfo, context);
+
+        // relocate serialization if needed
+        relocateSerializationMembersIfNeeded(relocatedClassData, classInfo, context);
+
+        // relocate overrideable methods from non-relocation classes if needed
+        relocateOverrideableMethodsFromNonRelocationClassesIfNeeded(relocatedClassData, classInfo, context);
 
 
         // relocate bridge methods:
@@ -547,48 +574,6 @@ public class RelocateClassCombinedImmediateHandler
             .forEach(otherMethodKey ->
                 context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), otherMethodKey))
             );
-
-
-        // if any of the relocated methods are instance methods:
-        if (relocatedClassData.getRelocatedOverrideableMethodsFromNonRelocationClasses().compareAndSet(false, true)) {
-            // relocate all constructors
-            classInfo.getConstructors().forEach(otherMethodKey -> {
-                context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), otherMethodKey));
-            });
-
-            // relocate overrideable methods from non-relocation classes
-            classInfo.getAllParentClasses().stream()
-                .filter(info -> !context.isRelocationClassInternalName(info.getInternalClassName()))
-                .map(ClassInfo::getOverrideableMethods)
-                .flatMap(Collection::stream)
-                .filter(classInfo::hasAccessibleMethod)
-                .filter(not(relocatedClassData::hasProcessedMethod))
-                .forEach(otherMethodKey -> {
-                    context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), otherMethodKey));
-                });
-
-            // relocate serialization
-            Stream.of(
-                    SERIAL_VERSION_UID_FIELD_NAME
-                )
-                .filter(classInfo::hasField)
-                .filter(not(relocatedClassData::hasProcessedField))
-                .forEach(fieldName -> {
-                    context.queue(new RelocateField(relocatedClassData.getInputClassInternalName(), fieldName));
-                });
-            Stream.of(
-                    WRITE_OBJECT_METHOD_KEY,
-                    READ_OBJECT_METHOD_KEY,
-                    READ_OBJECT_NO_DATA_METHOD_KEY,
-                    WRITE_REPLACE_METHOD_KEY,
-                    READ_RESOLVE_METHOD_KEY
-                )
-                .filter(classInfo::hasMethod)
-                .filter(not(relocatedClassData::hasProcessedMethod))
-                .forEach(otherMethodKey -> {
-                    context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), otherMethodKey));
-                });
-        }
 
 
         // relocate overridden methods in parent classes:
@@ -608,6 +593,75 @@ public class RelocateClassCombinedImmediateHandler
         // relocate overridden methods in known child classes:
         relocateOverriddenMethodsInKnownChildClasses(classInfo, methodKey, context);
     }
+
+    private void relocateAllConstructorsIfNeeded(
+        RelocatedClassData relocatedClassData,
+        ClassInfo classInfo,
+        RelocationContext context
+    ) {
+        if (!relocatedClassData.getRelocatedConstructors().compareAndSet(false, true)) {
+            return;
+        }
+
+        classInfo.getConstructors().stream()
+            .filter(not(relocatedClassData::hasProcessedMethod))
+            .forEach(otherMethodKey -> {
+                context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), otherMethodKey));
+            });
+    }
+
+    private void relocateSerializationMembersIfNeeded(
+        RelocatedClassData relocatedClassData,
+        ClassInfo classInfo,
+        RelocationContext context
+    ) {
+        if (!relocatedClassData.getRelocatedSerialization().compareAndSet(false, true)) {
+            return;
+        }
+
+        Stream.of(
+                SERIAL_VERSION_UID_FIELD_NAME
+            )
+            .filter(classInfo::hasField)
+            .filter(not(relocatedClassData::hasProcessedField))
+            .forEach(fieldName -> {
+                context.queue(new RelocateField(relocatedClassData.getInputClassInternalName(), fieldName));
+            });
+
+        Stream.of(
+                WRITE_OBJECT_METHOD_KEY,
+                READ_OBJECT_METHOD_KEY,
+                READ_OBJECT_NO_DATA_METHOD_KEY,
+                WRITE_REPLACE_METHOD_KEY,
+                READ_RESOLVE_METHOD_KEY
+            )
+            .filter(classInfo::hasMethod)
+            .filter(not(relocatedClassData::hasProcessedMethod))
+            .forEach(otherMethodKey -> {
+                context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), otherMethodKey));
+            });
+    }
+
+    private void relocateOverrideableMethodsFromNonRelocationClassesIfNeeded(
+        RelocatedClassData relocatedClassData,
+        ClassInfo classInfo,
+        RelocationContext context
+    ) {
+        if (!relocatedClassData.getRelocatedOverrideableMethodsFromNonRelocationClasses().compareAndSet(false, true)) {
+            return;
+        }
+
+        classInfo.getAllParentClasses().stream()
+            .filter(info -> !context.isRelocationClassInternalName(info.getInternalClassName()))
+            .map(ClassInfo::getOverrideableMethods)
+            .flatMap(Collection::stream)
+            .filter(classInfo::hasAccessibleMethod)
+            .filter(not(relocatedClassData::hasProcessedMethod))
+            .forEach(otherMethodKey -> {
+                context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), otherMethodKey));
+            });
+    }
+
 
     private static boolean isOverriddenCandidateMethod(MethodNode methodNode) {
         return (methodNode.access & ACC_PRIVATE) == 0

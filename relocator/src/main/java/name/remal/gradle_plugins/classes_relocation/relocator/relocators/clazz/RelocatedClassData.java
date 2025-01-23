@@ -32,6 +32,10 @@ public class RelocatedClassData {
 
     ClassNode outputClassNode;
 
+    AtomicBoolean relocatedConstructors = new AtomicBoolean(false);
+
+    AtomicBoolean relocatedSerialization = new AtomicBoolean(false);
+
     AtomicBoolean relocatedOverrideableMethodsFromNonRelocationClasses = new AtomicBoolean(false);
 
 
