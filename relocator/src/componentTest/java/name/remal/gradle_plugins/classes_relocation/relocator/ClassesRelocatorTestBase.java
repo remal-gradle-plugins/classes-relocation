@@ -21,6 +21,7 @@ import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.makeAccessible;
 import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.packageNameOf;
 import static org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.DEFLATED;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.objectweb.asm.ClassWriter.COMPUTE_FRAMES;
 import static org.objectweb.asm.ClassWriter.COMPUTE_MAXS;
@@ -72,6 +73,8 @@ import org.objectweb.asm.tree.VarInsnNode;
 @CustomLog
 @SuppressWarnings("Slf4jSignOnlyFormat")
 public abstract class ClassesRelocatorTestBase {
+
+    private static final String TO_RELOCATE_SUBPACKAGE_NAME = "to_relocate";
 
     private static final Class<?> CLASS_THAT_SHOULD_NOT_BE_AVAILABLE_IN_TEST_CLASS_LOADER_NAME = ImmutableList.class;
 
@@ -151,9 +154,11 @@ public abstract class ClassesRelocatorTestBase {
             sourceJar.setUseZip64(Zip64Mode.AsNeeded);
             sourceJar.setEncoding(UTF_8.name());
 
+            var sourcePackage = packageNameOf(logicClass);
+
             var filter = new ResourcesFilter()
                 .include("META-INF/**")
-                .include(toClassInternalName(packageNameOf(logicClass)) + "/*");
+                .include(toClassInternalName(sourcePackage) + "/*");
 
             var entriesToCopy = list(testClassesJar.getEntries()).stream()
                 .filter(not(ZipArchiveEntry::isDirectory))
@@ -184,9 +189,25 @@ public abstract class ClassesRelocatorTestBase {
             libJar.setUseZip64(Zip64Mode.AsNeeded);
             libJar.setEncoding(UTF_8.name());
 
+            var sourcePackage = packageNameOf(logicClass);
+            var toRelocatePackage = sourcePackage + '.' + TO_RELOCATE_SUBPACKAGE_NAME;
+
+            {
+                var failFilter = new ResourcesFilter()
+                    .include(toClassInternalName(packageNameOf(logicClass)) + "/*/**")
+                    .exclude(toClassInternalName(toRelocatePackage) + "/**");
+
+                var failEntries = list(testClassesJar.getEntries()).stream()
+                    .filter(not(ZipArchiveEntry::isDirectory))
+                    .map(ZipArchiveEntry::getName)
+                    .filter(failFilter::matches)
+                    .collect(toUnmodifiableList());
+                assertThat(failEntries).isEmpty();
+            }
+
             var filter = new ResourcesFilter()
                 .include("META-INF/**")
-                .include(toClassInternalName(packageNameOf(logicClass)) + "/*/**");
+                .include(toClassInternalName(toRelocatePackage) + "/**");
 
             var entriesToCopy = list(testClassesJar.getEntries()).stream()
                 .filter(not(ZipArchiveEntry::isDirectory))
