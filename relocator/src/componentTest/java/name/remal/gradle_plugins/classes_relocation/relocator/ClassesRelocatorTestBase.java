@@ -21,7 +21,7 @@ import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.makeAccessible;
 import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.packageNameOf;
 import static org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.DEFLATED;
-import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.objectweb.asm.ClassWriter.COMPUTE_FRAMES;
 import static org.objectweb.asm.ClassWriter.COMPUTE_MAXS;
@@ -202,7 +202,8 @@ public abstract class ClassesRelocatorTestBase {
                     .map(ZipArchiveEntry::getName)
                     .filter(failFilter::matches)
                     .collect(toUnmodifiableList());
-                assertThat(failEntries).isEmpty();
+
+                assertEquals(List.of(), failEntries, "The only allowed subpackage is " + TO_RELOCATE_SUBPACKAGE_NAME);
             }
 
             var filter = new ResourcesFilter()
