@@ -27,7 +27,7 @@ but you need to ensure that these dependencies do not interfere with those in pr
 By using this plugin, you can better manage dependency versions,
 leading to more reliable and predictable behavior of your Java applications across different environments.
 
-Base configuration:
+## Base configuration
 
 ```groovy
 classesRelocation {
