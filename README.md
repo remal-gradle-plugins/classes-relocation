@@ -9,11 +9,13 @@
 Usage:
 
 <!--plugin-usage:name.remal.classes-relocation-->
+
 ```groovy
 plugins {
-    id 'name.remal.classes-relocation' version '2.0.0-rc-5'
+  id 'name.remal.classes-relocation' version '2.0.0-rc-5'
 }
 ```
+
 <!--/plugin-usage-->
 
 &nbsp;
@@ -52,8 +54,9 @@ These class members are **always** relocated:
 * Static initializer
   * It means that all initialized static fields will always be kept
   * See issue [#37](https://github.com/remal-gradle-plugins/classes-relocation/issues/37)
- 
+
 Serialization-related members are relocated if any instance member is relocated:
+
 * `serialVersionUID` static field
 * `writeObject(ObjectOutputStream)` method
 * `readObject(ObjectInputStream)` method
@@ -63,6 +66,23 @@ Serialization-related members are relocated if any instance member is relocated:
 
 If you relocate a dependency that doesn't use reflection (`Class.getMethod()`, `Class.getField()`, etc),
 you don't need to configure minimization.
+
+### Keep class members annotated with configured annotations
+
+All class members annotated by these annotations will be kept:
+
+<!--iterable-code-property:keepAnnotationInclusionsDefault-->
+<!--/iterable-code-property-->
+
+You can configure other annotation type patterns:
+
+```groovy
+classesRelocation {
+  minimize {
+    keepMembersAnnotatedWith('jakarta.inject.**') // all class members annotated with annotations matched to the provided patterns will be kept
+  }
+}
+```
 
 ### GraalVM's Reachability Metadata
 
