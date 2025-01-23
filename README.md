@@ -9,13 +9,11 @@
 Usage:
 
 <!--plugin-usage:name.remal.classes-relocation-->
-
 ```groovy
 plugins {
-  id 'name.remal.classes-relocation' version '2.0.0-rc-5'
+    id 'name.remal.classes-relocation' version '2.0.0-rc-5'
 }
 ```
-
 <!--/plugin-usage-->
 
 &nbsp;
@@ -72,6 +70,13 @@ you don't need to configure minimization.
 All class members annotated by these annotations will be kept:
 
 <!--iterable-code-property:keepAnnotationInclusionsDefault-->
+* `jakarta.inject.**`
+* `javax.inject.**`
+* `com.fasterxml.jackson.**`
+* `com.google.gson.**`
+* `jakarta.validation.**`
+* `javax.validation.**`
+* `org.hibernate.validator.**`
 <!--/iterable-code-property-->
 
 You can configure other annotation type patterns:
