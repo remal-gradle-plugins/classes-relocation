@@ -194,7 +194,7 @@ public abstract class ClassesRelocatorTestBase {
 
             {
                 var failFilter = new ResourcesFilter()
-                    .include(toClassInternalName(packageNameOf(logicClass)) + "/*/**")
+                    .include(toClassInternalName(sourcePackage) + "/*/**")
                     .exclude(toClassInternalName(toRelocatePackage) + "/**");
 
                 var failEntries = list(testClassesJar.getEntries()).stream()
