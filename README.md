@@ -52,6 +52,8 @@ These class members are **always** relocated:
 * Static initializer
   * It means that all initialized static fields will always be kept
   * See issue [#37](https://github.com/remal-gradle-plugins/classes-relocation/issues/37)
+ 
+Serialization-related members are relocated if any instance member is relocated:
 * `serialVersionUID` static field
 * `writeObject(ObjectOutputStream)` method
 * `readObject(ObjectInputStream)` method
@@ -62,14 +64,16 @@ These class members are **always** relocated:
 If you relocate a dependency that doesn't use reflection (`Class.getMethod()`, `Class.getField()`, etc),
 you don't need to configure minimization.
 
-To avoid removal of necessary code, the plugin uses [GraalVM's Reachability Metadata](https://www.graalvm.org/latest/reference-manual/native-image/metadata/):
+### GraalVM's Reachability Metadata
+
+To avoid the removal of necessary code, the plugin uses [GraalVM's Reachability Metadata](https://www.graalvm.org/latest/reference-manual/native-image/metadata/):
 
 * `META-INF/native-image/<groupId>/<artifactId>/reachability-metadata.json` files in the relocated dependencies are processed
   * only `$.reflection` field is supported
   * `$.resources` and `$.bundles` fields are NOT supported, so resource relocation can be broken is some cases
 * `reflect-config.json` files from [oracle/graalvm-reachability-metadata](https://github.com/oracle/graalvm-reachability-metadata) are processed
 
-Full minimization configuration:
+### Full minimization configuration
 
 ```groovy
 classesRelocation {
