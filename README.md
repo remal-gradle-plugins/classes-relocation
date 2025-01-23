@@ -9,11 +9,13 @@
 Usage:
 
 <!--plugin-usage:name.remal.classes-relocation-->
+
 ```groovy
 plugins {
-    id 'name.remal.classes-relocation' version '2.0.0-rc-4'
+  id 'name.remal.classes-relocation' version '2.0.0-rc-4'
 }
 ```
+
 <!--/plugin-usage-->
 
 &nbsp;
@@ -76,6 +78,8 @@ classesRelocation {
   minimize {
     keepClasses('com.google.common.*') // all classes in the `com.google.common` package will be fully relocated; subpackages (like `com.google.common.base`) will NOT be minimized
     keepClasses('com.google.common.**') // all classes in the `com.google.common` package in its subpackages (like `com.google.common.base`) will be fully relocated
+
+    keepMembersAnnotatedWith('jakarta.inject.**') // all class members annotated with annotations matched to the provided patterns will be kept
 
     graalvmReachabilityMetadataVersion = 'x.x.x' // set release of https://github.com/oracle/graalvm-reachability-metadata
 

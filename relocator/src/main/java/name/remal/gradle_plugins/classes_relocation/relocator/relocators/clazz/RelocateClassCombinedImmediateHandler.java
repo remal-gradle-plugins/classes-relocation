@@ -15,7 +15,12 @@ import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static org.objectweb.asm.Opcodes.ACC_RECORD;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
+import static org.objectweb.asm.Type.VOID_TYPE;
+import static org.objectweb.asm.Type.getMethodDescriptor;
+import static org.objectweb.asm.Type.getType;
 
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.Collection;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -24,6 +29,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import lombok.CustomLog;
 import lombok.SneakyThrows;
@@ -35,7 +41,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.asm.RelocationAnno
 import name.remal.gradle_plugins.classes_relocation.relocator.class_info.ClassInfo;
 import name.remal.gradle_plugins.classes_relocation.relocator.class_info.ClassInfoComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
-import name.remal.gradle_plugins.classes_relocation.relocator.reachability.ClassReachabilityConfigs;
+import name.remal.gradle_plugins.classes_relocation.relocator.minimization.ClassReachabilityConfigs;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
 import org.jetbrains.annotations.Contract;
 import org.objectweb.asm.ClassReader;
@@ -48,6 +54,25 @@ import org.objectweb.asm.tree.MethodNode;
 @SuppressWarnings("java:S1121")
 public class RelocateClassCombinedImmediateHandler
     implements ImmediateTaskHandler<RelocateClassResult, RelocateClassCombined> {
+
+    private static final String SERIAL_VERSION_UID_FIELD_NAME = "serialVersionUID";
+
+    private static final MethodKey WRITE_OBJECT_METHOD_KEY = methodKeyOf(
+        "writeObject",
+        getMethodDescriptor(VOID_TYPE, getType(ObjectOutputStream.class))
+    );
+
+    private static final MethodKey READ_OBJECT_METHOD_KEY = methodKeyOf(
+        "readObject",
+        getMethodDescriptor(VOID_TYPE, getType(ObjectInputStream.class))
+    );
+
+    private static final MethodKey READ_OBJECT_NO_DATA_METHOD_KEY = methodKeyOf("readObjectNoData", "()");
+
+    private static final MethodKey WRITE_REPLACE_METHOD_KEY = methodKeyOf("writeReplace", "()");
+
+    private static final MethodKey READ_RESOLVE_METHOD_KEY = methodKeyOf("readResolve", "()");
+
 
     private final Map<String, List<RelocatedClassData>> relocatedClassDataMap = isDebugEnabled()
         ? new TreeMap<>()
@@ -183,6 +208,8 @@ public class RelocateClassCombinedImmediateHandler
 
         relocateMembersAccordingToClassReachability(relocatedClassData, context);
 
+        relocateMembersAnnotatedWithConfiguredAnnotations(relocatedClassData, context);
+
         return relocatedClassData;
     }
 
@@ -236,8 +263,9 @@ public class RelocateClassCombinedImmediateHandler
 
         if (!classInfo.areAllResolved()) {
             relocateAllMembers(relocatedClassData, classInfo, context);
+        }
 
-        } else if ((relocatedClassData.getInputClassNode().access & ACC_ENUM) != 0) {
+        if ((relocatedClassData.getInputClassNode().access & ACC_ENUM) != 0) {
             context.queue(new RelocateMethod(classInternalName, methodKeyOf("values", "()")));
 
             relocatedClassData.getInputClassNode().fields.stream()
@@ -245,8 +273,9 @@ public class RelocateClassCombinedImmediateHandler
                 .map(fieldNode -> fieldNode.name)
                 .filter(not(relocatedClassData::hasProcessedField))
                 .forEach(fieldName -> context.queue(new RelocateField(classInternalName, fieldName)));
+        }
 
-        } else if ((relocatedClassData.getInputClassNode().access & ACC_RECORD) != 0) {
+        if ((relocatedClassData.getInputClassNode().access & ACC_RECORD) != 0) {
             relocatedClassData.getInputClassNode().methods.stream()
                 .filter(methodNode -> (methodNode.access & ACC_STATIC) == 0)
                 .map(MethodKey::methodKeyOf)
@@ -400,6 +429,30 @@ public class RelocateClassCombinedImmediateHandler
         );
     }
 
+    private void relocateMembersAnnotatedWithConfiguredAnnotations(
+        RelocatedClassData relocatedClassData,
+        RelocationContext context
+    ) {
+        var keepAnnotationsFilter = context.getConfig().getMinimization().getKeepAnnotationsFilter();
+        if (keepAnnotationsFilter.isEmpty()) {
+            return;
+        }
+
+        relocatedClassData.getInputClassNode().methods.forEach(methodNode -> {
+            var hasKeepAnnotation = Stream.of(methodNode.visibleAnnotations, methodNode.invisibleAnnotations)
+                .filter(Objects::nonNull)
+                .flatMap(Collection::stream)
+                .map(annotationNode -> annotationNode.desc)
+                .map(annotationDescriptor -> annotationDescriptor.substring(1, annotationDescriptor.length() - 1))
+                .anyMatch(keepAnnotationsFilter::matches);
+            if (hasKeepAnnotation) {
+                context.queue(
+                    new RelocateMethod(relocatedClassData.getInputClassInternalName(), methodKeyOf(methodNode))
+                );
+            }
+        });
+    }
+
     private void relocateField(
         RelocatedClassData relocatedClassData,
         String fieldName,
@@ -496,14 +549,41 @@ public class RelocateClassCombinedImmediateHandler
             );
 
 
-        // if any of the relocated methods are instance methods,
-        // relocate overrideable methods from non-relocation classes
+        // if any of the relocated methods are instance methods:
         if (relocatedClassData.getRelocatedOverrideableMethodsFromNonRelocationClasses().compareAndSet(false, true)) {
+            // relocate all constructors
+            classInfo.getConstructors().forEach(otherMethodKey -> {
+                context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), otherMethodKey));
+            });
+
+            // relocate overrideable methods from non-relocation classes
             classInfo.getAllParentClasses().stream()
                 .filter(info -> !context.isRelocationClassInternalName(info.getInternalClassName()))
                 .map(ClassInfo::getOverrideableMethods)
                 .flatMap(Collection::stream)
                 .filter(classInfo::hasAccessibleMethod)
+                .filter(not(relocatedClassData::hasProcessedMethod))
+                .forEach(otherMethodKey -> {
+                    context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), otherMethodKey));
+                });
+
+            // relocate serialization
+            Stream.of(
+                    SERIAL_VERSION_UID_FIELD_NAME
+                )
+                .filter(classInfo::hasField)
+                .filter(not(relocatedClassData::hasProcessedField))
+                .forEach(fieldName -> {
+                    context.queue(new RelocateField(relocatedClassData.getInputClassInternalName(), fieldName));
+                });
+            Stream.of(
+                    WRITE_OBJECT_METHOD_KEY,
+                    READ_OBJECT_METHOD_KEY,
+                    READ_OBJECT_NO_DATA_METHOD_KEY,
+                    WRITE_REPLACE_METHOD_KEY,
+                    READ_RESOLVE_METHOD_KEY
+                )
+                .filter(classInfo::hasMethod)
                 .filter(not(relocatedClassData::hasProcessedMethod))
                 .forEach(otherMethodKey -> {
                     context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), otherMethodKey));

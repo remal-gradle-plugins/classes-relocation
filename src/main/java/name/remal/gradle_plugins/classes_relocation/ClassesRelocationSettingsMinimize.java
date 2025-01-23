@@ -27,6 +27,19 @@ public abstract class ClassesRelocationSettingsMinimize {
     }
 
 
+    @Input
+    @org.gradle.api.tasks.Optional
+    public abstract SetProperty<String> getKeepMembersAnnotatedWith();
+
+    public void keepMembersAnnotatedWith(Iterable<String> annotationClassNamePatterns) {
+        getKeepMembersAnnotatedWith().addAll(annotationClassNamePatterns);
+    }
+
+    public void keepMembersAnnotatedWith(String... annotationClassNamePatterns) {
+        keepMembersAnnotatedWith(List.of(annotationClassNamePatterns));
+    }
+
+
     @Internal
     public abstract Property<String> getGraalvmReachabilityMetadataVersion();
 

@@ -18,9 +18,7 @@ interface WithResources extends Closeable {
     List<Resource> getAllResources();
 
     @Unmodifiable
-    default List<Resource> getAllResources(Consumer<ResourcesFilter> filterConfigurer) {
-        var filter = new ResourcesFilter();
-        filterConfigurer.accept(filter);
+    default List<Resource> getAllResources(ResourcesFilter filter) {
         if (filter.isEmpty()) {
             return getAllResources();
         } else {
@@ -28,6 +26,13 @@ interface WithResources extends Closeable {
                 .filter(filter::matches)
                 .collect(toUnmodifiableList());
         }
+    }
+
+    @Unmodifiable
+    default List<Resource> getAllResources(Consumer<ResourcesFilter> filterConfigurer) {
+        var filter = new ResourcesFilter();
+        filterConfigurer.accept(filter);
+        return getAllResources(filter);
     }
 
     @Unmodifiable

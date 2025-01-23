@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import lombok.CustomLog;
 import lombok.NoArgsConstructor;
 import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocator;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassFilter;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorConfig;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.MinimizationConfig;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ResourcesFilter;
@@ -56,8 +57,11 @@ abstract class RelocateJarWorkAction implements WorkAction<RelocateJarWorkAction
                 .config(ClassesRelocatorConfig.builder()
                     .logDynamicReflectionUsage(settings.getLogDynamicReflectionUsage().getOrElse(false))
                     .minimization(MinimizationConfig.builder()
-                        .resourcesFilter(new ResourcesFilter()
-                            .excludeClasses(minimizeSettings.getKeepClasses().get())
+                        .keepResourcesFilter(new ResourcesFilter()
+                            .includeClasses(minimizeSettings.getKeepClasses().get())
+                        )
+                        .keepAnnotationsFilter(new ClassFilter()
+                            .include(minimizeSettings.getKeepMembersAnnotatedWith().get())
                         )
                         .classReachabilityConfigs(minimizeSettings.getClassReachabilityConfigs().get())
                         .build()

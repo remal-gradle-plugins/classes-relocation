@@ -15,7 +15,8 @@ import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocat
 import name.remal.gradle_plugins.classes_relocation.relocator.class_info.ClassInfoComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.metadata.OriginalResourceNames;
 import name.remal.gradle_plugins.classes_relocation.relocator.metadata.OriginalResourceSources;
-import name.remal.gradle_plugins.classes_relocation.relocator.reachability.ClassReachabilityConfigs;
+import name.remal.gradle_plugins.classes_relocation.relocator.minimization.ClassReachabilityConfigs;
+import name.remal.gradle_plugins.classes_relocation.relocator.minimization.MinimizationConfigConfigurer;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.ProcessSourceClassHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.RelocateClassCombinedImmediateHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.RelocateClassCombinedQueuedHandler;
@@ -49,6 +50,7 @@ class Implementations extends AbstractClosablesContainer {
     public Implementations(ClassesRelocatorObjectFactory objectFactory) {
         this.objectFactory = objectFactory;
         this.componentClasses = ImmutableSet.of(
+            MinimizationConfigConfigurer.class,
             OriginalResourceNames.class,
             OriginalResourceSources.class,
             ClassReachabilityConfigs.class,

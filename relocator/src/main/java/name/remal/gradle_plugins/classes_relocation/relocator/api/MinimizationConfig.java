@@ -11,7 +11,10 @@ import lombok.Value;
 public class MinimizationConfig {
 
     @Default
-    ResourcesFilter resourcesFilter = new ResourcesFilter();
+    ResourcesFilter keepResourcesFilter = new ResourcesFilter();
+
+    @Default
+    ClassFilter keepAnnotationsFilter = new ClassFilter();
 
     @Singular
     List<ClassReachabilityConfig> classReachabilityConfigs;

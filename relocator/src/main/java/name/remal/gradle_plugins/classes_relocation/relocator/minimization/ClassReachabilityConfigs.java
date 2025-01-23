@@ -1,12 +1,12 @@
-package name.remal.gradle_plugins.classes_relocation.relocator.reachability;
+package name.remal.gradle_plugins.classes_relocation.relocator.minimization;
 
 import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
-import static name.remal.gradle_plugins.classes_relocation.relocator.reachability.ClassReachabilityConfigUtils.convertClassReachabilityConfigToMap;
-import static name.remal.gradle_plugins.classes_relocation.relocator.reachability.ClassReachabilityConfigUtils.convertMapToClassReachabilityConfig;
-import static name.remal.gradle_plugins.classes_relocation.relocator.reachability.ClassReachabilityConfigUtils.groupClassReachabilityConfigs;
-import static name.remal.gradle_plugins.classes_relocation.relocator.reachability.ReachabilityConfigDefaults.DEFAULT_CLASS_REACHABILITY_CONFIGS;
+import static name.remal.gradle_plugins.classes_relocation.relocator.minimization.ClassReachabilityConfigUtils.convertClassReachabilityConfigToMap;
+import static name.remal.gradle_plugins.classes_relocation.relocator.minimization.ClassReachabilityConfigUtils.convertMapToClassReachabilityConfig;
+import static name.remal.gradle_plugins.classes_relocation.relocator.minimization.ClassReachabilityConfigUtils.groupClassReachabilityConfigs;
+import static name.remal.gradle_plugins.classes_relocation.relocator.minimization.ReachabilityConfigDefaults.DEFAULT_CLASS_REACHABILITY_CONFIGS;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.JsonUtils.parseJsonArray;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.JsonUtils.parseJsonObject;
 
@@ -141,24 +141,21 @@ public class ClassReachabilityConfigs
 
 
     private void addClassReachabilityConfigsFromMinimizationExclusions(RelocationContext context) {
-        var exclusionFilter = context.getConfig().getMinimization().getResourcesFilter();
-        if (exclusionFilter.isEmpty()) {
+        var keepFilter = context.getConfig().getMinimization().getKeepResourcesFilter();
+        if (keepFilter.isEmpty()) {
             return;
         }
 
-        var excludedResources = context.getRelocationClasspath()
-            .getAllResources(filter -> filter
-                .copyFrom(exclusionFilter)
-                .negate()
-            );
+        var keptResources = context.getRelocationClasspath()
+            .getAllResources(keepFilter);
 
-        var excludedClassInternalNames = excludedResources.stream()
+        var keptClassInternalNames = keptResources.stream()
             .map(Resource::getName)
             .filter(resourceName -> resourceName.endsWith(".class"))
             .map(resourceName -> resourceName.substring(0, resourceName.length() - ".class".length()))
             .collect(toImmutableSet());
 
-        excludedClassInternalNames.stream()
+        keptClassInternalNames.stream()
             .map(classInternalName -> ClassReachabilityConfig.builder()
                 .classInternalName(classInternalName)
                 .allDeclaredConstructors(true)

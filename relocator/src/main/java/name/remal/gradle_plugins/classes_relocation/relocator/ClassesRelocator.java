@@ -33,6 +33,7 @@ import lombok.SneakyThrows;
 import lombok.experimental.SuperBuilder;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorConfig;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorConfigurer;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorLifecycleComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath;
@@ -132,6 +133,11 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
 
             var tasksExecutor = new TasksExecutor(context);
             context.setTasksExecutor(tasksExecutor);
+
+            var configurers = context.getRelocationComponents(ClassesRelocatorConfigurer.class);
+            for (var configurer : configurers) {
+                configurer.configure(context);
+            }
 
             var lifecycleComponents = context.getRelocationComponents(ClassesRelocatorLifecycleComponent.class);
             for (var lifecycleComponent : lifecycleComponents) {

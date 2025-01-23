@@ -3,8 +3,8 @@ package name.remal.gradle_plugins.classes_relocation.relocator.api;
 import static java.util.Objects.requireNonNull;
 import static name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey.methodKeyOf;
 import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.toClassInternalName;
-import static name.remal.gradle_plugins.classes_relocation.relocator.reachability.ClassReachabilityConfigUtils.convertClassReachabilityConfigToMap;
-import static name.remal.gradle_plugins.classes_relocation.relocator.reachability.ClassReachabilityConfigUtils.convertMapToClassReachabilityConfig;
+import static name.remal.gradle_plugins.classes_relocation.relocator.minimization.ClassReachabilityConfigUtils.convertClassReachabilityConfigToMap;
+import static name.remal.gradle_plugins.classes_relocation.relocator.minimization.ClassReachabilityConfigUtils.convertMapToClassReachabilityConfig;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.isEmpty;
 
 import java.io.IOException;
