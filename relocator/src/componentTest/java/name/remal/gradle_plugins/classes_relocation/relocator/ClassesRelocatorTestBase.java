@@ -7,6 +7,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.createTempDirectory;
 import static java.util.Arrays.stream;
 import static java.util.Collections.list;
+import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static java.util.zip.Deflater.BEST_COMPRESSION;
 import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmTestUtils.wrapWithTestClassVisitors;
@@ -51,6 +52,7 @@ import java.util.Set;
 import java.util.stream.Stream;
 import lombok.CustomLog;
 import lombok.SneakyThrows;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.ResourcesFilter;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath;
 import name.remal.gradle_plugins.toolkit.UrlUtils;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
@@ -109,8 +111,18 @@ public abstract class ClassesRelocatorTestBase {
         }
 
         var sourceJarPath = createSourceJar(logicClass);
+        var libJarPath = createLibJar(logicClass);
         var targetJarPath = createParentDirectories(tempDirPath.resolve("target.jar"));
-        relocate(sourceJarPath, targetJarPath, relocationLibraries);
+        relocate(
+            sourceJarPath,
+            targetJarPath,
+            Stream.concat(
+                Stream.of(libJarPath),
+                stream(relocationLibraries)
+                    .map(ClassesRelocatorTestBase::getLibraryFilePaths)
+                    .flatMap(Collection::stream)
+            ).distinct().collect(toList())
+        );
         executeRelocatedTestLogic(
             logicClass.getName(),
             targetJarPath,
@@ -119,7 +131,7 @@ public abstract class ClassesRelocatorTestBase {
 
         var wrappedSourceJar = createWrappedSourceJar(logicClass);
         var wrappedTargetJarPath = createParentDirectories(tempDirPath.resolve("wrapped-target.jar"));
-        relocate(wrappedSourceJar, wrappedTargetJarPath, targetJarPath);
+        relocate(wrappedSourceJar, wrappedTargetJarPath, List.of(targetJarPath));
         executeRelocatedTestLogic(
             WRAPPED_LOGIC_CLASS_NAME_PREFIX + logicClass.getName(),
             wrappedTargetJarPath,
@@ -139,14 +151,13 @@ public abstract class ClassesRelocatorTestBase {
             sourceJar.setUseZip64(Zip64Mode.AsNeeded);
             sourceJar.setEncoding(UTF_8.name());
 
-            var logicPackageResourceNamePrefix = packageNameOf(logicClass).replace('.', '/') + '/';
+            var filter = new ResourcesFilter()
+                .include("META-INF/**")
+                .include(toClassInternalName(packageNameOf(logicClass)) + "/*");
+
             var entriesToCopy = list(testClassesJar.getEntries()).stream()
                 .filter(not(ZipArchiveEntry::isDirectory))
-                .filter(entry -> {
-                    var resourceName = entry.getName();
-                    return resourceName.startsWith("META-INF/")
-                        || resourceName.startsWith(logicPackageResourceNamePrefix);
-                })
+                .filter(entry -> filter.matches(entry.getName()))
                 .collect(toUnmodifiableList());
 
             for (var entryToCopy : entriesToCopy) {
@@ -159,6 +170,39 @@ public abstract class ClassesRelocatorTestBase {
             }
         }
         return sourceJarPath;
+    }
+
+    @SneakyThrows
+    private Path createLibJar(Class<? extends ClassesRelocatorTestLogic> logicClass) {
+        var libJarPath = createParentDirectories(tempDirPath.resolve("lib.jar"));
+        try (
+            var testClassesJar = ZipFile.builder().setPath(getTestClassesJarPath()).get();
+            var libJar = new ZipArchiveOutputStream(libJarPath)
+        ) {
+            libJar.setMethod(DEFLATED);
+            libJar.setLevel(BEST_COMPRESSION);
+            libJar.setUseZip64(Zip64Mode.AsNeeded);
+            libJar.setEncoding(UTF_8.name());
+
+            var filter = new ResourcesFilter()
+                .include("META-INF/**")
+                .include(toClassInternalName(packageNameOf(logicClass)) + "/*/**");
+
+            var entriesToCopy = list(testClassesJar.getEntries()).stream()
+                .filter(not(ZipArchiveEntry::isDirectory))
+                .filter(entry -> filter.matches(entry.getName()))
+                .collect(toUnmodifiableList());
+
+            for (var entryToCopy : entriesToCopy) {
+                var libEntry = new ZipArchiveEntry(entryToCopy);
+                libJar.putArchiveEntry(libEntry);
+                try (var sourceIn = testClassesJar.getInputStream(entryToCopy)) {
+                    sourceIn.transferTo(libJar);
+                }
+                libJar.closeArchiveEntry();
+            }
+        }
+        return libJarPath;
     }
 
     @SneakyThrows
@@ -254,27 +298,12 @@ public abstract class ClassesRelocatorTestBase {
     private void relocate(
         Path sourceJarPath,
         Path targetJarPath,
-        String... relocationLibraries
-    ) {
-        relocate(
-            sourceJarPath,
-            targetJarPath,
-            stream(relocationLibraries)
-                .map(ClassesRelocatorTestBase::getLibraryFilePaths)
-                .flatMap(Collection::stream)
-                .toArray(Path[]::new)
-        );
-    }
-
-    private void relocate(
-        Path sourceJarPath,
-        Path targetJarPath,
-        Path... relocationLibraries
+        List<Path> relocationLibraries
     ) {
         try (
             var relocator = ClassesRelocator.builder()
                 .sourceJarPath(sourceJarPath)
-                .relocationClasspathPaths(List.of(relocationLibraries))
+                .relocationClasspathPaths(relocationLibraries)
                 .reachabilityMetadataClasspathPaths(getLibraryFilePaths("graalvm-reachability-metadata"))
                 .targetJarPath(targetJarPath)
                 .basePackageForRelocatedClasses("relocated")

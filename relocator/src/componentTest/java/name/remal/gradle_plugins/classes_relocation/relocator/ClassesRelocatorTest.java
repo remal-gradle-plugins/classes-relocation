@@ -1,5 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation.relocator;
 
+import name.remal.gradle_plugins.classes_relocation.relocator.annotated_with_inject.AnnotatedWithInjectTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.classgraph.ClassgraphTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.guava_class_descriptor.GuavaClassDescriptorTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.guava_class_name.GuavaClassNameTestLogic;
@@ -8,10 +9,22 @@ import name.remal.gradle_plugins.classes_relocation.relocator.guava_internal_cla
 import name.remal.gradle_plugins.classes_relocation.relocator.jackson_guava.JacksonGuavaTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.jackson_java_time.JacksonJavaTimeTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.joda_time_zone_info.JodaTimeZoneInfoTestLogic;
+import name.remal.gradle_plugins.classes_relocation.relocator.relocated_constructors.RelocatedConstructorsTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.saxon_catalogs.SaxonCatalogsTestLogic;
 import org.junit.jupiter.api.Test;
 
 class ClassesRelocatorTest extends ClassesRelocatorTestBase {
+
+    @Test
+    void relocatedConstructors() {
+        assertTestLogic(RelocatedConstructorsTestLogic.class);
+    }
+
+    @Test
+    void annotatedWithInject() {
+        assertTestLogic(AnnotatedWithInjectTestLogic.class);
+    }
+
 
     @Test
     void simple() {
