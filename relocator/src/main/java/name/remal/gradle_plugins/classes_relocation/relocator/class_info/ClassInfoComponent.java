@@ -108,7 +108,7 @@ public class ClassInfoComponent
                 ) {
                     fields.add(name);
 
-                    if ((access & ACC_PRIVATE) != 0) {
+                    if ((access & ACC_PRIVATE) == 0) {
                         accessibleFields.add(name);
                     }
 

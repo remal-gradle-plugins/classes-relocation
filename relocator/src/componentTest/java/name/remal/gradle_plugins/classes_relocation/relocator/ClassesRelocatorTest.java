@@ -1,5 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation.relocator;
 
+import name.remal.gradle_plugins.classes_relocation.relocator.accessible_field_from_parent_class.AccessibleFieldFromParentClassTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.annotated_with_inject.AnnotatedWithInjectTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.classgraph.ClassgraphTestLogic;
 import name.remal.gradle_plugins.classes_relocation.relocator.guava_class_descriptor.GuavaClassDescriptorTestLogic;
@@ -23,6 +24,11 @@ class ClassesRelocatorTest extends ClassesRelocatorTestBase {
     @Test
     void annotatedWithInject() {
         assertTestLogic(AnnotatedWithInjectTestLogic.class);
+    }
+
+    @Test
+    void accessibleFieldFromParentClass() {
+        assertTestLogic(AccessibleFieldFromParentClassTestLogic.class);
     }
 
 

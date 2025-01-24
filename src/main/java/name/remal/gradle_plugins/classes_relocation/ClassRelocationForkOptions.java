@@ -1,7 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation;
 
 import static name.remal.gradle_plugins.build_time_constants.api.BuildTimeConstants.getStringProperty;
-import static name.remal.gradle_plugins.toolkit.DebugUtils.isDebugEnabled;
 import static name.remal.gradle_plugins.toolkit.InTestFlags.isInTest;
 
 import lombok.Getter;
@@ -21,7 +20,7 @@ public abstract class ClassRelocationForkOptions {
         if (isInTest()) {
             isEnabledByDefault = false;
         }
-        if (isDebugEnabled() && getStringProperty("project.version").endsWith("-SNAPSHOT")) {
+        if (getStringProperty("project.version").endsWith("-SNAPSHOT")) {
             isEnabledByDefault = false;
         }
         getEnabled().convention(isEnabledByDefault);
