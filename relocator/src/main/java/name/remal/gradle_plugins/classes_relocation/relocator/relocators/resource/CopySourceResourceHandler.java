@@ -1,7 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource;
 
+import static java.util.function.Predicate.not;
 import static name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandlerResult.TASK_HANDLED;
-import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandler;
