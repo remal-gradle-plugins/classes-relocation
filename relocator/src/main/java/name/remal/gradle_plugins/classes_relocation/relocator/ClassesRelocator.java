@@ -6,6 +6,7 @@ import static java.lang.System.nanoTime;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.function.Predicate.not;
 import static java.util.jar.JarFile.MANIFEST_NAME;
 import static name.remal.gradle_plugins.build_time_constants.api.BuildTimeConstants.getStringProperty;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath.newClasspathForPaths;
@@ -16,7 +17,6 @@ import static name.remal.gradle_plugins.toolkit.InTestFlags.isInFunctionalTest;
 import static name.remal.gradle_plugins.toolkit.InTestFlags.isInTest;
 import static name.remal.gradle_plugins.toolkit.LateInit.lateInit;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyProxy;
-import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 
 import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
 import java.io.Closeable;

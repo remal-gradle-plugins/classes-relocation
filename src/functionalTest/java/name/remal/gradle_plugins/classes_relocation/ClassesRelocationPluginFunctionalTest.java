@@ -4,7 +4,7 @@ import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.io.File.pathSeparator;
 import static java.lang.String.format;
 import static java.lang.String.join;
-import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
+import static java.util.function.Predicate.not;
 import static name.remal.gradle_plugins.toolkit.StringUtils.escapeGroovy;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;

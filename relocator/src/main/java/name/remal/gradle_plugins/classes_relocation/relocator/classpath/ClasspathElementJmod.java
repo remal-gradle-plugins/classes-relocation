@@ -1,9 +1,9 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 
 import static java.util.Collections.list;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
 import static name.remal.gradle_plugins.toolkit.LazyValue.lazyValue;
-import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 
 import java.io.IOException;
 import java.io.InputStream;

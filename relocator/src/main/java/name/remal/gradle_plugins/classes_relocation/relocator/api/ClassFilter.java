@@ -1,7 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.api;
 
+import static java.util.function.Predicate.not;
 import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.toClassInternalName;
-import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.ArrayList;

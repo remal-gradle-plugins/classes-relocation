@@ -1,6 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz;
 
 import static java.util.Collections.newSetFromMap;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toCollection;
 import static java.util.stream.Collectors.toList;
 import static name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey.methodKeyOf;
@@ -9,7 +10,6 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtil
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.GeneratedResource.newGeneratedResource;
 import static name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.RelocateClassResult.RELOCATED;
 import static name.remal.gradle_plugins.toolkit.DebugUtils.isDebugEnabled;
-import static name.remal.gradle_plugins.toolkit.PredicateUtils.not;
 import static org.objectweb.asm.Opcodes.ACC_ENUM;
 import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
