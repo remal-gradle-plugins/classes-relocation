@@ -10,7 +10,7 @@ import org.gradle.api.tasks.Internal;
 
 @Getter
 @Setter
-public abstract class ClassRelocationForkOptions {
+public abstract class ClassesRelocationForkOptions {
 
     @Internal
     public abstract Property<Boolean> getEnabled();
