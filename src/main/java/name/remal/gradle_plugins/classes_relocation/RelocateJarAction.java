@@ -93,7 +93,7 @@ abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSetti
 
         final WorkQueue workQueue;
         {
-            boolean isForkEnabled = getForkOptions().getEnabled().get();
+            boolean isForkEnabled = getFork().getEnabled().get();
             if (isForkEnabled) {
                 workQueue = getWorkerExecutor().processIsolation(spec -> {
                     spec.getForkOptions().setExecutable(getJavaLauncher().get()
@@ -104,7 +104,7 @@ abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSetti
                     if (getJavaLauncher().get().getMetadata().getLanguageVersion().canCompileOrRun(9)) {
                         spec.getForkOptions().jvmArgs("--add-opens", "java.base/java.lang=ALL-UNNAMED");
                     }
-                    spec.getForkOptions().setMaxHeapSize(getForkOptions().getMaxHeapSize().getOrNull());
+                    spec.getForkOptions().setMaxHeapSize(getFork().getMaxHeapSize().getOrNull());
                 });
 
             } else {

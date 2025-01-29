@@ -22,10 +22,10 @@ interface ClassesRelocationSettings {
     }
 
     @Nested
-    ClassRelocationForkOptions getForkOptions();
+    ClassRelocationForkOptions getFork();
 
-    default void forkOptions(Action<? super ClassRelocationForkOptions> action) {
-        action.execute(getForkOptions());
+    default void fork(Action<? super ClassRelocationForkOptions> action) {
+        action.execute(getFork());
     }
 
 }
