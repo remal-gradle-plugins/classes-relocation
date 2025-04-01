@@ -5,6 +5,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static lombok.AccessLevel.PUBLIC;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.SystemClasspathUtils.getSystemClasspathPaths;
 import static name.remal.gradle_plugins.toolkit.GradleManagedObjectsUtils.copyManagedProperties;
+import static name.remal.gradle_plugins.toolkit.PathUtils.deleteRecursively;
 
 import java.io.File;
 import java.nio.file.Paths;
@@ -15,6 +16,7 @@ import org.gradle.api.Action;
 import org.gradle.api.Task;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
@@ -23,6 +25,7 @@ import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Nested;
+import org.gradle.api.tasks.OutputFile;
 import org.gradle.jvm.tasks.Jar;
 import org.gradle.jvm.toolchain.JavaInstallationMetadata;
 import org.gradle.jvm.toolchain.JavaLauncher;
@@ -74,12 +77,22 @@ abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSetti
     public abstract Property<JavaLauncher> getJavaLauncher();
 
 
+    @org.gradle.api.tasks.Optional
+    @OutputFile
+    public abstract RegularFileProperty getReachabilityReportFile();
+
+
     public void execute(Task task) {
         execute((Jar) task);
     }
 
     @SneakyThrows
     private void execute(Jar task) {
+        var reachabilityReportFile = getReachabilityReportFile().getAsFile().getOrNull();
+        if (reachabilityReportFile != null) {
+            deleteRecursively(reachabilityReportFile.toPath());
+        }
+
         if (getRelocationClasspath().isEmpty()) {
             return;
         }
@@ -128,6 +141,8 @@ abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSetti
             var settings = getObjects().newInstance(ClassesRelocationSettings.class);
             copyManagedProperties(ClassesRelocationSettings.class, this, settings);
             params.getSettings().set(settings);
+
+            params.getReachabilityReportFile().set(reachabilityReportFile);
         });
     }
 

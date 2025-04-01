@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import lombok.Builder.Default;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.Singular;
 import lombok.experimental.SuperBuilder;
@@ -16,6 +17,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocat
 import org.jetbrains.annotations.Unmodifiable;
 
 @SuperBuilder(toBuilder = true)
+@Getter
 @SuppressWarnings({"cast", "java:S1170"})
 public abstract class ClassesRelocatorParams {
 

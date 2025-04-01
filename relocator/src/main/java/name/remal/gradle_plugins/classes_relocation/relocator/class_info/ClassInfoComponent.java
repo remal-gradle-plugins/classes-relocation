@@ -11,9 +11,9 @@ import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
@@ -91,7 +91,7 @@ public class ClassInfoComponent
                         parentClassInternalNames.add(superName);
                     }
                     if (interfaces != null) {
-                        parentClassInternalNames.addAll(List.of(interfaces));
+                        Collections.addAll(parentClassInternalNames, interfaces);
                     }
 
                     super.visit(version, access, name, signature, superName, interfaces);

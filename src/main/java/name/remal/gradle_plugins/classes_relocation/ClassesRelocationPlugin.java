@@ -30,10 +30,13 @@ import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.artifacts.repositories.IvyArtifactRepository.MetadataSources;
 import org.gradle.api.attributes.LibraryElements;
+import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.model.ObjectFactory;
+import org.gradle.api.plugins.ReportingBasePlugin;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.provider.ProviderFactory;
+import org.gradle.api.reporting.ReportingExtension;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskContainer;
@@ -58,6 +61,9 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
 
     public static final String REACHABILITY_METADATA_CONFIGURATION_NAME =
         doNotInline("classesRelocationReachabilityMetadata");
+
+    public static final String CLASSES_RELOCATION_REACHABILITY_METADATA =
+        doNotInline("classesRelocationReports");
 
     @Override
     @SuppressWarnings("Slf4jFormatShouldBeConst")
@@ -169,10 +175,13 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         var sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         var mainSourceSetProvider = sourceSets.named(MAIN_SOURCE_SET_NAME);
 
+        var baseReportsDir = getBaseReportsDir(project);
+
         var jarProvider = getTasks().named(JAR_TASK_NAME, Jar.class);
         jarProvider.configure(jar -> {
-            var action = getObjects().newInstance(RelocateJarAction.class);
             jar.getOutputs().cacheIf(RelocateJarAction.class.getName(), __ -> true);
+
+            var action = getObjects().newInstance(RelocateJarAction.class);
             registerTaskProperties(jar, action, RelocateJarAction.class.getSimpleName());
 
             copyManagedProperties(ClassesRelocationSettings.class, extension, action);
@@ -191,6 +200,10 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
             action.getModuleIdentifiers().putAll(retrieveModuleIdentifiers(action.getCompileAndRuntimeClasspath()));
 
             action.getJavaLauncher().convention(getJavaLauncherProviderFor(project));
+
+            action.getReachabilityReportFile().set(baseReportsDir.map(dir ->
+                dir.file(jar.getName() + "/reachability.txt")
+            ));
 
             jar.doLast(RelocateJarAction.class.getName(), action);
         });
@@ -242,6 +255,12 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
                 compileClasspathConf.getName()
             ));
         });
+    }
+
+    private Provider<Directory> getBaseReportsDir(Project project) {
+        project.getPluginManager().apply(ReportingBasePlugin.class);
+        return project.getExtensions().getByType(ReportingExtension.class)
+            .getBaseDirectory();
     }
 
     private Provider<Map<String, String>> retrieveModuleIdentifiers(FileCollection fileCollection) {

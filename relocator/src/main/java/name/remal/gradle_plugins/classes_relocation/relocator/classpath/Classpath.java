@@ -2,6 +2,7 @@ package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toUnmodifiableList;
+import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.ClasspathEmpty.EMPTY_CLASSPATH;
 
 import java.io.Closeable;
 import java.nio.file.Path;
@@ -19,7 +20,12 @@ public interface Classpath extends WithResources, Closeable {
             .filter(Objects::nonNull)
             .flatMap(it -> StreamSupport.stream(it.spliterator(), false))
             .filter(Objects::nonNull)
+            .distinct()
             .collect(toUnmodifiableList());
+
+        if (combinedPaths.isEmpty()) {
+            return EMPTY_CLASSPATH;
+        }
 
         return new ClasspathPaths(combinedPaths);
     }
@@ -30,6 +36,12 @@ public interface Classpath extends WithResources, Closeable {
 
 
     default Classpath plus(Classpath classpath) {
+        if (this instanceof ClasspathEmpty) {
+            return classpath;
+        } else if (classpath instanceof ClasspathEmpty) {
+            return this;
+        }
+
         return new ClasspathComposite(List.of(this, classpath));
     }
 

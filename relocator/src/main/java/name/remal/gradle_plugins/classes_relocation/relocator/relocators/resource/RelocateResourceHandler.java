@@ -14,6 +14,7 @@ import lombok.SneakyThrows;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.GeneratedResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
+import name.remal.gradle_plugins.classes_relocation.relocator.report.ReachabilityReport;
 import name.remal.gradle_plugins.classes_relocation.relocator.resource.ResourceProcessor;
 import name.remal.gradle_plugins.classes_relocation.relocator.resource.ResourcesSelector;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
@@ -57,6 +58,10 @@ public class RelocateResourceHandler implements ImmediateTaskHandler<String, Rel
         if (allCandidateResources.isEmpty()) {
             return Optional.empty();
         }
+
+        context = context.getRelocationComponent(ReachabilityReport.class)
+            .resource(resourceName)
+            .wrapRelocationContext(context);
 
         var selectors = context.getRelocationComponents(ResourcesSelector.class);
         var processors = context.getRelocationComponents(ResourceProcessor.class);
