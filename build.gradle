@@ -1,5 +1,4 @@
 import static java.nio.charset.StandardCharsets.UTF_8
-import static java.util.stream.Collectors.toList
 
 import java.lang.reflect.Field
 import java.nio.file.Files
@@ -20,7 +19,7 @@ buildscript {
     String rootSnapshotVersion = project.ext.rootSnapshotVersion = '2-SNAPSHOT'
     dependencies {
         //classpath("$rootGroupId:$rootArtifactId:$rootSnapshotVersion") { version { strictly(rootSnapshotVersion) } }
-        classpath 'name.remal.gradle-plugins.toolkit:build-logic:0.72.8'
+        classpath 'name.remal.gradle-plugins.toolkit:build-logic:0.72.10'
 
         classpath platform("org.ow2.asm:asm-bom:9.8")
         classpath 'org.ow2.asm:asm-commons'
@@ -80,10 +79,8 @@ project.pluginManager.withPlugin('java') {
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-SourceSet functionalTestSourceSet = testSourceSets.getByName('functionalTest')
-
 dependencies {
-    functionalTestImplementation 'name.remal.gradle-plugins.test-source-sets:test-source-sets:5.0.0'
+    functionalTestAdditionalClasspath 'name.remal.gradle-plugins.test-source-sets:test-source-sets:5.0.0'
 }
 
 Map<String, String> functionalTestRelocationNotations = [
@@ -94,38 +91,6 @@ Map<String, String> functionalTestRelocationNotations = [
     'junit-jupiter-engine': 'org.junit.jupiter:junit-jupiter-engine',
     'junit-platform-launcher': 'org.junit.platform:junit-platform-launcher',
 ]
-
-tasks.named(functionalTestSourceSet.name, Test) {
-    inputs.property('functionalTestRelocationNotations', functionalTestRelocationNotations)
-
-    onlyIf {
-        functionalTestRelocationNotations.forEach { library, notation ->
-            Closure<List<ResolvedDependency>> getResolvedDependenciesFrom = { String confName ->
-                Configuration conf = configurations[confName]
-                return conf.resolvedConfiguration
-                    .firstLevelModuleDependencies
-                    .findAll { "${it.moduleGroup}:${it.moduleName}" == notation }
-                    .toList()
-            }
-
-            List<ResolvedDependency> resolvedDeps = getResolvedDependenciesFrom(functionalTestSourceSet.compileClasspathConfigurationName)
-            if (resolvedDeps.isEmpty()) {
-                resolvedDeps = getResolvedDependenciesFrom(functionalTestSourceSet.runtimeClasspathConfigurationName)
-            }
-            if (resolvedDeps.isEmpty()) {
-                throw new GradleException("Resolved dependencies with notation `$notation` can't be found in `${functionalTestSourceSet.name}` dependencies")
-            }
-            Collection<File> files = resolvedDeps.stream()
-                .flatMap { dep -> dep.allModuleArtifacts.stream() }
-                .map { artifact -> artifact.file }
-                .distinct()
-                .collect(toList())
-            systemProperty("$library-classpath", files.join(File.pathSeparator))
-        }
-
-        return true
-    }
-}
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
