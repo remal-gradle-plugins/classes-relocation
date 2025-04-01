@@ -1,7 +1,5 @@
 package name.remal.gradle_plugins.classes_relocation.relocator;
 
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
-import static java.io.File.pathSeparator;
 import static java.lang.ClassLoader.getSystemClassLoader;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.createTempDirectory;
@@ -20,6 +18,7 @@ import static name.remal.gradle_plugins.toolkit.PathUtils.createParentDirectorie
 import static name.remal.gradle_plugins.toolkit.PathUtils.tryToDeleteRecursively;
 import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.makeAccessible;
 import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.packageNameOf;
+import static name.remal.gradle_plugins.toolkit.testkit.TestClasspath.getTestClasspathLibraryFilePaths;
 import static org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream.DEFLATED;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -38,7 +37,6 @@ import static org.objectweb.asm.Type.VOID_TYPE;
 import static org.objectweb.asm.Type.getInternalName;
 import static org.objectweb.asm.Type.getMethodDescriptor;
 
-import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import java.net.URL;
@@ -56,6 +54,7 @@ import lombok.SneakyThrows;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ResourcesFilter;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath;
 import name.remal.gradle_plugins.toolkit.UrlUtils;
+import name.remal.gradle_plugins.toolkit.testkit.TestClasspath;
 import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
@@ -122,7 +121,7 @@ public abstract class ClassesRelocatorTestBase {
             Stream.concat(
                 Stream.of(libJarPath),
                 stream(relocationLibraries)
-                    .map(ClassesRelocatorTestBase::getLibraryFilePaths)
+                    .map(TestClasspath::getTestClasspathLibraryFilePaths)
                     .flatMap(Collection::stream)
             ).distinct().collect(toList())
         );
@@ -326,7 +325,9 @@ public abstract class ClassesRelocatorTestBase {
             var relocator = ClassesRelocator.builder()
                 .sourceJarPath(sourceJarPath)
                 .relocationClasspathPaths(relocationLibraries)
-                .reachabilityMetadataClasspathPaths(getLibraryFilePaths("graalvm-reachability-metadata"))
+                .reachabilityMetadataClasspathPaths(
+                    getTestClasspathLibraryFilePaths("oracle:graalvm-reachability-metadata")
+                )
                 .targetJarPath(targetJarPath)
                 .basePackageForRelocatedClasses("relocated")
                 .build()
@@ -371,9 +372,9 @@ public abstract class ClassesRelocatorTestBase {
 
 
     private static final List<String> ALWAYS_AVAILABLE_LIBRARIES = List.of(
-        "junit-jupiter-api",
-        "assertj-core",
-        "asm"
+        "org.junit.jupiter:junit-jupiter-api",
+        "org.assertj:assertj-core",
+        "org.ow2.asm:asm"
     );
 
     private static final Set<String> TEST_LOGIC_CLASS_NAMES;
@@ -386,7 +387,7 @@ public abstract class ClassesRelocatorTestBase {
         ).map(Class::getName).forEach(testLogicClassNames::add);
 
         ALWAYS_AVAILABLE_LIBRARIES.stream()
-            .map(ClassesRelocatorTestBase::getLibraryFilePaths)
+            .map(TestClasspath::getTestClasspathLibraryFilePaths)
             .map(Classpath::newClasspathForPaths)
             .map(Classpath::getClassNames)
             .flatMap(Collection::stream)
@@ -404,19 +405,6 @@ public abstract class ClassesRelocatorTestBase {
         }
 
         return Paths.get(path);
-    }
-
-    private static Collection<Path> getLibraryFilePaths(String libraryName) {
-        var classpathString = System.getProperty(libraryName + "-classpath");
-        if (classpathString == null) {
-            throw new IllegalStateException("Unknown library: " + libraryName);
-        }
-
-        return Splitter.on(pathSeparator).splitToStream(classpathString)
-            .filter(not(String::isEmpty))
-            .distinct()
-            .map(Paths::get)
-            .collect(toImmutableSet());
     }
 
     private static final ClassLoader TEST_LOGIC_BASE_CLASS_LOADER_DELEGATE =

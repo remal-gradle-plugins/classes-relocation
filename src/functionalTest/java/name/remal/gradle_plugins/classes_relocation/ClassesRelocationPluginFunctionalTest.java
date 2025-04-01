@@ -1,20 +1,15 @@
 package name.remal.gradle_plugins.classes_relocation;
 
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
-import static java.io.File.pathSeparator;
 import static java.lang.String.format;
 import static java.lang.String.join;
-import static java.util.function.Predicate.not;
 import static name.remal.gradle_plugins.toolkit.StringUtils.escapeGroovy;
+import static name.remal.gradle_plugins.toolkit.testkit.TestClasspath.getTestClasspathLibraryFilePaths;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import com.google.common.base.Splitter;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
@@ -81,7 +76,11 @@ class ClassesRelocationPluginFunctionalTest {
 
     @Test
     void testing() throws Throwable {
-        addLibraryToDependencies(project.getBuildFile(), "guava", "classesRelocation");
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "com.google.guava:guava",
+            "classesRelocation"
+        );
 
         project.writeTextFile("src/main/java/pkg/Logic.java", join("\n", new String[]{
             "package pkg;",
@@ -98,9 +97,21 @@ class ClassesRelocationPluginFunctionalTest {
             "}",
         }));
 
-        addLibraryToDependencies(project.getBuildFile(), "junit-jupiter-api", "testImplementation");
-        addLibraryToDependencies(project.getBuildFile(), "junit-jupiter-engine", "testRuntimeOnly");
-        addLibraryToDependencies(project.getBuildFile(), "junit-platform-launcher", "testRuntimeOnly");
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "org.junit.jupiter:junit-jupiter-api",
+            "testImplementation"
+        );
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "org.junit.jupiter:junit-jupiter-engine",
+            "testRuntimeOnly"
+        );
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "org.junit.platform:junit-platform-launcher",
+            "testRuntimeOnly"
+        );
 
         project.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
             task.line("useJUnitPlatform()");
@@ -151,9 +162,21 @@ class ClassesRelocationPluginFunctionalTest {
             "}",
         }));
 
-        addLibraryToDependencies(project.getBuildFile(), "junit-jupiter-api", "testImplementation");
-        addLibraryToDependencies(project.getBuildFile(), "junit-jupiter-engine", "testRuntimeOnly");
-        addLibraryToDependencies(project.getBuildFile(), "junit-platform-launcher", "testRuntimeOnly");
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "org.junit.jupiter:junit-jupiter-api",
+            "testImplementation"
+        );
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "org.junit.jupiter:junit-jupiter-engine",
+            "testRuntimeOnly"
+        );
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "org.junit.platform:junit-platform-launcher",
+            "testRuntimeOnly"
+        );
 
         project.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
             task.line("useJUnitPlatform()");
@@ -188,7 +211,11 @@ class ClassesRelocationPluginFunctionalTest {
 
     @Test
     void dependencyInAnotherProject() {
-        addLibraryToDependencies(project.getBuildFile(), "guava", "classesRelocation");
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "com.google.guava:guava",
+            "classesRelocation"
+        );
 
         project.writeTextFile("src/main/java/pkg/Logic.java", join("\n", new String[]{
             "package pkg;",
@@ -227,9 +254,21 @@ class ClassesRelocationPluginFunctionalTest {
                 "}",
             }));
 
-            addLibraryToDependencies(child.getBuildFile(), "junit-jupiter-api", "testImplementation");
-            addLibraryToDependencies(child.getBuildFile(), "junit-jupiter-engine", "testRuntimeOnly");
-            addLibraryToDependencies(child.getBuildFile(), "junit-platform-launcher", "testRuntimeOnly");
+            addLibraryToDependencies(
+                child.getBuildFile(),
+                "org.junit.jupiter:junit-jupiter-api",
+                "testImplementation"
+            );
+            addLibraryToDependencies(
+                child.getBuildFile(),
+                "org.junit.jupiter:junit-jupiter-engine",
+                "testRuntimeOnly"
+            );
+            addLibraryToDependencies(
+                child.getBuildFile(),
+                "org.junit.platform:junit-platform-launcher",
+                "testRuntimeOnly"
+            );
 
             child.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
                 task.line("useJUnitPlatform()");
@@ -265,7 +304,11 @@ class ClassesRelocationPluginFunctionalTest {
 
     @Test
     void sourceSetOutputDependencyInAnotherProject() {
-        addLibraryToDependencies(project.getBuildFile(), "guava", "classesRelocation");
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "com.google.guava:guava",
+            "classesRelocation"
+        );
 
         project.writeTextFile("src/main/java/pkg/Logic.java", join("\n", new String[]{
             "package pkg;",
@@ -305,9 +348,21 @@ class ClassesRelocationPluginFunctionalTest {
                 "}",
             }));
 
-            addLibraryToDependencies(child.getBuildFile(), "junit-jupiter-api", "testImplementation");
-            addLibraryToDependencies(child.getBuildFile(), "junit-jupiter-engine", "testRuntimeOnly");
-            addLibraryToDependencies(child.getBuildFile(), "junit-platform-launcher", "testRuntimeOnly");
+            addLibraryToDependencies(
+                child.getBuildFile(),
+                "org.junit.jupiter:junit-jupiter-api",
+                "testImplementation"
+            );
+            addLibraryToDependencies(
+                child.getBuildFile(),
+                "org.junit.jupiter:junit-jupiter-engine",
+                "testRuntimeOnly"
+            );
+            addLibraryToDependencies(
+                child.getBuildFile(),
+                "org.junit.platform:junit-platform-launcher",
+                "testRuntimeOnly"
+            );
 
             child.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
                 task.line("useJUnitPlatform()");
@@ -343,7 +398,11 @@ class ClassesRelocationPluginFunctionalTest {
 
     @Test
     void testSourceSets() throws Throwable {
-        addLibraryToDependencies(project.getBuildFile(), "guava", "classesRelocation");
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "com.google.guava:guava",
+            "classesRelocation"
+        );
 
         project.writeTextFile("src/main/java/pkg/Logic.java", join("\n", new String[]{
             "package pkg;",
@@ -360,9 +419,21 @@ class ClassesRelocationPluginFunctionalTest {
             "}",
         }));
 
-        addLibraryToDependencies(project.getBuildFile(), "junit-jupiter-api", "testImplementation");
-        addLibraryToDependencies(project.getBuildFile(), "junit-jupiter-engine", "testRuntimeOnly");
-        addLibraryToDependencies(project.getBuildFile(), "junit-platform-launcher", "testRuntimeOnly");
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "org.junit.jupiter:junit-jupiter-api",
+            "testImplementation"
+        );
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "org.junit.jupiter:junit-jupiter-engine",
+            "testRuntimeOnly"
+        );
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "org.junit.platform:junit-platform-launcher",
+            "testRuntimeOnly"
+        );
 
         project.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
             task.line("useJUnitPlatform()");
@@ -370,7 +441,11 @@ class ClassesRelocationPluginFunctionalTest {
         });
 
         project.getBuildFile().forBuildscript(buildscript -> {
-            addLibraryToDependencies(buildscript, "test-source-sets", "classpath");
+            addLibraryToDependencies(
+                buildscript,
+                "name.remal.gradle-plugins.test-source-sets:test-source-sets",
+                "classpath"
+            );
         });
         project.getBuildFile().line("apply plugin: 'name.remal.test-source-sets'");
 
@@ -412,7 +487,11 @@ class ClassesRelocationPluginFunctionalTest {
 
     @Test
     void publishing() throws Throwable {
-        addLibraryToDependencies(project.getBuildFile(), "guava", "classesRelocation");
+        addLibraryToDependencies(
+            project.getBuildFile(),
+            "com.google.guava:guava",
+            "classesRelocation"
+        );
 
         project.writeTextFile("src/main/java/pkg/Logic.java", join("\n", new String[]{
             "package pkg;",
@@ -464,30 +543,18 @@ class ClassesRelocationPluginFunctionalTest {
 
     private static void addLibraryToDependencies(
         JavaLikeContent<?> script,
-        String libraryName,
+        String libraryNotation,
         String configurationName
     ) {
         script.block("dependencies", deps -> {
             deps.line(configurationName + " files(");
             deps.indent(indent ->
-                getLibraryFilePaths(libraryName).forEach(path ->
+                getTestClasspathLibraryFilePaths(libraryNotation).forEach(path ->
                     indent.line("    '" + indent.escapeString(path.toString()) + "',")
                 )
             );
             deps.line(")");
         });
-    }
-
-    private static Collection<Path> getLibraryFilePaths(String libraryName) {
-        var classpathString = System.getProperty(libraryName + "-classpath");
-        if (classpathString == null) {
-            throw new IllegalStateException("Unknown library: " + libraryName);
-        }
-
-        return Splitter.on(pathSeparator).splitToStream(classpathString)
-            .filter(not(String::isEmpty))
-            .map(Paths::get)
-            .collect(toImmutableSet());
     }
 
 }

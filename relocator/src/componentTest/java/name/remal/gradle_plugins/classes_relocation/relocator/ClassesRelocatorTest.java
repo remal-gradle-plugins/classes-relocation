@@ -18,43 +18,65 @@ class ClassesRelocatorTest extends ClassesRelocatorTestBase {
 
     @Test
     void relocatedConstructors() {
-        assertTestLogic(RelocatedConstructorsTestLogic.class);
+        assertTestLogic(
+            RelocatedConstructorsTestLogic.class
+        );
     }
 
     @Test
     void annotatedWithInject() {
-        assertTestLogic(AnnotatedWithInjectTestLogic.class);
+        assertTestLogic(
+            AnnotatedWithInjectTestLogic.class
+        );
     }
 
     @Test
     void accessibleFieldFromParentClass() {
-        assertTestLogic(AccessibleFieldFromParentClassTestLogic.class);
+        assertTestLogic(
+            AccessibleFieldFromParentClassTestLogic.class
+        );
     }
 
 
     @Test
     void simple() {
-        assertTestLogic(GuavaImmutableListTestLogic.class, "guava");
+        assertTestLogic(
+            GuavaImmutableListTestLogic.class,
+            "com.google.guava:guava"
+        );
     }
 
     @Test
     void className() {
-        assertTestLogic(GuavaClassNameTestLogic.class, "guava");
+        assertTestLogic(
+            GuavaClassNameTestLogic.class,
+            "com.google.guava:guava"
+        );
     }
 
     @Test
     void internalClassName() {
-        assertTestLogic(GuavaInternalClassNameTestLogic.class, "guava");
+        assertTestLogic(
+            GuavaInternalClassNameTestLogic.class,
+            "com.google.guava:guava"
+        );
     }
 
     @Test
     void classDescriptor() {
-        assertTestLogic(GuavaClassDescriptorTestLogic.class, "guava");
+        assertTestLogic(
+            GuavaClassDescriptorTestLogic.class,
+            "com.google.guava:guava"
+        );
     }
 
     @Test
     void metaInfServicesRelocated() {
-        assertTestLogic(JacksonGuavaTestLogic.class, "jackson-databind", "jackson-guava");
+        assertTestLogic(
+            JacksonGuavaTestLogic.class,
+            "com.fasterxml.jackson.core:jackson-databind",
+            "com.fasterxml.jackson.datatype:jackson-datatype-guava"
+        );
     }
 
     @Test
@@ -63,22 +85,36 @@ class ClassesRelocatorTest extends ClassesRelocatorTestBase {
          * JavaTime will be the last library on the relocation classpath.
          * This test will succeed only if META-INF/services are merged.
          */
-        assertTestLogic(JacksonJavaTimeTestLogic.class, "jackson-databind", "jackson-guava", "jackson-jsr310");
+        assertTestLogic(
+            JacksonJavaTimeTestLogic.class,
+            "com.fasterxml.jackson.core:jackson-databind",
+            "com.fasterxml.jackson.datatype:jackson-datatype-guava",
+            "com.fasterxml.jackson.datatype:jackson-datatype-jsr310"
+        );
     }
 
     @Test
     void resourcesRelocatedBasedOnPathPrefix() {
-        assertTestLogic(JodaTimeZoneInfoTestLogic.class, "joda-time");
+        assertTestLogic(
+            JodaTimeZoneInfoTestLogic.class,
+            "joda-time:joda-time"
+        );
     }
 
     @Test
     void xmlFiles() {
-        assertTestLogic(SaxonCatalogsTestLogic.class, "saxon");
+        assertTestLogic(
+            SaxonCatalogsTestLogic.class,
+            "net.sf.saxon:Saxon-HE"
+        );
     }
 
     @Test
     void classgraph() {
-        assertTestLogic(ClassgraphTestLogic.class, "classgraph");
+        assertTestLogic(
+            ClassgraphTestLogic.class,
+            "io.github.classgraph:classgraph"
+        );
     }
 
 }
