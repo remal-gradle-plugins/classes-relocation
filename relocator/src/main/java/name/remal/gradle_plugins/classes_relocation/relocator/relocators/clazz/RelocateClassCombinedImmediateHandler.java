@@ -42,6 +42,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.class_info.ClassIn
 import name.remal.gradle_plugins.classes_relocation.relocator.class_info.ClassInfoComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.relocator.minimization.ClassReachabilityConfigs;
+import name.remal.gradle_plugins.classes_relocation.relocator.report.ReachabilityReport;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
 import org.jetbrains.annotations.Contract;
 import org.objectweb.asm.ClassReader;
@@ -144,20 +145,27 @@ public class RelocateClassCombinedImmediateHandler
 
         while (!task.isEmpty()) {
             for (var relocatedClassData : relocatedClassDataList) {
+                var inputClassInternalName = relocatedClassData.getInputClassInternalName();
                 var remapper = new RelocationRemapper(
-                    relocatedClassData.getInputClassInternalName(),
+                    inputClassInternalName,
                     relocatedClassData.getResource(),
                     fasterContext
                 );
 
                 var fieldName = task.getFields().poll();
                 if (fieldName != null) {
-                    relocateField(relocatedClassData, fieldName, classInfo, remapper, fasterContext);
+                    var reachabilityReportContext = context.getRelocationComponent(ReachabilityReport.class)
+                        .field(inputClassInternalName, fieldName)
+                        .wrapRelocationContext(fasterContext);
+                    relocateField(relocatedClassData, fieldName, classInfo, remapper, reachabilityReportContext);
                 }
 
                 var methodKey = task.getMethods().poll();
                 if (methodKey != null) {
-                    relocateMethod(relocatedClassData, methodKey, classInfo, remapper, fasterContext);
+                    var reachabilityReportContext = context.getRelocationComponent(ReachabilityReport.class)
+                        .method(inputClassInternalName, methodKey)
+                        .wrapRelocationContext(fasterContext);
+                    relocateMethod(relocatedClassData, methodKey, classInfo, remapper, reachabilityReportContext);
                 }
             }
         }
@@ -166,10 +174,14 @@ public class RelocateClassCombinedImmediateHandler
     }
 
     private List<RelocatedClassData> createRelocatedClassDataList(String classInternalName, RelocationContext context) {
+        var reachabilityReportContext = context.getRelocationComponent(ReachabilityReport.class)
+            .clazz(classInternalName)
+            .wrapRelocationContext(context);
+
         var classResources = context.getRelocationClasspath().getClassResources(classInternalName);
         return classResources.stream()
-            .map(context::withResourceMarkedAsProcessed)
-            .map(resource -> createRelocatedClassData(resource, classInternalName, context))
+            .map(reachabilityReportContext::withResourceMarkedAsProcessed)
+            .map(resource -> createRelocatedClassData(resource, classInternalName, reachabilityReportContext))
             .collect(toList());
     }
 
@@ -203,6 +215,8 @@ public class RelocateClassCombinedImmediateHandler
             .getClassInfo(classInternalName, context);
 
         relocateGeneralMembers(relocatedClassData, classInfo, context);
+
+        relocateMethodsDefinedInNonRelocationParentClasses(relocatedClassData, classInfo, context);
 
         relocateMethodsAlreadyRelocatedInParentClasses(relocatedClassData, classInfo, context);
 
@@ -294,9 +308,27 @@ public class RelocateClassCombinedImmediateHandler
         classInfo.getFields().stream()
             .filter(not(relocatedClassData::hasProcessedField))
             .forEach(fieldName -> context.queue(new RelocateField(classInternalName, fieldName)));
+
         classInfo.getMethods().stream()
             .filter(not(relocatedClassData::hasProcessedMethod))
             .forEach(methodKey -> context.queue(new RelocateMethod(classInternalName, methodKey)));
+    }
+
+    private void relocateMethodsDefinedInNonRelocationParentClasses(
+        RelocatedClassData relocatedClassData,
+        ClassInfo classInfo,
+        RelocationContext context
+    ) {
+        classInfo.getAllParentClasses().stream()
+            .filter(info -> !context.isRelocationClassInternalName(info.getInternalClassName()))
+            .map(ClassInfo::getAccessibleMethods)
+            .flatMap(Collection::stream)
+            .filter(classInfo::hasAccessibleMethod)
+            .filter(not(relocatedClassData::hasProcessedMethod))
+            .distinct()
+            .forEach(methodKey -> {
+                context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), methodKey));
+            });
     }
 
     private void relocateMethodsAlreadyRelocatedInParentClasses(
@@ -313,6 +345,7 @@ public class RelocateClassCombinedImmediateHandler
             .flatMap(Collection::stream)
             .filter(classInfo::hasAccessibleMethod)
             .filter(not(relocatedClassData::hasProcessedMethod))
+            .distinct()
             .forEach(methodKey -> {
                 context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), methodKey));
             });
@@ -368,13 +401,13 @@ public class RelocateClassCombinedImmediateHandler
                     .build()
                 );
 
-                config.getFields().forEach(fieldName ->
-                    context.queue(new RelocateField(classInternalName, fieldName))
-                );
+                config.getFields().stream()
+                    .filter(classInfo::hasField)
+                    .forEach(fieldName -> context.queue(new RelocateField(classInternalName, fieldName)));
 
-                config.getMethodsKeys().forEach(methodKey ->
-                    context.queue(new RelocateMethod(classInternalName, methodKey))
-                );
+                config.getMethodsKeys().stream()
+                    .filter(classInfo::hasMethod)
+                    .forEach(methodKey -> context.queue(new RelocateMethod(classInternalName, methodKey)));
 
                 if (config.isAllDeclaredConstructors()) {
                     classInfo.getConstructors().stream()
@@ -489,9 +522,6 @@ public class RelocateClassCombinedImmediateHandler
         if ((inputFieldNode.access & ACC_STATIC) != 0) {
             return;
         }
-
-        // if any of the relocated methods are instance methods:
-
 
         // relocate all constructors if needed
         relocateAllConstructorsIfNeeded(relocatedClassData, classInfo, context);

@@ -11,7 +11,6 @@ import static java.util.jar.JarFile.MANIFEST_NAME;
 import static name.remal.gradle_plugins.build_time_constants.api.BuildTimeConstants.getStringProperty;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath.newClasspathForPaths;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.ResourceContainer.newResourceContainerPaths;
-import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.SystemClasspathUtils.getSystemClasspathPaths;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.MultiReleaseUtils.withMultiReleasePathPrefix;
 import static name.remal.gradle_plugins.toolkit.InTestFlags.isInFunctionalTest;
 import static name.remal.gradle_plugins.toolkit.InTestFlags.isInTest;
@@ -40,12 +39,15 @@ import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpat
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ClasspathElement;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ResourceContainer;
+import name.remal.gradle_plugins.classes_relocation.relocator.classpath.SystemClasspathUtils;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.WithSourceResources;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.ProcessSourceClass;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.license.CopyRelocationLicenses;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.manifest.CreateManifest;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.module_info.ProcessModuleInfo;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource.CopySourceResource;
+import name.remal.gradle_plugins.classes_relocation.relocator.report.ReachabilityReport;
+import name.remal.gradle_plugins.classes_relocation.relocator.report.ReachabilityUnmodifiableReport;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTask;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.TasksExecutor;
@@ -92,7 +94,10 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
     private final Classpath systemClasspath = asLazyProxy(Classpath.class, () -> {
         List<Path> systemClasspathPaths = this.systemClasspathPaths;
         if (systemClasspathPaths.isEmpty()) {
-            systemClasspathPaths = getSystemClasspathPaths();
+            systemClasspathPaths = SystemClasspathUtils.getSystemClasspathPaths();
+        }
+        if (systemClasspathPaths.isEmpty()) {
+            throw new ClassesRelocationException("System classpath couldn't be identified");
         }
         return closables.registerCloseable(newClasspathForPaths(systemClasspathPaths));
     });
@@ -127,9 +132,11 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
 
     @SneakyThrows
     private void relocateImpl() {
-        try (var implementations = new Implementations(objectFactory)) {
-            var context = new RelocationContextImpl();
+        var context = new RelocationContextImpl();
+        try (var implementations = new Implementations(context, objectFactory)) {
             context.setImplementations(implementations);
+
+            reachabilityReport.set(context.getRelocationComponent(ReachabilityReport.class));
 
             var tasksExecutor = new TasksExecutor(context);
             context.setTasksExecutor(tasksExecutor);
@@ -178,6 +185,13 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         if (!sourcePackageNamesToRelocate.isEmpty()) {
             throw new SourceResourcesInRelocationPackagesException(sourcePackageNamesToRelocate);
         }
+    }
+
+
+    private final LateInit<ReachabilityReport> reachabilityReport = lateInit("reachabilityReport");
+
+    public ReachabilityUnmodifiableReport getReachabilityReport() {
+        return new ReachabilityUnmodifiableReport(reachabilityReport.get());
     }
 
 

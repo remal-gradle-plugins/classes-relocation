@@ -30,4 +30,7 @@ interface RelocateJarWorkActionParams extends WorkParameters {
 
     Property<ClassesRelocationSettings> getSettings();
 
+
+    RegularFileProperty getReachabilityReportFile();
+
 }

@@ -12,6 +12,8 @@ import java.util.concurrent.ConcurrentMap;
 import lombok.Getter;
 import lombok.experimental.Delegate;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorComponent;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
+import name.remal.gradle_plugins.classes_relocation.relocator.api.WithRelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.class_info.ClassInfoComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.metadata.OriginalResourceNames;
 import name.remal.gradle_plugins.classes_relocation.relocator.metadata.OriginalResourceSources;
@@ -34,6 +36,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant.ResourceNameHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.type_constant.ProcessTypeConstantHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.xml.SimpleXmlResourcesHandler;
+import name.remal.gradle_plugins.classes_relocation.relocator.report.ReachabilityReport;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.BaseWithSupportedTaskClass;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
@@ -44,13 +47,16 @@ import org.jetbrains.annotations.Unmodifiable;
 
 class Implementations extends AbstractClosablesContainer {
 
+    private final RelocationContext relocationContext;
     private final ClassesRelocatorObjectFactory objectFactory;
     private final Set<Class<? extends ClassesRelocatorComponent>> componentClasses;
 
-    public Implementations(ClassesRelocatorObjectFactory objectFactory) {
+    public Implementations(RelocationContext relocationContext, ClassesRelocatorObjectFactory objectFactory) {
+        this.relocationContext = relocationContext;
         this.objectFactory = objectFactory;
         this.componentClasses = ImmutableSet.of(
             MinimizationConfigConfigurer.class,
+            ReachabilityReport.class,
             OriginalResourceNames.class,
             OriginalResourceSources.class,
             ClassReachabilityConfigs.class,
@@ -82,6 +88,7 @@ class Implementations extends AbstractClosablesContainer {
         return components.computeIfAbsent(type, clazz -> {
             try {
                 Object component = objectFactory.create(clazz);
+                component = invokeSetters(component);
                 component = registerCloseableIfPossible(component);
                 component = wrapWithCacheIfPossible(component);
                 return component;
@@ -124,6 +131,13 @@ class Implementations extends AbstractClosablesContainer {
         });
     }
 
+
+    private <T> T invokeSetters(T component) {
+        if (component instanceof WithRelocationContext) {
+            ((WithRelocationContext) component).setRelocationContext(relocationContext);
+        }
+        return component;
+    }
 
     private <T> T registerCloseableIfPossible(T component) {
         if (component instanceof AutoCloseable) {
