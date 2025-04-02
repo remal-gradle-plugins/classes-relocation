@@ -5,5 +5,5 @@ org.ow2.asm:asm-bom:9.8:@pom
 org.ow2.asm:asm-commons:9.8
 org.ow2.asm:asm-tree:9.8
 org.ow2.asm:asm:9.8
-zzzz-classes-relying-on-gradle-internal-api:name.remal.gradle_plugins.classes_relocation.ClassesRelocationPlugin:78e0f5749b9be2114fae5abacbb1cc7c0298b90a274fde79f0fd90b9376cda01
+zzzz-classes-relying-on-gradle-internal-api:name.remal.gradle_plugins.classes_relocation.ClassesRelocationPlugin:3a003405656d0243f2b2df64d3bedbd1cdecfa05ecb94c1c7e9d4918e0eb81f5
 zzzz-classes-relying-on-gradle-internal-api:name.remal.gradle_plugins.classes_relocation.relocator.InternalGradleConstantTimeForZipEntries:19c1903a4ddf4a88b000786882d7acbf3dd303f800a2f7bd4f03564a33b0fd6a
