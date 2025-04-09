@@ -7,6 +7,7 @@ import java.util.Map;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.With;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.string_constant.ProcessStringConstant;
@@ -25,6 +26,7 @@ class RelocationRemapper extends Remapper {
     @Getter
     private final Resource classResource;
 
+    @With
     private final RelocationContext context;
 
     @Override

@@ -16,8 +16,15 @@ public class ReachabilityReportRelocationContext extends DelegateRelocationConte
         RelocationContext delegate,
         ReachabilityNode reachabilityNode
     ) {
-        super(delegate);
+        super(unwrapReachabilityReportRelocationContext(delegate));
         this.reachabilityNode = reachabilityNode;
+    }
+
+    private static RelocationContext unwrapReachabilityReportRelocationContext(RelocationContext delegate) {
+        while (delegate instanceof ReachabilityReportRelocationContext) {
+            delegate = ((ReachabilityReportRelocationContext) delegate).delegate;
+        }
+        return delegate;
     }
 
     @Override

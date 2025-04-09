@@ -7,6 +7,6 @@ import lombok.experimental.Delegate;
 public class DelegateRelocationContext implements RelocationContext {
 
     @Delegate
-    private final RelocationContext delegate;
+    protected final RelocationContext delegate;
 
 }

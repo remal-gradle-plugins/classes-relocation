@@ -24,14 +24,14 @@ class RelocationMethodRemapper extends MethodRemapper {
         "java/lang/invoke/LambdaMetafactory",
         "metafactory",
         "("
-            + "Ljava/lang/invoke/MethodHandles$Lookup"
-            + ";Ljava/lang/String"
-            + ";Ljava/lang/invoke/MethodType"
-            + ";Ljava/lang/invoke/MethodType"
-            + ";Ljava/lang/invoke/MethodHandle"
-            + ";Ljava/lang/invoke/MethodType"
-            + ";"
-            + ")Ljava/lang/invoke/CallSite;",
+            + "Ljava/lang/invoke/MethodHandles$Lookup;"
+            + "Ljava/lang/String;"
+            + "Ljava/lang/invoke/MethodType;"
+            + "Ljava/lang/invoke/MethodType;"
+            + "Ljava/lang/invoke/MethodHandle;"
+            + "Ljava/lang/invoke/MethodType;"
+            + ")"
+            + "Ljava/lang/invoke/CallSite;",
         false
     );
 
@@ -91,8 +91,20 @@ class RelocationMethodRemapper extends MethodRemapper {
         String descriptor,
         boolean isInterface
     ) {
+        var methodKey = methodKeyOf(name, descriptor);
         if (context.isRelocationClassInternalName(owner)) {
             context.queue(new RelocateMethod(owner, name, descriptor));
+
+        } else if (!methodKey.isConstructor()) {
+            var classInfo = context.getRelocationComponent(ClassInfoComponent.class)
+                .getClassInfo(owner, context);
+            classInfo.getAllParentClasses().stream()
+                .filter(parentInfo -> context.isRelocationClassInternalName(parentInfo.getInternalClassName()))
+                .forEach(parentInfo -> {
+                    if (parentInfo.hasAccessibleMethod(methodKey)) {
+                        context.queue(new RelocateMethod(parentInfo.getInternalClassName(), methodKey));
+                    }
+                });
         }
 
         if (context.getConfig().isLogDynamicReflectionUsage()

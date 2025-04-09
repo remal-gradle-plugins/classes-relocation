@@ -9,6 +9,7 @@ import lombok.SneakyThrows;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.asm.NameClassVisitor;
 import name.remal.gradle_plugins.classes_relocation.relocator.asm.UnsupportedAnnotationsClassVisitor;
+import name.remal.gradle_plugins.classes_relocation.relocator.report.ReachabilityReport;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandlerResult;
 import org.objectweb.asm.ClassReader;
@@ -21,6 +22,10 @@ public class ProcessSourceClassHandler implements QueuedTaskHandler<ProcessSourc
     @SneakyThrows
     @SuppressWarnings({"java:S1121", "VariableDeclarationUsageDistance"})
     public QueuedTaskHandlerResult handle(ProcessSourceClass task, RelocationContext context) {
+        context = context.getRelocationComponent(ReachabilityReport.class)
+            .clazz(task.getSourceClassName())
+            .wrapRelocationContext(context);
+
         var classResources = context.getSourceClasspath().getClassResources(task.getSourceClassName());
         for (var resource : classResources) {
             ClassVisitor classVisitor;
