@@ -63,7 +63,7 @@ Serialization-related members are relocated if any instance member is relocated:
 * `readResolve()` method
 
 If you relocate a dependency that doesn't use reflection (`Class.getMethod()`, `Class.getField()`, etc),
-you don't need to configure minimization.
+you likely don't need to configure minimization.
 
 ### Keep class members annotated with configured annotations
 
