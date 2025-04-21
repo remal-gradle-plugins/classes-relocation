@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import java.util.ArrayList;
 import lombok.CustomLog;
 import lombok.RequiredArgsConstructor;
-import name.remal.gradle_plugins.toolkit.testkit.MinSupportedGradleVersion;
+import name.remal.gradle_plugins.toolkit.testkit.MinTestableGradleVersion;
 import name.remal.gradle_plugins.toolkit.testkit.TaskValidations;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.SourceSetContainer;
@@ -34,7 +34,7 @@ class ClassesRelocationPluginTest {
     }
 
     @Test
-    @MinSupportedGradleVersion("8.0")
+    @MinTestableGradleVersion("8.0")
     void jarTaskProperties() {
         var jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
         var jarInputs = jar.getInputs();
