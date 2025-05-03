@@ -2,11 +2,13 @@ package name.remal.gradle_plugins.classes_relocation;
 
 import static lombok.AccessLevel.PRIVATE;
 import static name.remal.gradle_plugins.toolkit.SourceSetUtils.isCompiledBy;
-import static org.gradle.api.plugins.ApplicationPlugin.TASK_RUN_NAME;
 import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
 
 import java.util.List;
 import lombok.NoArgsConstructor;
+import org.gradle.api.plugins.quality.Checkstyle;
+import org.gradle.api.plugins.quality.CodeNarc;
+import org.gradle.api.plugins.quality.Pmd;
 import org.gradle.api.tasks.JavaExec;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.compile.AbstractCompile;
@@ -63,10 +65,24 @@ abstract class TaskClasspathConfigurers {
         ),
         new TaskClasspathFileCollectionConfigurer<>(
             JavaExec.class,
-            task -> task.getName().equals(TASK_RUN_NAME)
-                && task.getProject().getPluginManager().hasPlugin("application"),
             JavaExec::getClasspath,
             JavaExec::setClasspath
+        ),
+
+        new TaskClasspathFileCollectionConfigurer<>(
+            Checkstyle.class,
+            Checkstyle::getClasspath,
+            Checkstyle::setClasspath
+        ),
+        new TaskClasspathFileCollectionConfigurer<>(
+            CodeNarc.class,
+            CodeNarc::getCompilationClasspath,
+            CodeNarc::setCompilationClasspath
+        ),
+        new TaskClasspathFileCollectionConfigurer<>(
+            Pmd.class,
+            Pmd::getClasspath,
+            Pmd::setClasspath
         )
     );
 
