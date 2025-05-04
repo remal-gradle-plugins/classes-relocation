@@ -178,8 +178,8 @@ TaskProvider<Jar> archiveAnnotationClasses = tasks.register('archiveAnnotationCl
     dependsOn(extractAnnotationClasses)
 
     destinationDirectory = archivedAnnotationClassesDirectory
-    archiveBaseName = "${project.rootProject.group}.annotations"
-    archiveVersion = ""
+    archiveBaseName = provider { "${project.rootProject.group}-annotations" }
+    archiveVersion = provider { project.rootProject.version.toString() }
 
     from(extractedAnnotationClassesDirectory)
 }

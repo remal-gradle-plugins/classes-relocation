@@ -2,7 +2,9 @@ package name.remal.gradle_plugins.classes_relocation;
 
 import static java.lang.String.format;
 import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.exists;
 import static java.nio.file.Files.newOutputStream;
+import static name.remal.gradle_plugins.build_time_constants.api.BuildTimeConstants.getStringProperty;
 import static name.remal.gradle_plugins.classes_relocation.TaskClasspathConfigurers.TASK_CLASSPATH_CONFIGURERS;
 import static name.remal.gradle_plugins.toolkit.AttributeContainerUtils.javaApiLibrary;
 import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.getModuleVersionIdentifiersForFilesIn;
@@ -67,8 +69,12 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
     public static final String REACHABILITY_METADATA_CONFIGURATION_NAME =
         doNotInline("classesRelocationReachabilityMetadata");
 
-    public static final String CLASSES_RELOCATION_REACHABILITY_METADATA =
-        doNotInline("classesRelocationReports");
+
+    private static final String RELOCATOR_ANNOTATIONS_RESOURCE_NAME = format(
+        "name.remal.gradle-plugins.classes-relocation-annotations-%s.jar",
+        getStringProperty("project.version")
+    );
+
 
     @Override
     @SuppressWarnings("Slf4jFormatShouldBeConst")
@@ -293,16 +299,24 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
     private void addRelocatorAnnotationsToCompilationClasspaths() {
         var relocatorAnnotationsFile = getObjects().fileProperty().fileProvider(getProviders().provider(() -> {
             var targetDir = getLayout().getBuildDirectory().dir("tmp").get().getAsFile().toPath();
-            createDirectories(targetDir);
+            var targetFile = targetDir.resolve(RELOCATOR_ANNOTATIONS_RESOURCE_NAME);
 
-            var resourceName = "name.remal.gradle-plugins.classes-relocation.annotations.jar";
-            var targetFile = targetDir.resolve(resourceName);
+            if (!RELOCATOR_ANNOTATIONS_RESOURCE_NAME.contains("-SNAPSHOT")) {
+                if (exists(targetFile)) {
+                    return targetFile.toFile();
+                }
+            }
 
-            try (var resourceInputStream = ClassesRelocationPlugin.class.getResourceAsStream('/' + resourceName)) {
+            try (
+                var resourceInputStream = ClassesRelocationPlugin.class.getResourceAsStream(
+                    '/' + RELOCATOR_ANNOTATIONS_RESOURCE_NAME
+                )
+            ) {
                 if (resourceInputStream == null) {
-                    throw new IllegalStateException("Resource not found: " + resourceName);
+                    throw new IllegalStateException("Resource not found: " + RELOCATOR_ANNOTATIONS_RESOURCE_NAME);
                 }
 
+                createDirectories(targetDir);
                 try (var out = newOutputStream(targetFile)) {
                     resourceInputStream.transferTo(out);
                 }
