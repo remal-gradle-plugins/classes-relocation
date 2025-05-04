@@ -1,3 +1,25 @@
+import java.nio.file.Files
+import org.objectweb.asm.ClassReader
+import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.commons.ClassRemapper
+import org.objectweb.asm.commons.Remapper
+import org.objectweb.asm.tree.ClassNode
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+buildscript {
+    dependencies {
+        classpath platform("org.ow2.asm:asm-bom:9.8")
+        classpath 'org.ow2.asm:asm-tree'
+        classpath 'org.ow2.asm:asm-commons'
+    }
+    repositories {
+        mavenCentral()
+    }
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
 apply plugin: 'java-library'
 apply plugin: 'name.remal.build-time-constants'
 
@@ -70,4 +92,99 @@ tasks.named(componentTestSourceSet.name, Test) {
         systemProperty("test-classes-jar", componentTestJar.get().archiveFile.get().asFile.absolutePath)
         return true
     }
+}
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
+
+Provider<Directory> extractedAnnotationClassesDirectory = layout.buildDirectory.dir("extracted-annotations")
+
+TaskProvider extractAnnotationClasses = tasks.register('extractAnnotationClasses') {
+    dependsOn('compileJava')
+
+    ConfigurableFileCollection classpath = files(
+        sourceSets.main.output.classesDirs,
+        configurations.compileClasspath,
+    )
+    inputs.files(classpath).withPropertyName('classpath').withNormalizer(ClasspathNormalizer)
+    dependsOn(classpath)
+
+    outputs.dir(extractedAnnotationClassesDirectory)
+
+    doLast {
+        File outputDir = extractedAnnotationClassesDirectory.get().asFile
+        outputDir.deleteDir()
+        outputDir.mkdirs()
+
+        Collection<URL> classpathUrls = classpath.files.collect { it.toURI().toURL() }
+        new URLClassLoader(classpathUrls.toArray(new URL[0]), (ClassLoader) null).withCloseable { classLoader ->
+            Deque<String> internalClassNamesQueue = new ArrayDeque<>([
+                'name.remal.gradle_plugins.classes_relocation.relocator.asm.Generated',
+                'name.remal.gradle_plugins.classes_relocation.relocator.asm.RelocatedClass',
+                'org.jetbrains.annotations.ApiStatus$Internal',
+                'org.apiguardian.api.API',
+                'edu.umd.cs.findbugs.annotations.SuppressFBWarnings',
+            ].collect { it.replace('.', '/') })
+            Set<String> extractedInternalClassNames = new LinkedHashSet<>(internalClassNamesQueue)
+
+            while (true) {
+                String internalClassName = internalClassNamesQueue.pollFirst()
+                if (internalClassName == null) {
+                    break
+                }
+
+                logger.info('Processing {}', internalClassName)
+
+                String classResourceName = internalClassName + '.class'
+                InputStream classInputStream = classLoader.getResourceAsStream(classResourceName)
+                if (classInputStream == null) {
+                    throw new GradleException("Class resource can't be found: $classResourceName")
+                }
+                classInputStream.withCloseable { inputStream ->
+                    ClassNode classNode = new ClassNode()
+
+                    Remapper remapper = new Remapper() {
+                        @Override
+                        String map(String internalName) {
+                            if (internalName.startsWith('java/')) {
+                                return super.map(internalName)
+                            }
+
+                            if (extractedInternalClassNames.add(internalName)) {
+                                internalClassNamesQueue.addLast(internalName)
+                            }
+
+                            return super.map(internalName)
+                        }
+                    }
+                    ClassRemapper classRemapper = new ClassRemapper(classNode, remapper)
+                    new ClassReader(inputStream).accept(classRemapper, 0)
+
+                    ClassWriter classWriter = new ClassWriter(0)
+                    classNode.accept(classWriter)
+                    byte[] bytes = classWriter.toByteArray()
+
+                    File outputFile = new File(outputDir, classResourceName)
+                    outputFile.parentFile.mkdirs()
+                    Files.write(outputFile.toPath(), bytes)
+                }
+            }
+        }
+    }
+}
+
+Provider<Directory> archivedAnnotationClassesDirectory = layout.buildDirectory.dir("extracted-annotations-archived")
+
+TaskProvider<Jar> archiveAnnotationClasses = tasks.register('archiveAnnotationClasses', Jar) {
+    dependsOn(extractAnnotationClasses)
+
+    destinationDirectory = archivedAnnotationClassesDirectory
+    archiveBaseName = "${project.rootProject.group}.annotations"
+    archiveVersion = ""
+
+    from(extractedAnnotationClassesDirectory)
+}
+
+tasks.named('processResources', ProcessResources) {
+    dependsOn(archiveAnnotationClasses)
+    from(archivedAnnotationClassesDirectory)
 }

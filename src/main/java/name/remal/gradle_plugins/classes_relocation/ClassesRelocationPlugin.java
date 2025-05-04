@@ -1,6 +1,8 @@
 package name.remal.gradle_plugins.classes_relocation;
 
 import static java.lang.String.format;
+import static java.nio.file.Files.createDirectories;
+import static java.nio.file.Files.newOutputStream;
 import static name.remal.gradle_plugins.classes_relocation.TaskClasspathConfigurers.TASK_CLASSPATH_CONFIGURERS;
 import static name.remal.gradle_plugins.toolkit.AttributeContainerUtils.javaApiLibrary;
 import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.getModuleVersionIdentifiersForFilesIn;
@@ -8,6 +10,7 @@ import static name.remal.gradle_plugins.toolkit.GradleManagedObjectsUtils.copyMa
 import static name.remal.gradle_plugins.toolkit.JavaLauncherUtils.getJavaLauncherProviderFor;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.doNotInline;
 import static name.remal.gradle_plugins.toolkit.TaskPropertiesUtils.registerTaskProperties;
+import static name.remal.gradle_plugins.toolkit.TaskUtils.doBeforeTaskExecution;
 import static org.gradle.api.artifacts.Configuration.State.UNRESOLVED;
 import static org.gradle.api.attributes.LibraryElements.JAR;
 import static org.gradle.api.attributes.LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE;
@@ -32,6 +35,7 @@ import org.gradle.api.artifacts.repositories.IvyArtifactRepository.MetadataSourc
 import org.gradle.api.attributes.LibraryElements;
 import org.gradle.api.file.Directory;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.plugins.ReportingBasePlugin;
 import org.gradle.api.provider.Provider;
@@ -40,6 +44,7 @@ import org.gradle.api.reporting.ReportingExtension;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskContainer;
+import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.jvm.tasks.Jar;
 
 @CustomLog
@@ -172,6 +177,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         extendCompileClasspathConfiguration(relocationDepsConfProvider);
         resolveConsistentlyWithCompileClasspath(relocationConfProvider);
 
+
         var sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         var mainSourceSetProvider = sourceSets.named(MAIN_SOURCE_SET_NAME);
 
@@ -212,6 +218,9 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         TASK_CLASSPATH_CONFIGURERS.forEach(configurer ->
             configurer.configureTasks(project, mainSourceSetProvider, jarProvider)
         );
+
+
+        addRelocatorAnnotationsToCompilationClasspaths();
     }
 
     private void setLibraryElementToJar(Project project) {
@@ -281,6 +290,37 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         });
     }
 
+    private void addRelocatorAnnotationsToCompilationClasspaths() {
+        var relocatorAnnotationsFile = getObjects().fileProperty().fileProvider(getProviders().provider(() -> {
+            var targetDir = getLayout().getBuildDirectory().dir("tmp").get().getAsFile().toPath();
+            createDirectories(targetDir);
+
+            var resourceName = "name.remal.gradle-plugins.classes-relocation.annotations.jar";
+            var targetFile = targetDir.resolve(resourceName);
+
+            try (var resourceInputStream = ClassesRelocationPlugin.class.getResourceAsStream('/' + resourceName)) {
+                if (resourceInputStream == null) {
+                    throw new IllegalStateException("Resource not found: " + resourceName);
+                }
+
+                try (var out = newOutputStream(targetFile)) {
+                    resourceInputStream.transferTo(out);
+                }
+            }
+
+            return targetFile.toFile();
+        }));
+        relocatorAnnotationsFile.finalizeValueOnRead();
+
+        getTasks().withType(AbstractCompile.class).configureEach(compileTask ->
+            doBeforeTaskExecution(compileTask, task -> {
+                var classpath = task.getClasspath();
+                classpath = classpath.plus(getObjects().fileCollection().from(relocatorAnnotationsFile));
+                task.setClasspath(classpath);
+            })
+        );
+    }
+
 
     @Inject
     protected abstract ConfigurationContainer getConfigurations();
@@ -293,6 +333,9 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
 
     @Inject
     protected abstract TaskContainer getTasks();
+
+    @Inject
+    protected abstract ProjectLayout getLayout();
 
     @Inject
     protected abstract ObjectFactory getObjects();
