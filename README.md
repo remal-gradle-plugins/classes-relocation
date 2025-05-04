@@ -11,7 +11,7 @@ Usage:
 <!--plugin-usage:name.remal.classes-relocation-->
 ```groovy
 plugins {
-    id 'name.remal.classes-relocation' version '2.0.0-rc-9'
+    id 'name.remal.classes-relocation' version '2.0.0-rc-10'
 }
 ```
 <!--/plugin-usage-->
