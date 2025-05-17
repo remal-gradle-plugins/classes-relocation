@@ -27,7 +27,7 @@ dependencies {
     optional 'name.remal.gradle-api:gradle-api'
 
     classesRelocation 'org.apache.commons:commons-compress:1.27.1'
-    classesRelocation 'org.json:json:20250107'
+    classesRelocation 'org.json:json:20250517'
 
     compileOnly 'org.apiguardian:apiguardian-api:1.1.2'
     compileOnly 'com.github.spotbugs:spotbugs-annotations:4.9.3'
