@@ -65,7 +65,7 @@ SourceSet componentTestSourceSet = testSourceSets.create('componentTest')
 dependencies {
     componentTestImplementation "oracle:graalvm-reachability-metadata:${property('graalvm-reachability-metadata.version')}@zip"
 
-    componentTestImplementation platform('com.fasterxml.jackson:jackson-bom:2.19.0')
+    componentTestImplementation platform('com.fasterxml.jackson:jackson-bom:2.19.1')
     componentTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
     componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
     componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
