@@ -70,7 +70,7 @@ dependencies {
     componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-guava'
     componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     componentTestImplementation 'joda-time:joda-time:2.14.0'
-    componentTestImplementation 'net.sf.saxon:Saxon-HE:12.7'
+    componentTestImplementation 'net.sf.saxon:Saxon-HE:12.8'
     componentTestImplementation 'io.github.classgraph:classgraph:4.8.180'
 }
 
