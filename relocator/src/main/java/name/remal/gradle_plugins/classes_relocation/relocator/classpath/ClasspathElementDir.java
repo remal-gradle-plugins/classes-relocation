@@ -4,6 +4,7 @@ import static java.nio.file.Files.getLastModifiedTime;
 import static java.nio.file.Files.newInputStream;
 import static java.nio.file.Files.walk;
 import static java.util.stream.Collectors.toList;
+import static name.remal.gradle_plugins.toolkit.LazyValue.lazyValue;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +32,7 @@ class ClasspathElementDir extends ClasspathElementBase {
         try (var paths = walk(dirPath)) {
             return paths
                 .filter(Files::isRegularFile)
-                .map(filePath -> filePath.relativize(dirPath).toString())
+                .map(filePath -> dirPath.relativize(filePath).toString())
                 .map(ResourceFile::new)
                 .collect(toList());
         }
@@ -46,7 +47,7 @@ class ClasspathElementDir extends ClasspathElementBase {
         public ResourceFile(String name) {
             super(name);
             this.path = getPath().resolve(name);
-            this.lastModifiedMillis = LazyValue.lazyValue(() ->
+            this.lastModifiedMillis = lazyValue(() ->
                 getLastModifiedTime(path).toMillis()
             );
         }
