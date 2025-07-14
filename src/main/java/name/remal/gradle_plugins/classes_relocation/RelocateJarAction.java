@@ -3,19 +3,16 @@ package name.remal.gradle_plugins.classes_relocation;
 import static java.nio.file.Files.move;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import static lombok.AccessLevel.PUBLIC;
-import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.SystemClasspathUtils.getSystemClasspathPaths;
 import static name.remal.gradle_plugins.toolkit.GradleManagedObjectsUtils.copyManagedProperties;
 import static name.remal.gradle_plugins.toolkit.PathUtils.deleteRecursively;
 
 import java.io.File;
-import java.nio.file.Paths;
 import javax.inject.Inject;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import org.gradle.api.Action;
 import org.gradle.api.Task;
 import org.gradle.api.file.ConfigurableFileCollection;
-import org.gradle.api.file.Directory;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.MapProperty;
@@ -44,25 +41,6 @@ abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSetti
     @Classpath
     @org.gradle.api.tasks.Optional
     public abstract ConfigurableFileCollection getCompileAndRuntimeClasspath();
-
-    @InputFiles
-    public abstract ConfigurableFileCollection getSystemClasspath();
-
-    {
-        getSystemClasspath().from(getProviders().provider(() -> {
-            var installationDir = getJavaLauncher()
-                .map(JavaLauncher::getMetadata)
-                .map(JavaInstallationMetadata::getInstallationPath)
-                .map(Directory::getAsFile)
-                .getOrNull();
-            if (installationDir != null) {
-                return getSystemClasspathPaths(installationDir);
-            }
-
-            var javaHome = getProviders().systemProperty("java.home").get();
-            return getSystemClasspathPaths(Paths.get(javaHome));
-        }));
-    }
 
     @InputFiles
     @org.gradle.api.tasks.Optional
@@ -130,7 +108,10 @@ abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSetti
             params.getJarFile().set(renamedJarFile);
             params.getRelocationClasspath().setFrom(getRelocationClasspath());
             params.getCompileAndRuntimeClasspath().setFrom(getCompileAndRuntimeClasspath());
-            params.getSystemClasspath().setFrom(getSystemClasspath());
+            params.getJvmInstallationDir().set(getJavaLauncher()
+                .map(JavaLauncher::getMetadata)
+                .map(JavaInstallationMetadata::getInstallationPath)
+            );
             params.getReachabilityMetadataClasspath().setFrom(getReachabilityMetadataClasspath());
             params.getModuleIdentifiers().set(getModuleIdentifiers());
 

@@ -75,7 +75,7 @@ class ClassesRelocationPluginFunctionalTest {
 
 
     @Test
-    void testing() throws Throwable {
+    void testing() {
         addLibraryToDependencies(
             project.getBuildFile(),
             "com.google.guava:guava",
@@ -145,7 +145,7 @@ class ClassesRelocationPluginFunctionalTest {
     }
 
     @Test
-    void withoutRelocation() throws Throwable {
+    void withoutRelocation() {
         project.writeTextFile("src/main/java/pkg/Logic.java", join("\n", new String[]{
             "package pkg;",
             "",
@@ -397,7 +397,7 @@ class ClassesRelocationPluginFunctionalTest {
     }
 
     @Test
-    void testSourceSets() throws Throwable {
+    void testSourceSets() {
         addLibraryToDependencies(
             project.getBuildFile(),
             "com.google.guava:guava",

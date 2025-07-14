@@ -1,60 +1,89 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 
+import static java.lang.String.format;
+import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
+import static java.nio.file.Files.isRegularFile;
+import static java.nio.file.Files.list;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static lombok.AccessLevel.PRIVATE;
+import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath.newClasspathForPaths;
+import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.JrtFileSystemProvider.newJrtFileSystem;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.isEmpty;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
 @NoArgsConstructor(access = PRIVATE)
 public abstract class SystemClasspathUtils {
 
-    public static List<Path> getSystemClasspathPaths() {
-        var javaHome = System.getProperty("java.home");
-        if (isEmpty(javaHome)) {
-            throw new IllegalStateException("System property `java_home` is not set or empty");
-        }
-        return getSystemClasspathPaths(Paths.get(javaHome));
-    }
-
     @SneakyThrows
-    public static List<Path> getSystemClasspathPaths(Path jvmInstallationDir) {
-        var paths = new ArrayList<Path>();
+    public static Classpath getSystemClasspath(Path jvmInstallationDir) {
+        if (!exists(jvmInstallationDir)) {
+            throw new IllegalStateException(format(
+                "JVM installation dir does NOT exist: %s",
+                jvmInstallationDir
+            ));
+        }
 
-        var jreLibDirPath = jvmInstallationDir.resolve("jre/lib");
-        if (isDirectory(jreLibDirPath)) {
-            try (var stream = Files.list(jreLibDirPath)) {
-                stream
-                    .filter(path -> path.getFileName().toString().endsWith(".jar"))
-                    .filter(Files::isRegularFile)
-                    .sorted()
-                    .forEach(paths::add);
+        var jrtFsJarPath = jvmInstallationDir.resolve("lib/jrt-fs.jar");
+        if (isRegularFile(jrtFsJarPath)) {
+            @SuppressWarnings("java:S2095")
+            var fileSystem = newJrtFileSystem(jvmInstallationDir);
+            var modulesPath = fileSystem.getPath("/modules");
+            try (var stream = list(modulesPath)) {
+                var paths = stream.collect(toUnmodifiableList());
+                if (!paths.isEmpty()) {
+                    return new ClasspathPaths(fileSystem, paths);
+                }
             }
         }
 
+        /*
         var jmodsDirPath = jvmInstallationDir.resolve("jmods");
         if (isDirectory(jmodsDirPath)) {
-            try (var stream = Files.list(jmodsDirPath)) {
-                stream
+            try (var stream = list(jmodsDirPath)) {
+                var paths = stream
                     .filter(path -> path.getFileName().toString().endsWith(".jmod"))
                     .filter(Files::isRegularFile)
                     .sorted()
-                    .forEach(paths::add);
+                    .collect(toUnmodifiableList());
+                if (!paths.isEmpty()) {
+                    return newClasspathForPaths(paths);
+                }
+            }
+        }
+        */
+
+        var jreLibDirPath = jvmInstallationDir.resolve("jre/lib");
+        if (isDirectory(jreLibDirPath)) {
+            try (var stream = list(jreLibDirPath)) {
+                var paths = stream
+                    .filter(path -> path.getFileName().toString().endsWith(".jar"))
+                    .filter(Files::isRegularFile)
+                    .sorted()
+                    .collect(toUnmodifiableList());
+                if (!paths.isEmpty()) {
+                    return newClasspathForPaths(paths);
+                }
             }
         }
 
-        return List.copyOf(paths);
+        throw new IllegalStateException(format(
+            "Unsupported JVM installation dir (no classpath elements found): %s",
+            jvmInstallationDir
+        ));
     }
 
-    public static List<Path> getSystemClasspathPaths(File jvmInstallationDir) {
-        return getSystemClasspathPaths(jvmInstallationDir.toPath());
+    public static Classpath getCurrentSystemClasspath() {
+        var javaHome = System.getProperty("java.home");
+        if (isEmpty(javaHome)) {
+            throw new IllegalStateException("System property `java.home` is not set or empty");
+        }
+        return getSystemClasspath(Paths.get(javaHome));
     }
 
 }

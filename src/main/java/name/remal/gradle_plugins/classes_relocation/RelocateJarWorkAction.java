@@ -21,6 +21,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassFilter;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorConfig;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.MinimizationConfig;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ResourcesFilter;
+import org.gradle.api.file.Directory;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.workers.WorkAction;
@@ -42,9 +43,11 @@ abstract class RelocateJarWorkAction implements WorkAction<RelocateJarWorkAction
                     .map(File::toPath)
                     .collect(toList())
                 )
-                .systemClasspathPaths(params.getSystemClasspath().getFiles().stream()
+                .jvmInstallationDir(params.getJvmInstallationDir()
+                    .map(Directory::getAsFile)
                     .map(File::toPath)
-                    .collect(toList()))
+                    .getOrNull()
+                )
                 .reachabilityMetadataClasspathPaths(params.getReachabilityMetadataClasspath().getFiles().stream()
                     .map(File::toPath)
                     .collect(toList()))

@@ -8,6 +8,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.Nullable;
 import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NonNull;
@@ -35,9 +36,8 @@ public abstract class ClassesRelocatorParams {
     @Singular
     protected final List<Path> compileAndRuntimeClasspathPaths;
 
-    @Unmodifiable
-    @Singular
-    protected final List<Path> systemClasspathPaths;
+    @Nullable
+    protected final Path jvmInstallationDir;
 
     @Unmodifiable
     @Singular

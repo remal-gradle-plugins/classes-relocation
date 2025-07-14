@@ -31,7 +31,7 @@ class ClasspathElementJmod extends ClasspathElementBase {
     }
 
     @Override
-    protected Collection<Resource> readClasspathElementResources() throws Exception {
+    protected Collection<Resource> readClasspathElementResources() {
         var processedEntryNames = new LinkedHashSet<>();
         return list(zipFile.get().getEntries()).stream()
             .filter(not(ZipArchiveEntry::isDirectory))

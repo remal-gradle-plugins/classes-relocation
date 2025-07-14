@@ -1,6 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation;
 
 import org.gradle.api.file.ConfigurableFileCollection;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
@@ -14,7 +15,7 @@ interface RelocateJarWorkActionParams extends WorkParameters {
 
     ConfigurableFileCollection getCompileAndRuntimeClasspath();
 
-    ConfigurableFileCollection getSystemClasspath();
+    DirectoryProperty getJvmInstallationDir();
 
     ConfigurableFileCollection getReachabilityMetadataClasspath();
 

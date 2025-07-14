@@ -11,6 +11,7 @@ public class GuavaImmutableListTestLogic implements ClassesRelocatorTestLogic {
     @Override
     public void assertTestLogic() {
         assertThat(ImmutableList.of("a", "b", "c"))
+            .hasSize(3)
             .containsExactly("a", "b", "c");
     }
 

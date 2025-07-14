@@ -11,6 +11,8 @@ import static java.util.jar.JarFile.MANIFEST_NAME;
 import static name.remal.gradle_plugins.build_time_constants.api.BuildTimeConstants.getStringProperty;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath.newClasspathForPaths;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.ResourceContainer.newResourceContainerPaths;
+import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.SystemClasspathUtils.getCurrentSystemClasspath;
+import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.SystemClasspathUtils.getSystemClasspath;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.MultiReleaseUtils.withMultiReleasePathPrefix;
 import static name.remal.gradle_plugins.toolkit.InTestFlags.isInFunctionalTest;
 import static name.remal.gradle_plugins.toolkit.InTestFlags.isInTest;
@@ -39,7 +41,6 @@ import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpat
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ClasspathElement;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ResourceContainer;
-import name.remal.gradle_plugins.classes_relocation.relocator.classpath.SystemClasspathUtils;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.WithSourceResources;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.ProcessSourceClass;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.license.CopyRelocationLicenses;
@@ -92,14 +93,13 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
     );
 
     private final Classpath systemClasspath = asLazyProxy(Classpath.class, () -> {
-        List<Path> systemClasspathPaths = this.systemClasspathPaths;
-        if (systemClasspathPaths.isEmpty()) {
-            systemClasspathPaths = SystemClasspathUtils.getSystemClasspathPaths();
+        final Classpath classpath;
+        if (jvmInstallationDir != null) {
+            classpath = getSystemClasspath(jvmInstallationDir);
+        } else {
+            classpath = getCurrentSystemClasspath();
         }
-        if (systemClasspathPaths.isEmpty()) {
-            throw new ClassesRelocationException("System classpath couldn't be identified");
-        }
-        return closables.registerCloseable(newClasspathForPaths(systemClasspathPaths));
+        return closables.registerCloseable(classpath);
     });
 
     private final ResourceContainer reachabilityMetadataResourceContainer = asLazyProxy(ResourceContainer.class, () ->
