@@ -1,6 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 
 import static java.lang.String.format;
+import static java.nio.file.FileSystems.newFileSystem;
 import static java.nio.file.Files.exists;
 import static java.nio.file.Files.isDirectory;
 import static java.nio.file.Files.isRegularFile;
@@ -8,12 +9,13 @@ import static java.nio.file.Files.list;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static lombok.AccessLevel.PRIVATE;
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.Classpath.newClasspathForPaths;
-import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.JrtFileSystemProvider.newJrtFileSystem;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.isEmpty;
 
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 
@@ -32,7 +34,12 @@ public abstract class SystemClasspathUtils {
         var jrtFsJarPath = jvmInstallationDir.resolve("lib/jrt-fs.jar");
         if (isRegularFile(jrtFsJarPath)) {
             @SuppressWarnings("java:S2095")
-            var fileSystem = newJrtFileSystem(jvmInstallationDir);
+            var fileSystem = newFileSystem(
+                URI.create("jrt:/"),
+                Map.of(
+                    "java.home", jvmInstallationDir.toAbsolutePath().toString()
+                )
+            );
             var modulesPath = fileSystem.getPath("/modules");
             try (var stream = list(modulesPath)) {
                 var paths = stream.collect(toUnmodifiableList());
