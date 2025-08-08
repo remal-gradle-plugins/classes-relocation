@@ -52,7 +52,7 @@ public abstract class ResourceNameUtils {
     }
 
     public static String resourceNameWithRelocationSource(String resourceName, @Nullable String relocationSource) {
-        if (isEmpty(relocationSource)) {
+        if (relocationSource == null || relocationSource.isEmpty()) {
             return resourceName;
         }
 

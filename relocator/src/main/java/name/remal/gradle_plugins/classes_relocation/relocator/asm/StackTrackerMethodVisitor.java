@@ -55,20 +55,20 @@ public class StackTrackerMethodVisitor extends MethodVisitor implements Opcodes 
         }
 
         return unmodifiableList(
-                stack.stream()
-                        .filter(value -> {
-                            if (value == TWO_SLOTS_VALUE_FILLER) {
-                                return false;
-                            }
-                            return true;
-                        })
-                        .map(value -> {
-                            if (value == NULL_STACK_VALUE) {
-                                return null;
-                            }
-                            return value;
-                        })
-                        .collect(toList())
+            stack.stream()
+                .filter(value -> {
+                    if (value == TWO_SLOTS_VALUE_FILLER) {
+                        return false;
+                    }
+                    return true;
+                })
+                .map(value -> {
+                    if (value == NULL_STACK_VALUE) {
+                        return null;
+                    }
+                    return value;
+                })
+                .collect(toList())
         );
     }
 
