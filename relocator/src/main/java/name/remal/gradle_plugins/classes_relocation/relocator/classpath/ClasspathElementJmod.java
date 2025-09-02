@@ -26,7 +26,7 @@ class ClasspathElementJmod extends ClasspathElementBase {
         super(path);
         this.zipFile = lazyValue(() -> {
             var zipFileBuilder = ZipFile.builder().setPath(path);
-            return closables.registerCloseable(zipFileBuilder.get());
+            return closeables.registerCloseable(zipFileBuilder.get());
         });
     }
 

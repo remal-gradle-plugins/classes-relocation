@@ -15,7 +15,7 @@ class ResourceContainerComposite extends WithResourcesBase implements ResourceCo
     private final List<ResourceContainer> containers;
 
     public ResourceContainerComposite(List<? extends ResourceContainer> containers) {
-        this.containers = asLazyListProxy(() -> closables.registerCloseables(
+        this.containers = asLazyListProxy(() -> closeables.registerCloseables(
             containers.stream()
                 .filter(Objects::nonNull)
                 .collect(toUnmodifiableList())

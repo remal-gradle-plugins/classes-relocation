@@ -16,7 +16,7 @@ class ClasspathComposite extends ClasspathBase {
     private final List<ClasspathElement> elements;
 
     public ClasspathComposite(List<? extends Classpath> classpaths) {
-        this.elements = asLazyListProxy(() -> closables.registerCloseables(
+        this.elements = asLazyListProxy(() -> closeables.registerCloseables(
             classpaths.stream()
                 .filter(Objects::nonNull)
                 .map(Classpath::getElements)
