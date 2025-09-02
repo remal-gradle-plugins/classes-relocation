@@ -39,10 +39,10 @@ class ClasspathPaths extends ClasspathBase {
                 }
             }
 
-            closables.registerCloseable(fileSystem);
+            closeables.registerCloseable(fileSystem);
         }
 
-        this.elements = asLazyListProxy(() -> closables.registerCloseables(
+        this.elements = asLazyListProxy(() -> closeables.registerCloseables(
             paths.stream()
                 .filter(Objects::nonNull)
                 .distinct()

@@ -24,7 +24,7 @@ import lombok.AccessLevel;
 import lombok.CustomLog;
 import lombok.Getter;
 import name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils;
-import name.remal.gradle_plugins.toolkit.ClosablesContainer;
+import name.remal.gradle_plugins.toolkit.CloseablesContainer;
 import org.jetbrains.annotations.Unmodifiable;
 
 @Getter
@@ -32,12 +32,12 @@ import org.jetbrains.annotations.Unmodifiable;
 abstract class WithResourcesBase extends WithIdentityEqualsHashCode implements WithResources {
 
     @Getter(AccessLevel.NONE)
-    protected final ClosablesContainer closables = new ClosablesContainer();
+    protected final CloseablesContainer closeables = new CloseablesContainer();
 
     @Override
     @OverridingMethodsMustInvokeSuper
     public void close() {
-        closables.close();
+        closeables.close();
     }
 
 

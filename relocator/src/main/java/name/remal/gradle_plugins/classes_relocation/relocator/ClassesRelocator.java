@@ -52,7 +52,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.report.Reachabilit
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTask;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTask;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.TasksExecutor;
-import name.remal.gradle_plugins.toolkit.ClosablesContainer;
+import name.remal.gradle_plugins.toolkit.CloseablesContainer;
 import name.remal.gradle_plugins.toolkit.LateInit;
 import org.gradle.api.logging.LogLevel;
 import org.jetbrains.annotations.Unmodifiable;
@@ -67,21 +67,21 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
     private static final boolean IN_FUNCTIONAL_TEST = isInFunctionalTest();
 
 
-    private final ClosablesContainer closables = new ClosablesContainer();
+    private final CloseablesContainer closeables = new CloseablesContainer();
 
     @Override
     @OverridingMethodsMustInvokeSuper
     public void close() {
-        closables.close();
+        closeables.close();
     }
 
 
     private final Classpath sourceClasspath = asLazyProxy(Classpath.class, () ->
-        closables.registerCloseable(newClasspathForPaths(singletonList(sourceJarPath)))
+        closeables.registerCloseable(newClasspathForPaths(singletonList(sourceJarPath)))
     );
 
     private final Classpath relocationClasspath = asLazyProxy(Classpath.class, () ->
-        closables.registerCloseable(newClasspathForPaths(relocationClasspathPaths))
+        closeables.registerCloseable(newClasspathForPaths(relocationClasspathPaths))
     );
 
     private final Classpath sourceAndRelocationClasspath = asLazyProxy(Classpath.class, () ->
@@ -89,7 +89,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
     );
 
     private final Classpath compileAndRuntimeClasspath = asLazyProxy(Classpath.class, () ->
-        closables.registerCloseable(newClasspathForPaths(compileAndRuntimeClasspathPaths))
+        closeables.registerCloseable(newClasspathForPaths(compileAndRuntimeClasspathPaths))
     );
 
     private final Classpath systemClasspath = asLazyProxy(Classpath.class, () -> {
@@ -99,15 +99,15 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
         } else {
             classpath = getCurrentSystemClasspath();
         }
-        return closables.registerCloseable(classpath);
+        return closeables.registerCloseable(classpath);
     });
 
     private final ResourceContainer reachabilityMetadataResourceContainer = asLazyProxy(ResourceContainer.class, () ->
-        closables.registerCloseable(newResourceContainerPaths(reachabilityMetadataClasspathPaths))
+        closeables.registerCloseable(newResourceContainerPaths(reachabilityMetadataClasspathPaths))
     );
 
     private final RelocationOutput output = asLazyProxy(RelocationOutput.class, () ->
-        closables.registerCloseable(new RelocationOutputImpl(targetJarPath, metadataCharset, preserveFileTimestamps))
+        closeables.registerCloseable(new RelocationOutputImpl(targetJarPath, metadataCharset, preserveFileTimestamps))
     );
 
     private final Set<Resource> processedResources = new LinkedHashSet<>();

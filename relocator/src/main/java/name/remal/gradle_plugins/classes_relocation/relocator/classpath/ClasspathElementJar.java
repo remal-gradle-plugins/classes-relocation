@@ -36,7 +36,7 @@ class ClasspathElementJar extends ClasspathElementBase {
                 var bytes = readAllBytes(path);
                 zipFileBuilder.setByteArray(bytes);
             }
-            return closables.registerCloseable(zipFileBuilder.get());
+            return closeables.registerCloseable(zipFileBuilder.get());
         });
         this.multiRelease = lazyValue(() -> {
             var zipFile = this.zipFile.get();

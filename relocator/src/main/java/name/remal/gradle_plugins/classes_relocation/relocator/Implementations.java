@@ -42,10 +42,10 @@ import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTask
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTask;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.QueuedTaskHandler;
-import name.remal.gradle_plugins.toolkit.AbstractClosablesContainer;
+import name.remal.gradle_plugins.toolkit.AbstractCloseablesContainer;
 import org.jetbrains.annotations.Unmodifiable;
 
-class Implementations extends AbstractClosablesContainer {
+class Implementations extends AbstractCloseablesContainer {
 
     private final RelocationContext relocationContext;
     private final ClassesRelocatorObjectFactory objectFactory;

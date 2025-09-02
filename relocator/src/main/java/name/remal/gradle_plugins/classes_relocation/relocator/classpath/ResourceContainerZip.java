@@ -31,7 +31,7 @@ class ResourceContainerZip extends ResourceContainerBase {
                 var bytes = readAllBytes(path);
                 zipFileBuilder.setByteArray(bytes);
             }
-            return closables.registerCloseable(zipFileBuilder.get());
+            return closeables.registerCloseable(zipFileBuilder.get());
         });
     }
 
