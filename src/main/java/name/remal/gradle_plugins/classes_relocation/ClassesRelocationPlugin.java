@@ -88,7 +88,6 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         var depsLegacyConfProvider = getConfigurations().register(
             CLASSES_RELOCATION_LEGACY_CONFIGURATION_NAME,
             conf -> {
-                conf.setVisible(false);
                 conf.setCanBeConsumed(false);
                 conf.setCanBeResolved(false);
                 conf.setDescription(
@@ -110,7 +109,6 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         var depsConfProvider = getConfigurations().register(
             CLASSES_RELOCATION_CONFIGURATION_NAME,
             conf -> {
-                conf.setVisible(false);
                 conf.setCanBeConsumed(false);
                 conf.setCanBeResolved(false);
                 conf.extendsFrom(depsLegacyConfProvider.get());
@@ -121,7 +119,6 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         var confProvider = getConfigurations().register(
             CLASSES_RELOCATION_CLASSPATH_CONFIGURATION_NAME,
             conf -> {
-                conf.setVisible(false);
                 conf.setCanBeConsumed(false);
                 conf.setCanBeResolved(true);
                 conf.extendsFrom(depsConfProvider.get());
@@ -151,7 +148,6 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         var reachabilityMetadataConfProvider = getConfigurations().register(
             REACHABILITY_METADATA_CONFIGURATION_NAME,
             conf -> {
-                conf.setVisible(false);
                 conf.setCanBeConsumed(false);
                 conf.setCanBeResolved(true);
                 conf.setDescription("GraalVM reachability metadata");
