@@ -4,6 +4,7 @@ import java.util.Collection;
 
 public class SourceResourcesInRelocationPackagesException extends ClassesRelocationException {
 
+    @SuppressWarnings("java:S3024")
     private static String createMessage(Collection<String> sourcePackageNamesToRelocate) {
         var sb = new StringBuilder();
         sb.append("Source JAR contains packages for relocation:");
