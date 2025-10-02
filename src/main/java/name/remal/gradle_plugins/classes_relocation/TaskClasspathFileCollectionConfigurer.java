@@ -2,25 +2,20 @@ package name.remal.gradle_plugins.classes_relocation;
 
 import java.util.function.BiConsumer;
 import java.util.function.Function;
-import javax.annotation.Nullable;
-import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.specs.Spec;
-import org.gradle.api.tasks.SourceSet;
-import org.gradle.api.tasks.TaskProvider;
-import org.gradle.jvm.tasks.Jar;
+import org.jspecify.annotations.Nullable;
 
 class TaskClasspathFileCollectionConfigurer<T extends Task> extends TaskClasspathConfigurer<T> {
 
-    private final Function<? super T, ? extends FileCollection> getter;
-
+    private final Function<? super T, ? extends @Nullable FileCollection> getter;
     private final BiConsumer<? super T, ? super FileCollection> setter;
 
     public TaskClasspathFileCollectionConfigurer(
         Class<T> taskType,
         Spec<? super T> taskPredicate,
-        Function<? super T, ? extends FileCollection> getter,
+        Function<? super T, ? extends @Nullable FileCollection> getter,
         BiConsumer<? super T, ? super FileCollection> setter
     ) {
         super(taskType, taskPredicate);
@@ -30,7 +25,7 @@ class TaskClasspathFileCollectionConfigurer<T extends Task> extends TaskClasspat
 
     public TaskClasspathFileCollectionConfigurer(
         Class<T> taskType,
-        Function<? super T, ? extends FileCollection> getter,
+        Function<? super T, ? extends @Nullable FileCollection> getter,
         BiConsumer<? super T, ? super FileCollection> setter
     ) {
         super(taskType);
@@ -45,22 +40,8 @@ class TaskClasspathFileCollectionConfigurer<T extends Task> extends TaskClasspat
     }
 
     @Override
-    protected void configureTask(
-        T task,
-        NamedDomainObjectProvider<SourceSet> sourceSetProvider,
-        TaskProvider<Jar> jarProvider
-    ) {
-        var classpath = getter.apply(task);
-        var modifiedClasspath = createModifiedClasspath(
-            task,
-            classpath,
-            sourceSetProvider,
-            jarProvider
-        );
-        if (modifiedClasspath != null) {
-            modifiedClasspath.builtBy(classpath);
-            setter.accept(task, modifiedClasspath);
-        }
+    protected void setClasspath(T task, FileCollection classpath) {
+        setter.accept(task, classpath);
     }
 
 }

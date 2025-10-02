@@ -10,6 +10,7 @@ import static name.remal.gradle_plugins.toolkit.AttributeContainerUtils.javaApiL
 import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.getModuleVersionIdentifiersForFilesIn;
 import static name.remal.gradle_plugins.toolkit.GradleManagedObjectsUtils.copyManagedProperties;
 import static name.remal.gradle_plugins.toolkit.JavaLauncherUtils.getJavaLauncherProviderFor;
+import static name.remal.gradle_plugins.toolkit.JvmLanguageCompilationUtils.getJvmLanguagesCompileTaskProperties;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.doNotInline;
 import static name.remal.gradle_plugins.toolkit.TaskPropertiesUtils.registerTaskProperties;
 import static name.remal.gradle_plugins.toolkit.TaskUtils.doBeforeTaskExecution;
@@ -26,6 +27,7 @@ import java.util.Map;
 import javax.inject.Inject;
 import lombok.CustomLog;
 import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocationException;
+import name.remal.gradle_plugins.toolkit.JvmLanguageCompilationUtils;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -46,7 +48,6 @@ import org.gradle.api.reporting.ReportingExtension;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskContainer;
-import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.jvm.tasks.Jar;
 
 @CustomLog
@@ -322,13 +323,18 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         }));
         relocatorAnnotationsFile.finalizeValueOnRead();
 
-        getTasks().withType(AbstractCompile.class).configureEach(compileTask ->
-            doBeforeTaskExecution(compileTask, task -> {
-                var classpath = task.getClasspath();
+        getTasks().matching(JvmLanguageCompilationUtils::isJvmLanguageCompileTask).configureEach(task -> {
+            doBeforeTaskExecution(task, currentTask -> {
+                var compilationProperties = getJvmLanguagesCompileTaskProperties(currentTask);
+                if (compilationProperties == null) {
+                    return;
+                }
+
+                var classpath = compilationProperties.getClasspath();
                 classpath = classpath.plus(getObjects().fileCollection().from(relocatorAnnotationsFile));
-                task.setClasspath(classpath);
-            })
-        );
+                compilationProperties.setClasspath(classpath);
+            });
+        });
     }
 
 

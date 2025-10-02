@@ -4,6 +4,7 @@ import static java.lang.String.format;
 import static java.lang.String.join;
 import static name.remal.gradle_plugins.toolkit.StringUtils.escapeGroovy;
 import static name.remal.gradle_plugins.toolkit.testkit.TestClasspath.getTestClasspathLibraryFilePaths;
+import static name.remal.gradle_plugins.toolkit.testkit.functional.GradleProjectTestTasks.configureJunitTests;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -29,7 +30,7 @@ class ClassesRelocationPluginFunctionalTest {
 
     ClassesRelocationPluginFunctionalTest(GradleProject project) {
         this.project = project;
-        this.mavenRepoPath = project.getProjectDir().toPath().resolve(".m2");
+        this.mavenRepoPath = project.getProjectDir().toPath().resolve(".m2-test");
     }
 
 
@@ -62,6 +63,8 @@ class ClassesRelocationPluginFunctionalTest {
             build.block("classesRelocation", classesRelocation -> {
                 classesRelocation.line("basePackageForRelocatedClasses = 'relocated'");
             });
+
+            configureJunitTests(build);
         });
 
         project.addSuppressedDeprecationMessage(SuppressedMessage.builder()
@@ -96,27 +99,6 @@ class ClassesRelocationPluginFunctionalTest {
             "",
             "}",
         }));
-
-        addLibraryToDependencies(
-            project.getBuildFile(),
-            "org.junit.jupiter:junit-jupiter-api",
-            "testImplementation"
-        );
-        addLibraryToDependencies(
-            project.getBuildFile(),
-            "org.junit.jupiter:junit-jupiter-engine",
-            "testRuntimeOnly"
-        );
-        addLibraryToDependencies(
-            project.getBuildFile(),
-            "org.junit.platform:junit-platform-launcher",
-            "testRuntimeOnly"
-        );
-
-        project.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
-            task.line("useJUnitPlatform()");
-            task.line("enableAssertions = true");
-        });
 
         project.writeTextFile("src/test/java/pkg/LogicTest.java", join("\n", new String[]{
             "package pkg;",
@@ -161,27 +143,6 @@ class ClassesRelocationPluginFunctionalTest {
             "",
             "}",
         }));
-
-        addLibraryToDependencies(
-            project.getBuildFile(),
-            "org.junit.jupiter:junit-jupiter-api",
-            "testImplementation"
-        );
-        addLibraryToDependencies(
-            project.getBuildFile(),
-            "org.junit.jupiter:junit-jupiter-engine",
-            "testRuntimeOnly"
-        );
-        addLibraryToDependencies(
-            project.getBuildFile(),
-            "org.junit.platform:junit-platform-launcher",
-            "testRuntimeOnly"
-        );
-
-        project.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
-            task.line("useJUnitPlatform()");
-            task.line("enableAssertions = true");
-        });
 
         project.writeTextFile("src/test/java/pkg/LogicTest.java", join("\n", new String[]{
             "package pkg;",
@@ -254,26 +215,7 @@ class ClassesRelocationPluginFunctionalTest {
                 "}",
             }));
 
-            addLibraryToDependencies(
-                child.getBuildFile(),
-                "org.junit.jupiter:junit-jupiter-api",
-                "testImplementation"
-            );
-            addLibraryToDependencies(
-                child.getBuildFile(),
-                "org.junit.jupiter:junit-jupiter-engine",
-                "testRuntimeOnly"
-            );
-            addLibraryToDependencies(
-                child.getBuildFile(),
-                "org.junit.platform:junit-platform-launcher",
-                "testRuntimeOnly"
-            );
-
-            child.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
-                task.line("useJUnitPlatform()");
-                task.line("enableAssertions = true");
-            });
+            configureJunitTests(child.getBuildFile());
 
             child.writeTextFile("src/test/java/pkg/child/LogicExecutorTest.java", join("\n", new String[]{
                 "package pkg.child;",
@@ -304,6 +246,8 @@ class ClassesRelocationPluginFunctionalTest {
 
     @Test
     void sourceSetOutputDependencyInAnotherProject() {
+        project.withoutIsolatedProjects();
+
         addLibraryToDependencies(
             project.getBuildFile(),
             "com.google.guava:guava",
@@ -348,26 +292,7 @@ class ClassesRelocationPluginFunctionalTest {
                 "}",
             }));
 
-            addLibraryToDependencies(
-                child.getBuildFile(),
-                "org.junit.jupiter:junit-jupiter-api",
-                "testImplementation"
-            );
-            addLibraryToDependencies(
-                child.getBuildFile(),
-                "org.junit.jupiter:junit-jupiter-engine",
-                "testRuntimeOnly"
-            );
-            addLibraryToDependencies(
-                child.getBuildFile(),
-                "org.junit.platform:junit-platform-launcher",
-                "testRuntimeOnly"
-            );
-
-            child.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
-                task.line("useJUnitPlatform()");
-                task.line("enableAssertions = true");
-            });
+            configureJunitTests(child.getBuildFile());
 
             child.writeTextFile("src/test/java/pkg/child/LogicExecutorTest.java", join("\n", new String[]{
                 "package pkg.child;",
@@ -418,27 +343,6 @@ class ClassesRelocationPluginFunctionalTest {
             "",
             "}",
         }));
-
-        addLibraryToDependencies(
-            project.getBuildFile(),
-            "org.junit.jupiter:junit-jupiter-api",
-            "testImplementation"
-        );
-        addLibraryToDependencies(
-            project.getBuildFile(),
-            "org.junit.jupiter:junit-jupiter-engine",
-            "testRuntimeOnly"
-        );
-        addLibraryToDependencies(
-            project.getBuildFile(),
-            "org.junit.platform:junit-platform-launcher",
-            "testRuntimeOnly"
-        );
-
-        project.getBuildFile().block("tasks.withType(Test).configureEach", task -> {
-            task.line("useJUnitPlatform()");
-            task.line("enableAssertions = true");
-        });
 
         project.getBuildFile().forBuildscript(buildscript -> {
             addLibraryToDependencies(
