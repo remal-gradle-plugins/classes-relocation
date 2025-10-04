@@ -9,7 +9,7 @@ import org.objectweb.asm.tree.ClassNode
 
 buildscript {
     dependencies {
-        classpath platform("org.ow2.asm:asm-bom:9.8")
+        classpath platform("org.ow2.asm:asm-bom:9.9")
         classpath 'org.ow2.asm:asm-tree'
         classpath 'org.ow2.asm:asm-commons'
     }
