@@ -5,7 +5,6 @@ import static lombok.AccessLevel.PRIVATE;
 import static name.remal.gradle_plugins.toolkit.JvmLanguageCompilationUtils.getJvmLanguagesCompileTaskProperties;
 import static name.remal.gradle_plugins.toolkit.JvmLanguageCompilationUtils.isJvmLanguageCompileTask;
 import static name.remal.gradle_plugins.toolkit.LazyNullableValue.lazyNullableValue;
-import static name.remal.gradle_plugins.toolkit.SneakyThrowUtils.sneakyThrowsBiConsumer;
 import static name.remal.gradle_plugins.toolkit.SourceSetUtils.isCompiledBy;
 import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.makeAccessible;
 import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
@@ -68,7 +67,7 @@ abstract class TaskClasspathConfigurers {
         new TaskClasspathFileCollectionConfigurer<>(
             Test.class,
             Test::getClasspath,
-            sneakyThrowsBiConsumer((task, classpath) -> {
+            (task, classpath) -> {
                 task.setClasspath(classpath);
 
                 var stableClasspathField = TEST_STABLE_CLASSPATH_FIELD.get();
@@ -76,7 +75,7 @@ abstract class TaskClasspathConfigurers {
                     var stableClasspath = (ConfigurableFileCollection) stableClasspathField.get(task);
                     stableClasspath.setFrom(classpath);
                 }
-            })
+            }
         ),
         new TaskClasspathConfigurableFileCollectionConfigurer<>(
             PluginUnderTestMetadata.class,
