@@ -1,9 +1,9 @@
 # This file is generated automatically by `collectAllGradlePluginApiDependencies` Gradle task.
 # Do not modify it yourself unless you know what you are doing.
 
-org.ow2.asm:asm-bom:9.8:@pom
-org.ow2.asm:asm-commons:9.8
-org.ow2.asm:asm-tree:9.8
-org.ow2.asm:asm:9.8
+org.ow2.asm:asm-bom:9.9:@pom
+org.ow2.asm:asm-commons:9.9
+org.ow2.asm:asm-tree:9.9
+org.ow2.asm:asm:9.9
 zzzz-classes-relying-on-gradle-internal-api:name.remal.gradle_plugins.classes_relocation.ClassesRelocationPlugin:73ca15725596544dea3a4baf8c3eb30e4c838c61b0c3b03ca32190d8539a9118
 zzzz-classes-relying-on-gradle-internal-api:name.remal.gradle_plugins.classes_relocation.relocator.InternalGradleConstantTimeForZipEntries:19c1903a4ddf4a88b000786882d7acbf3dd303f800a2f7bd4f03564a33b0fd6a
