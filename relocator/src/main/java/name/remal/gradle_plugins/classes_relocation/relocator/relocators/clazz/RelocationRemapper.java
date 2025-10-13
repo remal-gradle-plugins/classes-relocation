@@ -1,12 +1,12 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz;
 
+import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.getLatestAsmApi;
 import static org.objectweb.asm.Opcodes.H_PUTSTATIC;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.CustomLog;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.With;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
@@ -16,7 +16,6 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.Type;
 import org.objectweb.asm.commons.Remapper;
 
-@RequiredArgsConstructor
 @CustomLog
 class RelocationRemapper extends Remapper {
 
@@ -28,6 +27,14 @@ class RelocationRemapper extends Remapper {
 
     @With
     private final RelocationContext context;
+
+    public RelocationRemapper(String classInternalName, Resource classResource, RelocationContext context) {
+        super(getLatestAsmApi());
+        this.classInternalName = classInternalName;
+        this.classResource = classResource;
+        this.context = context;
+    }
+
 
     @Override
     public String map(String internalName) {
