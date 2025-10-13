@@ -8,11 +8,11 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Consumer;
-import javax.annotation.Nullable;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.gradle.api.Action;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jspecify.annotations.Nullable;
 
 @Data
 @RequiredArgsConstructor(access = PRIVATE)

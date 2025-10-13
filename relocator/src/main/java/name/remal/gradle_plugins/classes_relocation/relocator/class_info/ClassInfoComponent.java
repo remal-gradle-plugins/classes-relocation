@@ -17,13 +17,12 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Stream;
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.toolkit.ObjectUtils;
+import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -85,7 +84,7 @@ public class ClassInfoComponent
                     String name,
                     @Nullable String signature,
                     @Nullable String superName,
-                    @Nullable String[] interfaces
+                    String @Nullable [] interfaces
                 ) {
                     if (superName != null) {
                         parentClassInternalNames.add(superName);
@@ -101,8 +100,8 @@ public class ClassInfoComponent
                 @Override
                 public FieldVisitor visitField(
                     int access,
-                    @Nonnull String name,
-                    @Nonnull String descriptor,
+                    String name,
+                    String descriptor,
                     @Nullable String signature,
                     @Nullable Object value
                 ) {
@@ -122,7 +121,7 @@ public class ClassInfoComponent
                     String name,
                     String descriptor,
                     @Nullable String signature,
-                    @Nullable String[] exceptions
+                    String @Nullable [] exceptions
                 ) {
                     var methodKey = methodKeyOf(name, descriptor);
                     if (name.equals("<init>")) {

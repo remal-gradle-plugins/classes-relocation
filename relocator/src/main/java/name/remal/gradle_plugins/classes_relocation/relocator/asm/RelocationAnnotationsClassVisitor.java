@@ -5,8 +5,8 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtil
 import static org.jetbrains.annotations.ApiStatus.Internal;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import javax.annotation.Nullable;
 import org.apiguardian.api.API;
+import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 
@@ -38,7 +38,7 @@ public class RelocationAnnotationsClassVisitor extends ClassVisitor {
         String name,
         @Nullable String signature,
         @Nullable String superName,
-        @Nullable String[] interfaces
+        String @Nullable [] interfaces
     ) {
         super.visit(version, access, name, signature, superName, interfaces);
 

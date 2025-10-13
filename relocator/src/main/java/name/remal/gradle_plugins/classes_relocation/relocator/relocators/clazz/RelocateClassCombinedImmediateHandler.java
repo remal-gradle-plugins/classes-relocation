@@ -30,7 +30,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import lombok.CustomLog;
 import lombok.SneakyThrows;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey;
@@ -45,6 +44,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.minimization.Class
 import name.remal.gradle_plugins.classes_relocation.relocator.report.ReachabilityReport;
 import name.remal.gradle_plugins.classes_relocation.relocator.task.ImmediateTaskHandler;
 import org.jetbrains.annotations.Contract;
+import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.ClassWriter;

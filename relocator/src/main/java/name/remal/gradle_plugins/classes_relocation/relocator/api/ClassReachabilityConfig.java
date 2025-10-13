@@ -15,7 +15,6 @@ import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
-import javax.annotation.Nullable;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -28,6 +27,7 @@ import lombok.Value;
 import lombok.experimental.Tolerate;
 import org.gradle.api.tasks.Input;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jspecify.annotations.Nullable;
 
 @Value
 @Getter(onMethod_ = {@Input, @org.gradle.api.tasks.Optional})

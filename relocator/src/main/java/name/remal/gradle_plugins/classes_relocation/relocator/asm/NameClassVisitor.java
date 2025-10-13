@@ -4,8 +4,8 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtil
 import static name.remal.gradle_plugins.toolkit.LateInit.lateInit;
 
 import java.util.function.Consumer;
-import javax.annotation.Nullable;
 import name.remal.gradle_plugins.toolkit.LateInit;
+import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.ClassVisitor;
 
 public class NameClassVisitor extends ClassVisitor {
@@ -34,7 +34,7 @@ public class NameClassVisitor extends ClassVisitor {
         String name,
         @Nullable String signature,
         @Nullable String superName,
-        @Nullable String[] interfaces
+        String @Nullable [] interfaces
     ) {
         classInternalName.set(name);
         if (classInternalNameConsumer != null) {

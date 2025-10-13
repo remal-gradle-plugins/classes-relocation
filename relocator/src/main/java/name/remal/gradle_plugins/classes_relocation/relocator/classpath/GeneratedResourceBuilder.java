@@ -8,11 +8,11 @@ import static name.remal.gradle_plugins.toolkit.LazyValue.lazyValue;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Collection;
 import java.util.List;
-import javax.annotation.Nullable;
 import lombok.NoArgsConstructor;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor(access = PACKAGE)
 public final class GeneratedResourceBuilder {

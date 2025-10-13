@@ -3,9 +3,9 @@ package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 import static lombok.AccessLevel.PRIVATE;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.MultiReleaseUtils.withMultiReleasePathPrefix;
 
-import javax.annotation.Nullable;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
+import org.jspecify.annotations.Nullable;
 
 @Value
 @RequiredArgsConstructor(access = PRIVATE)

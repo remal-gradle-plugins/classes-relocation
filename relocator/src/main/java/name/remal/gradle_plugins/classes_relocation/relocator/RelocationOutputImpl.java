@@ -13,7 +13,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import javax.annotation.Nullable;
 import javax.annotation.WillNotClose;
 import lombok.CustomLog;
 import lombok.SneakyThrows;
@@ -21,6 +20,7 @@ import org.apache.commons.compress.archivers.zip.Zip64Mode;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.jetbrains.annotations.UnmodifiableView;
+import org.jspecify.annotations.Nullable;
 
 @CustomLog
 class RelocationOutputImpl implements RelocationOutput {

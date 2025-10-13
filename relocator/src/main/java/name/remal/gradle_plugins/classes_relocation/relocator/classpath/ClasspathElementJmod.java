@@ -10,10 +10,10 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import javax.annotation.Nullable;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipFile;
+import org.jspecify.annotations.Nullable;
 
 class ClasspathElementJmod extends ClasspathElementBase {
 

@@ -2,11 +2,11 @@ package name.remal.gradle_plugins.classes_relocation.relocator;
 
 import static lombok.AccessLevel.PRIVATE;
 
-import javax.annotation.Nullable;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import name.remal.gradle_plugins.toolkit.annotations.ReliesOnInternalGradleApi;
 import org.jetbrains.annotations.VisibleForTesting;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor(access = PRIVATE)
 abstract class InternalGradleConstantTimeForZipEntries {

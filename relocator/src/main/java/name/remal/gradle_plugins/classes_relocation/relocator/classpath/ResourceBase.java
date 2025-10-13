@@ -3,9 +3,9 @@ package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 import static name.remal.gradle_plugins.classes_relocation.relocator.utils.MultiReleaseUtils.parseMultiReleaseResourceName;
 
 import com.google.errorprone.annotations.ForOverride;
-import javax.annotation.Nullable;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.jspecify.annotations.Nullable;
 
 @Getter
 @RequiredArgsConstructor

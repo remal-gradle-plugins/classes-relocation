@@ -7,7 +7,7 @@ import com.google.common.collect.ImmutableSet;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -45,7 +45,7 @@ public class UnsupportedAnnotationsClassVisitor extends ClassVisitor {
         String name,
         @Nullable String signature,
         @Nullable String superName,
-        @Nullable String[] interfaces
+        String @Nullable [] interfaces
     ) {
         this.className = name;
         super.visit(version, access, name, signature, superName, interfaces);
@@ -125,7 +125,7 @@ public class UnsupportedAnnotationsClassVisitor extends ClassVisitor {
         String name,
         String descriptor,
         @Nullable String signature,
-        @Nullable String[] exceptions
+        String @Nullable [] exceptions
     ) {
         var visitor = super.visitMethod(access, name, descriptor, signature, exceptions);
         return new MethodVisitor(api, visitor) {

@@ -16,12 +16,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassReachabilityConfig;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.relocator.metadata.AbstractClassesRelocationJsonSetMetadata;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jspecify.annotations.Nullable;
 
 public class ClassReachabilityConfigs
     extends AbstractClassesRelocationJsonSetMetadata<ClassReachabilityConfig> {

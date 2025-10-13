@@ -10,7 +10,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import javax.annotation.Nullable;
 import lombok.AccessLevel;
 import lombok.Getter;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorLifecycleComponent;
@@ -20,6 +19,7 @@ import org.gradle.api.logging.LogLevel;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.logging.Logging;
 import org.jetbrains.annotations.Contract;
+import org.jspecify.annotations.Nullable;
 
 @Getter
 public abstract class AbstractClassesRelocationMetadata<Type, Storage>
@@ -61,11 +61,12 @@ public abstract class AbstractClassesRelocationMetadata<Type, Storage>
 
     @Override
     @OverridingMethodsMustInvokeSuper
+    @SuppressWarnings("java:S2259")
     public void prepareRelocation(RelocationContext context) {
         var resources = context.getRelocationClasspath().getResources(getResourceName());
         resources.forEach(context::markResourceAsProcessed);
 
-        var storages = resources.stream()
+        List<Storage> storages = resources.stream()
             .map(this::deserializeStorage)
             .filter(Objects::nonNull)
             .collect(toList());

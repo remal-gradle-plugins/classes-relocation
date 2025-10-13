@@ -3,9 +3,9 @@ package name.remal.gradle_plugins.classes_relocation.relocator;
 import java.io.Closeable;
 import java.io.InputStream;
 import java.util.Set;
-import javax.annotation.Nullable;
 import javax.annotation.WillNotClose;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jspecify.annotations.Nullable;
 
 interface RelocationOutput extends Closeable {
 

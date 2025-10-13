@@ -5,11 +5,11 @@ import static lombok.AccessLevel.PRIVATE;
 
 import java.util.jar.Attributes.Name;
 import java.util.regex.Pattern;
-import javax.annotation.Nullable;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.Value;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor(access = PRIVATE)
 public abstract class MultiReleaseUtils {

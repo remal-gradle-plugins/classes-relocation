@@ -10,6 +10,7 @@ import org.objectweb.asm.ClassVisitor
 import org.objectweb.asm.ClassWriter
 import org.objectweb.asm.commons.ClassRemapper
 import org.objectweb.asm.commons.Remapper
+import org.objectweb.asm.tree.ClassNode
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
@@ -22,6 +23,7 @@ buildscript {
         classpath 'name.remal.gradle-plugins.toolkit:build-logic:0.75.1'
 
         classpath platform("org.ow2.asm:asm-bom:9.9")
+        classpath 'org.ow2.asm:asm-tree'
         classpath 'org.ow2.asm:asm-commons'
     }
     repositories {
@@ -159,6 +161,8 @@ abstract class ProcessHashMap implements TransformAction<ProcessHashMapParameter
             return
         }
 
+        int asmApi = new ClassNode().api
+
         Files.createDirectories(outputFile.parentFile.toPath())
         new ZipInputStream(new FileInputStream(file), UTF_8).withCloseable { ZipInputStream inputStream ->
             new ZipOutputStream(new FileOutputStream(outputFile), UTF_8).withCloseable { ZipOutputStream outputStream ->
@@ -182,7 +186,7 @@ abstract class ProcessHashMap implements TransformAction<ProcessHashMapParameter
                     ClassVisitor classVisitor
                     ClassWriter classWriter = classVisitor = new ClassWriter(0)
 
-                    Remapper remapper = new Remapper() {
+                    Remapper remapper = new Remapper(asmApi) {
                         @Override
                         String map(String internalName) {
                             if (internalName == 'java/util/HashMap') {

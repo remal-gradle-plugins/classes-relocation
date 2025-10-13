@@ -142,7 +142,7 @@ TaskProvider extractAnnotationClasses = tasks.register('extractAnnotationClasses
                 classInputStream.withCloseable { inputStream ->
                     ClassNode classNode = new ClassNode()
 
-                    Remapper remapper = new Remapper() {
+                    Remapper remapper = new Remapper(classNode.api) {
                         @Override
                         String map(String internalName) {
                             if (internalName.startsWith('java/')) {

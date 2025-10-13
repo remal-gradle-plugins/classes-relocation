@@ -4,10 +4,10 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.List;
 import java.util.function.Consumer;
-import javax.annotation.Nullable;
 import lombok.Getter;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jspecify.annotations.Nullable;
 
 public final class GeneratedResource
     extends ResourceBase

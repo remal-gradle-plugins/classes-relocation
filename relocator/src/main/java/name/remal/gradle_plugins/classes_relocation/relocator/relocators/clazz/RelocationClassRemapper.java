@@ -3,10 +3,10 @@ package name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz;
 import static name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey.methodKeyOf;
 
 import java.util.concurrent.atomic.AtomicReference;
-import javax.annotation.Nullable;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.report.ReachabilityReport;
+import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -22,9 +22,10 @@ class RelocationClassRemapper extends ClassRemapper {
         this.context = context;
     }
 
-    private final AtomicReference<String> currentFieldName = new AtomicReference<>();
+    private final AtomicReference<@Nullable String> currentFieldName = new AtomicReference<>();
 
     @Override
+    @Nullable
     public FieldVisitor visitField(
         int access,
         String name,
@@ -57,15 +58,16 @@ class RelocationClassRemapper extends ClassRemapper {
     }
 
 
-    private final AtomicReference<MethodKey> currentMethodKey = new AtomicReference<>();
+    private final AtomicReference<@Nullable MethodKey> currentMethodKey = new AtomicReference<>();
 
     @Override
+    @Nullable
     public MethodVisitor visitMethod(
         int access,
         String name,
         String descriptor,
         @Nullable String signature,
-        @Nullable String[] exceptions
+        String @Nullable [] exceptions
     ) {
         currentMethodKey.set(methodKeyOf(name, descriptor));
         try {

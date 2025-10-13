@@ -3,6 +3,7 @@ package name.remal.gradle_plugins.classes_relocation.relocator.minimization;
 import static java.lang.Boolean.parseBoolean;
 import static java.lang.String.format;
 import static java.util.Arrays.stream;
+import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.groupingBy;
 import static java.util.stream.Collectors.joining;
 import static java.util.stream.Collectors.toUnmodifiableList;
@@ -43,7 +44,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
-import javax.annotation.Nullable;
 import lombok.CustomLog;
 import lombok.NoArgsConstructor;
 import lombok.Value;
@@ -56,6 +56,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Unmodifiable;
 import org.json.JSONObject;
+import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.Type;
 
 @ApiStatus.Internal
@@ -125,12 +126,15 @@ public abstract class ClassReachabilityConfigUtils {
     }
 
 
+    @SuppressWarnings("java:S2259")
     public static Map<String, Object> convertClassReachabilityConfigToMap(ClassReachabilityConfig config) {
         var map = new LinkedHashMap<String, Object>();
         map.put("type", toClassName(config.getClassInternalName()));
-        if (ObjectUtils.isNotEmpty(config.getOnReachedClassInternalName())) {
-            map.put("condition", ImmutableMap.of("typeReached", toClassName(config.getOnReachedClassInternalName())));
-        }
+        Optional.ofNullable(config.getOnReachedClassInternalName())
+            .filter(not(String::isEmpty))
+            .ifPresent(classInternalName ->
+                map.put("condition", ImmutableMap.of("typeReached", toClassName(classInternalName)))
+            );
         if (!config.getFields().isEmpty()) {
             var array = new ArrayList<>();
             for (var name : config.getFields()) {

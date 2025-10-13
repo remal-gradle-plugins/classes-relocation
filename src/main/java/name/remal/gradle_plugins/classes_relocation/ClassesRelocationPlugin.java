@@ -10,10 +10,8 @@ import static name.remal.gradle_plugins.toolkit.AttributeContainerUtils.javaApiL
 import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.getModuleVersionIdentifiersForFilesIn;
 import static name.remal.gradle_plugins.toolkit.GradleManagedObjectsUtils.copyManagedProperties;
 import static name.remal.gradle_plugins.toolkit.JavaLauncherUtils.getJavaLauncherProviderFor;
-import static name.remal.gradle_plugins.toolkit.JvmLanguageCompilationUtils.getJvmLanguagesCompileTaskProperties;
 import static name.remal.gradle_plugins.toolkit.ObjectUtils.doNotInline;
 import static name.remal.gradle_plugins.toolkit.TaskPropertiesUtils.registerTaskProperties;
-import static name.remal.gradle_plugins.toolkit.TaskUtils.doBeforeTaskExecution;
 import static org.gradle.api.artifacts.Configuration.State.UNRESOLVED;
 import static org.gradle.api.attributes.LibraryElements.JAR;
 import static org.gradle.api.attributes.LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE;
@@ -294,7 +292,8 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
     }
 
     private void addRelocatorAnnotationsToCompilationClasspaths() {
-        var relocatorAnnotationsFile = getObjects().fileProperty().fileProvider(getProviders().provider(() -> {
+        var relocatorAnnotationsFileRegisterer = getObjects().newInstance(RelocatorAnnotationsFileRegisterer.class);
+        relocatorAnnotationsFileRegisterer.getRelocatorAnnotationsFile().fileProvider(getProviders().provider(() -> {
             var targetDir = getLayout().getBuildDirectory().dir("tmp").get().getAsFile().toPath();
             var targetFile = targetDir.resolve(RELOCATOR_ANNOTATIONS_RESOURCE_NAME);
 
@@ -320,20 +319,10 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
             }
 
             return targetFile.toFile();
-        }));
-        relocatorAnnotationsFile.finalizeValueOnRead();
+        })).finalizeValueOnRead();
 
         getTasks().matching(JvmLanguageCompilationUtils::isJvmLanguageCompileTask).configureEach(task -> {
-            doBeforeTaskExecution(task, currentTask -> {
-                var compilationProperties = getJvmLanguagesCompileTaskProperties(currentTask);
-                if (compilationProperties == null) {
-                    return;
-                }
-
-                var classpath = compilationProperties.getClasspath();
-                classpath = classpath.plus(getObjects().fileCollection().from(relocatorAnnotationsFile));
-                compilationProperties.setClasspath(classpath);
-            });
+            task.onlyIf(relocatorAnnotationsFileRegisterer);
         });
     }
 

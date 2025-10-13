@@ -11,9 +11,9 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import javax.annotation.Nullable;
 import lombok.SneakyThrows;
 import name.remal.gradle_plugins.toolkit.LazyValue;
+import org.jspecify.annotations.Nullable;
 
 class ClasspathElementDir extends ClasspathElementBase {
 

@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
 import lombok.CustomLog;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -57,6 +56,7 @@ import name.remal.gradle_plugins.toolkit.LateInit;
 import org.gradle.api.logging.LogLevel;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.UnmodifiableView;
+import org.jspecify.annotations.Nullable;
 
 @SuperBuilder(toBuilder = true)
 @CustomLog

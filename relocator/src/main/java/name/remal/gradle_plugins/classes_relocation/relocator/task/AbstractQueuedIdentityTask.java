@@ -2,7 +2,7 @@ package name.remal.gradle_plugins.classes_relocation.relocator.task;
 
 import static java.lang.System.identityHashCode;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public abstract class AbstractQueuedIdentityTask implements QueuedTask {
 

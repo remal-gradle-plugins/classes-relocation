@@ -9,12 +9,12 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.StreamSupport;
-import javax.annotation.Nullable;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils;
 import name.remal.gradle_plugins.toolkit.GlobPattern;
+import org.jspecify.annotations.Nullable;
 
 @NoArgsConstructor
 @ToString

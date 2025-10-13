@@ -7,11 +7,11 @@ import static name.remal.gradle_plugins.toolkit.ObjectUtils.isEmpty;
 
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ClasspathElement;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.relocator.resource.BaseResourcesHandler;
+import org.jspecify.annotations.Nullable;
 
 public class MetaInfClasspathElementResourcesHandler extends BaseResourcesHandler {
 

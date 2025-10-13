@@ -11,7 +11,6 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.utils.Resou
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.events.Attribute;
 import javax.xml.stream.events.StartElement;
@@ -19,6 +18,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationCont
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.classes_relocation.relocator.relocators.resource.RelocateResource;
 import name.remal.gradle_plugins.classes_relocation.relocator.resource.BaseResourcesHandler;
+import org.jspecify.annotations.Nullable;
 
 public class SimpleXmlResourcesHandler extends BaseResourcesHandler {
 

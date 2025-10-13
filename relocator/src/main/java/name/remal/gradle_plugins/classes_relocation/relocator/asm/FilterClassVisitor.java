@@ -4,7 +4,7 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtil
 import static org.objectweb.asm.Type.getType;
 
 import java.util.function.Predicate;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
@@ -114,7 +114,7 @@ public class FilterClassVisitor extends ClassVisitor {
         String name,
         String descriptor,
         @Nullable String signature,
-        @Nullable String[] exceptions
+        String @Nullable [] exceptions
     ) {
         MethodVisitor visitor = super.visitMethod(access, name, descriptor, signature, exceptions);
         if (visitor != null) {

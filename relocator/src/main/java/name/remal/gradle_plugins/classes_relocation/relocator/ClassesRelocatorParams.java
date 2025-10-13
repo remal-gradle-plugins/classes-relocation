@@ -8,7 +8,6 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import javax.annotation.Nullable;
 import lombok.Builder.Default;
 import lombok.Getter;
 import lombok.NonNull;
@@ -16,6 +15,7 @@ import lombok.Singular;
 import lombok.experimental.SuperBuilder;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorConfig;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jspecify.annotations.Nullable;
 
 @SuperBuilder(toBuilder = true)
 @Getter

@@ -5,13 +5,13 @@ import static name.remal.gradle_plugins.toolkit.LateInit.lateInit;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.function.Consumer;
-import javax.annotation.Nullable;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.ClassesRelocatorComponent;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.WithRelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.report.ReachabilityReport.ReachabilityNode;
 import name.remal.gradle_plugins.toolkit.LateInit;
+import org.jspecify.annotations.Nullable;
 
 @Deprecated
 @SuppressWarnings({"java:S1123", "java:S1133", "java:S6355"})

@@ -3,7 +3,7 @@ package name.remal.gradle_plugins.classes_relocation.relocator.asm;
 import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtils.getLatestAsmApi;
 import static org.objectweb.asm.Opcodes.ACC_STATIC;
 
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -33,7 +33,7 @@ public class MinimalFieldsAndMethodsClassVisitor extends ClassVisitor {
         String name,
         String descriptor,
         @Nullable String signature,
-        @Nullable String[] exceptions
+        String @Nullable [] exceptions
     ) {
         if (isStaticInitializerMethod(access, name, descriptor)) {
             return super.visitMethod(access, name, descriptor, signature, exceptions);

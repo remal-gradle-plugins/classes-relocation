@@ -23,7 +23,6 @@
 @NullMarked
 package name.remal.gradle_plugins.classes_relocation.relocator.task;
 
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import javax.annotation.concurrent.NotThreadSafe;
 import javax.annotation.concurrent.ThreadSafe;
@@ -31,3 +30,4 @@ import org.immutables.value.Value;
 import org.immutables.value.Value.Style.BuilderVisibility;
 import org.immutables.value.Value.Style.ImplementationVisibility;
 import org.jspecify.annotations.NullMarked;
+import org.jspecify.annotations.Nullable;

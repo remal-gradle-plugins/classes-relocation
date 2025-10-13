@@ -6,7 +6,7 @@ import com.google.errorprone.annotations.MustBeClosed;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
-import javax.annotation.Nullable;
+import org.jspecify.annotations.Nullable;
 
 public interface Resource extends Comparable<Resource> {
 

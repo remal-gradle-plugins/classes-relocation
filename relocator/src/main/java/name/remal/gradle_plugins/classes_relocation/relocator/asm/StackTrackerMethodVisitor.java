@@ -7,9 +7,9 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtil
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
-import javax.annotation.Nullable;
 import lombok.CustomLog;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 

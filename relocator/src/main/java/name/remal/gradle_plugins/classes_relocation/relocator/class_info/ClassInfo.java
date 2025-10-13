@@ -12,7 +12,6 @@ import java.util.ArrayDeque;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.function.Function;
-import javax.annotation.Nullable;
 import lombok.Builder;
 import lombok.Builder.Default;
 import lombok.Getter;
@@ -24,6 +23,7 @@ import name.remal.gradle_plugins.classes_relocation.relocator.api.MethodKey;
 import name.remal.gradle_plugins.toolkit.LazyValue;
 import org.jetbrains.annotations.Unmodifiable;
 import org.jetbrains.annotations.UnmodifiableView;
+import org.jspecify.annotations.Nullable;
 
 @Builder
 @RequiredArgsConstructor(access = PRIVATE)

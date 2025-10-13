@@ -12,9 +12,9 @@ import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Objects;
-import javax.annotation.Nullable;
 import lombok.Getter;
 import org.jetbrains.annotations.Unmodifiable;
+import org.jspecify.annotations.Nullable;
 
 @Getter
 class ClasspathPaths extends ClasspathBase {

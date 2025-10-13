@@ -7,11 +7,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.annotation.Nullable;
 import name.remal.gradle_plugins.classes_relocation.relocator.api.RelocationContext;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.ClasspathElement;
 import name.remal.gradle_plugins.classes_relocation.relocator.classpath.Resource;
 import name.remal.gradle_plugins.toolkit.GlobPattern;
+import org.jspecify.annotations.Nullable;
 
 public abstract class BaseResourcesHandler implements ResourcesSelector, ResourceProcessor {
 
