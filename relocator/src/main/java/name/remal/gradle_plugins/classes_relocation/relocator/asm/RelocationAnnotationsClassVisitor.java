@@ -5,11 +5,13 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtil
 import static org.jetbrains.annotations.ApiStatus.Internal;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import name.remal.gradle_plugins.toolkit.annotations.ReliesOnExternalDependency;
 import org.apiguardian.api.API;
 import org.jspecify.annotations.Nullable;
 import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 
+@ReliesOnExternalDependency
 public class RelocationAnnotationsClassVisitor extends ClassVisitor {
 
     private static final String GENERATED_DESCRIPTOR = getClassDescriptor(Generated.class);
@@ -77,7 +79,6 @@ public class RelocationAnnotationsClassVisitor extends ClassVisitor {
         {
             var av = super.visitAnnotation(SUPPRESS_FB_WARNINGS_DESCRIPTOR, false);
             if (av != null) {
-                av.visit("justification", "relocated");
                 av.visitEnd();
             }
         }
