@@ -1,21 +1,22 @@
 package name.remal.gradle_plugins.classes_relocation;
 
 import static lombok.AccessLevel.PUBLIC;
-import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.finalizeFileCollectionValueOnRead;
 
+import java.io.File;
+import java.util.LinkedHashSet;
 import javax.inject.Inject;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
-import org.gradle.api.Action;
 import org.gradle.api.Describable;
 import org.gradle.api.Task;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.Property;
+import org.gradle.api.specs.Spec;
 
 @NoArgsConstructor(access = PUBLIC, onConstructor_ = {@Inject})
-abstract class TaskClasspathUpdater implements Action<Task>, Describable {
+abstract class TaskClasspathUpdater implements Spec<Task>, Describable {
 
     public abstract Property<TaskClasspathGetter<Task>> getGetter();
 
@@ -26,35 +27,39 @@ abstract class TaskClasspathUpdater implements Action<Task>, Describable {
     public abstract Property<TaskClasspathSetter<Task>> getSetter();
 
     @Override
+    public boolean isSatisfiedBy(Task task) {
+        execute(task);
+        return true;
+    }
+
     @SneakyThrows
-    public void execute(Task task) {
+    private void execute(Task task) {
         var initialClasspath = getGetter().get().getClasspath(task);
         if (initialClasspath == null) {
             return;
         }
-
         var initialClasspathFiles = initialClasspath.getFiles();
         if (initialClasspathFiles.isEmpty()) {
             return;
         }
+
         var sourceSetOutputFiles = getSourceSetOutput().getFiles();
         if (sourceSetOutputFiles.isEmpty()) {
             return;
         }
 
         boolean foundSourceSetOutput = false;
-        var modifiedClasspath = getObjects().fileCollection();
+        var modifiedClasspath = new LinkedHashSet<File>(initialClasspathFiles.size());
         for (var file : initialClasspathFiles) {
             if (sourceSetOutputFiles.contains(file)) {
                 if (!foundSourceSetOutput) {
-                    modifiedClasspath.from(getJarFile());
+                    modifiedClasspath.add(getJarFile().get().getAsFile());
                     foundSourceSetOutput = true;
                 }
             } else {
-                modifiedClasspath.from(file);
+                modifiedClasspath.add(file);
             }
         }
-        finalizeFileCollectionValueOnRead(modifiedClasspath);
 
         if (foundSourceSetOutput) {
             var logger = task.getLogger();
@@ -63,10 +68,11 @@ abstract class TaskClasspathUpdater implements Action<Task>, Describable {
                 initialClasspathFiles.forEach(file -> logger.debug("  {}", file));
 
                 logger.debug("Modified classpath:");
-                modifiedClasspath.getFiles().forEach(file -> logger.debug("  {}", file));
+                modifiedClasspath.forEach(file -> logger.debug("  {}", file));
             }
 
-            getSetter().get().setClasspath(task, modifiedClasspath);
+            var modifiedClasspathFileCollection = getObjects().fileCollection().from(modifiedClasspath);
+            getSetter().get().setClasspath(task, modifiedClasspathFileCollection);
         }
     }
 

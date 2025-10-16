@@ -68,7 +68,7 @@ abstract class TaskClasspathConfigurer<T extends Task> {
                     classpathUpdater.getSourceSetOutput().from(sourceSetOutput);
                     classpathUpdater.getJarFile().set(jarFile);
                     classpathUpdater.getSetter().set((TaskClasspathSetter) setter);
-                    task.doFirst(classpathUpdater);
+                    task.onlyIf(classpathUpdater);
                 });
         };
         if (areIsolatedProjectsRequested(project.getGradle())) {
