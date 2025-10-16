@@ -221,7 +221,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         );
 
 
-        addRelocatorAnnotationsToCompilationClasspaths();
+        addRelocatorAnnotationsToCompilationClasspaths(extension);
     }
 
     private void setLibraryElementToJar(Project project) {
@@ -291,8 +291,11 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
         });
     }
 
-    private void addRelocatorAnnotationsToCompilationClasspaths() {
+    private void addRelocatorAnnotationsToCompilationClasspaths(ClassesRelocationExtension extension) {
         var relocatorAnnotationsFileRegisterer = getObjects().newInstance(RelocatorAnnotationsFileRegisterer.class);
+        relocatorAnnotationsFileRegisterer.getEnabled().set(
+            extension.getAddRelocatorAnnotationsToCompilationClasspath()
+        );
         relocatorAnnotationsFileRegisterer.getRelocatorAnnotationsFile().fileProvider(getProviders().provider(() -> {
             var targetDir = getLayout().getBuildDirectory().dir("tmp").get().getAsFile().toPath();
             var targetFile = targetDir.resolve(RELOCATOR_ANNOTATIONS_RESOURCE_NAME);
