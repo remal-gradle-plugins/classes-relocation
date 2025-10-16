@@ -11,13 +11,13 @@ import javax.inject.Inject;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
 import org.gradle.api.Action;
+import org.gradle.api.Describable;
 import org.gradle.api.Task;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.model.ObjectFactory;
 import org.gradle.api.provider.MapProperty;
 import org.gradle.api.provider.Property;
-import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.Classpath;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
@@ -30,7 +30,7 @@ import org.gradle.workers.WorkQueue;
 import org.gradle.workers.WorkerExecutor;
 
 @NoArgsConstructor(access = PUBLIC, onConstructor_ = {@Inject})
-abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSettings {
+abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSettings, Describable {
 
     @InputFiles
     @Classpath
@@ -128,11 +128,14 @@ abstract class RelocateJarAction implements Action<Task>, ClassesRelocationSetti
     }
 
 
-    @Inject
-    protected abstract WorkerExecutor getWorkerExecutor();
+    @Override
+    public String getDisplayName() {
+        return RelocateJarAction.class.getSimpleName();
+    }
+
 
     @Inject
-    protected abstract ProviderFactory getProviders();
+    protected abstract WorkerExecutor getWorkerExecutor();
 
     @Inject
     protected abstract ObjectFactory getObjects();

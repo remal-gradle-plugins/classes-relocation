@@ -1,15 +1,15 @@
 package name.remal.gradle_plugins.classes_relocation;
 
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.packageNameOf;
 import static name.remal.gradle_plugins.toolkit.reflection.ReflectionUtils.unwrapGeneratedSubclass;
 import static name.remal.gradle_plugins.toolkit.testkit.ProjectValidations.executeAfterEvaluateActions;
-import static name.remal.gradle_plugins.toolkit.testkit.TaskValidations.executeOnlyIfSpecs;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.gradle.api.plugins.JavaPlugin.JAR_TASK_NAME;
 import static org.gradle.api.tasks.SourceSet.MAIN_SOURCE_SET_NAME;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-import java.util.ArrayList;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import name.remal.gradle_plugins.toolkit.testkit.MinTestableGradleVersion;
 import name.remal.gradle_plugins.toolkit.testkit.TaskValidations;
@@ -47,7 +47,12 @@ class ClassesRelocationPluginTest {
         var mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
         var jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
 
-        executeOnlyIfSpecs(compileTask);
+        var classpathUpdaters = compileTask.getTaskActions().stream()
+            .filter(action -> TaskClasspathUpdater.class.getSimpleName().equals(action.getDisplayName()))
+            .collect(toUnmodifiableList());
+        assertThat(classpathUpdaters).isNotEmpty();
+        classpathUpdaters.forEach(it -> it.execute(compileTask));
+
         assertThat(compileTask.getClasspath().getFiles())
             .as("%s: %s", compileTask, "getClasspath")
             .doesNotContainAnyElementsOf(mainSourceSet.getOutput().getFiles())
@@ -56,7 +61,7 @@ class ClassesRelocationPluginTest {
 
     @Test
     void testClasspath() {
-        var testTasks = new ArrayList<>(project.getTasks().withType(org.gradle.api.tasks.testing.Test.class));
+        var testTasks = List.copyOf(project.getTasks().withType(org.gradle.api.tasks.testing.Test.class));
         var sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         var mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
         var jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
@@ -64,7 +69,12 @@ class ClassesRelocationPluginTest {
         assertThat(testTasks).as("testTasks")
             .isNotEmpty()
             .allSatisfy(testTask -> {
-                executeOnlyIfSpecs(testTask);
+                var classpathUpdaters = testTask.getTaskActions().stream()
+                    .filter(action -> TaskClasspathUpdater.class.getSimpleName().equals(action.getDisplayName()))
+                    .collect(toUnmodifiableList());
+                assertThat(classpathUpdaters).isNotEmpty();
+                classpathUpdaters.forEach(it -> it.execute(testTask));
+
                 assertThat(testTask.getClasspath().getFiles())
                     .as("%s: %s", testTask, "getClasspath")
                     .doesNotContainAnyElementsOf(mainSourceSet.getOutput().getFiles())
@@ -76,7 +86,7 @@ class ClassesRelocationPluginTest {
     void pluginUnderTestMetadataClasspath() {
         project.getPluginManager().apply("java-gradle-plugin");
 
-        var metadataTasks = new ArrayList<>(project.getTasks().withType(PluginUnderTestMetadata.class));
+        var metadataTasks = List.copyOf(project.getTasks().withType(PluginUnderTestMetadata.class));
         var sourceSets = project.getExtensions().getByType(SourceSetContainer.class);
         var mainSourceSet = sourceSets.getByName(MAIN_SOURCE_SET_NAME);
         var jar = project.getTasks().withType(Jar.class).getByName(JAR_TASK_NAME);
@@ -84,7 +94,12 @@ class ClassesRelocationPluginTest {
         assertThat(metadataTasks).as("metadataTasks")
             .isNotEmpty()
             .allSatisfy(metadataTask -> {
-                executeOnlyIfSpecs(metadataTask);
+                var classpathUpdaters = metadataTask.getTaskActions().stream()
+                    .filter(action -> TaskClasspathUpdater.class.getSimpleName().equals(action.getDisplayName()))
+                    .collect(toUnmodifiableList());
+                assertThat(classpathUpdaters).isNotEmpty();
+                classpathUpdaters.forEach(it -> it.execute(metadataTask));
+
                 assertThat(metadataTask.getPluginClasspath().getFiles())
                     .as("%s: %s", metadataTask, "pluginClasspath")
                     .doesNotContainAnyElementsOf(mainSourceSet.getOutput().getFiles())

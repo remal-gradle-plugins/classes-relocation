@@ -2,8 +2,8 @@ package name.remal.gradle_plugins.classes_relocation;
 
 import static name.remal.gradle_plugins.toolkit.BuildFeaturesUtils.areIsolatedProjectsRequested;
 import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.finalizeFileCollectionValueOnRead;
-import static name.remal.gradle_plugins.toolkit.SneakyThrowUtils.sneakyThrowsCallable;
 
+import java.util.Collection;
 import java.util.List;
 import lombok.SneakyThrows;
 import org.gradle.api.Action;
@@ -11,7 +11,6 @@ import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskProvider;
@@ -38,6 +37,7 @@ abstract class TaskClasspathConfigurer<T extends Task> {
     }
 
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public final void configureTasks(
         Project project,
         NamedDomainObjectProvider<SourceSet> sourceSetProvider,
@@ -62,18 +62,13 @@ abstract class TaskClasspathConfigurer<T extends Task> {
                         calculateDependsOn(task, sourceSetOutput, jarProvider)
                     ));
 
-                    var initialClasspath = objects.fileCollection()
-                        .from(sneakyThrowsCallable(() -> getter.getClasspath(task)));
-                    finalizeFileCollectionValueOnRead(initialClasspath);
-                    task.dependsOn(initialClasspath);
-
-                    var classpathUpdater = createClasspathUpdater(
-                        task,
-                        initialClasspath,
-                        sourceSetOutput,
-                        jarFile
-                    );
-                    task.onlyIf(classpathUpdater);
+                    currentProject.getLogger().debug("Registering relocation classpath updater for task {}", task);
+                    var classpathUpdater = objects.newInstance(TaskClasspathUpdater.class);
+                    classpathUpdater.getGetter().set((TaskClasspathGetter) getter);
+                    classpathUpdater.getSourceSetOutput().from(sourceSetOutput);
+                    classpathUpdater.getJarFile().set(jarFile);
+                    classpathUpdater.getSetter().set((TaskClasspathSetter) setter);
+                    task.doFirst(classpathUpdater);
                 });
         };
         if (areIsolatedProjectsRequested(project.getGradle())) {
@@ -83,26 +78,8 @@ abstract class TaskClasspathConfigurer<T extends Task> {
         }
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private TaskClasspathUpdater createClasspathUpdater(
-        T task,
-        FileCollection initialClasspath,
-        FileCollection sourceSetOutput,
-        RegularFileProperty jarFileProperty
-    ) {
-        var project = task.getProject();
-        var objects = project.getObjects();
-
-        var classpathUpdater = objects.newInstance(TaskClasspathUpdater.class);
-        classpathUpdater.getInitialClasspath().from(initialClasspath);
-        classpathUpdater.getSourceSetOutput().from(sourceSetOutput);
-        classpathUpdater.getJarFile().set(jarFileProperty);
-        classpathUpdater.getSetter().set((TaskClasspathSetter) setter);
-        return classpathUpdater;
-    }
-
     @SneakyThrows
-    private Object calculateDependsOn(
+    private Collection<Object> calculateDependsOn(
         T task,
         FileCollection sourceSetOutput,
         TaskProvider<Jar> jarProvider
@@ -121,7 +98,7 @@ abstract class TaskClasspathConfigurer<T extends Task> {
         var hasSourceSetOutputFiles = classpathFiles.stream()
             .anyMatch(sourceSetOutputFiles::contains);
         if (hasSourceSetOutputFiles) {
-            return jarProvider;
+            return List.of(jarProvider);
         }
 
         return List.of();
