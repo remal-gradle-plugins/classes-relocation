@@ -20,7 +20,7 @@ buildscript {
     String rootSnapshotVersion = project.ext.rootSnapshotVersion = '2-SNAPSHOT'
     dependencies {
         //classpath("$rootGroupId:$rootArtifactId:$rootSnapshotVersion") { version { strictly(rootSnapshotVersion) } }
-        classpath 'name.remal.gradle-plugins.toolkit:build-logic:0.75.6'
+        classpath 'name.remal.gradle-plugins.toolkit:build-logic:0.75.7'
 
         classpath platform("org.ow2.asm:asm-bom:9.9")
         classpath 'org.ow2.asm:asm-tree'
