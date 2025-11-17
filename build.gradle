@@ -81,7 +81,7 @@ project.pluginManager.withPlugin('java') {
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 dependencies {
-    functionalTestAdditionalClasspath 'name.remal.gradle-plugins.test-source-sets:test-source-sets:5.0.4'
+    functionalTestAdditionalClasspath 'name.remal.gradle-plugins.test-source-sets:test-source-sets:5.0.5'
 }
 
 Map<String, String> functionalTestRelocationNotations = [
