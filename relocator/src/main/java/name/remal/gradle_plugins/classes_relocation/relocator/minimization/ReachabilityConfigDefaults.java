@@ -170,6 +170,13 @@ public abstract class ReachabilityConfigDefaults {
             .className("nonapi.io.github.classgraph.classloaderhandler.UnoOneJarClassLoaderHandler")
             .onReached()
             .allDeclaredMethods(true)
+            .build(),
+
+        // org.apache.httpcomponents.core5/httpcore5
+        ClassReachabilityConfig.builder()
+            .className("org.apache.hc.core5.annotation.Contract")
+            .onReached()
+            .allPublicMethods(true)
             .build()
     );
 
