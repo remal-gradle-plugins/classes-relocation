@@ -22,7 +22,7 @@ buildscript {
         //classpath("$rootGroupId:$rootArtifactId:$rootSnapshotVersion") { version { strictly(rootSnapshotVersion) } }
         classpath 'name.remal.gradle-plugins.toolkit:build-logic:0.76.2'
 
-        classpath platform("org.ow2.asm:asm-bom:9.9")
+        classpath platform("org.ow2.asm:asm-bom:9.9.1")
         classpath 'org.ow2.asm:asm-tree'
         classpath 'org.ow2.asm:asm-commons'
     }
