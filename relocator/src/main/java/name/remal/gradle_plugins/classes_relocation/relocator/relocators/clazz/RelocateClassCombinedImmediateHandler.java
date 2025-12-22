@@ -10,6 +10,7 @@ import static name.remal.gradle_plugins.classes_relocation.relocator.asm.AsmUtil
 import static name.remal.gradle_plugins.classes_relocation.relocator.classpath.GeneratedResource.newGeneratedResource;
 import static name.remal.gradle_plugins.classes_relocation.relocator.relocators.clazz.RelocateClassResult.RELOCATED;
 import static name.remal.gradle_plugins.toolkit.DebugUtils.isDebugEnabled;
+import static org.objectweb.asm.Opcodes.ACC_ANNOTATION;
 import static org.objectweb.asm.Opcodes.ACC_ENUM;
 import static org.objectweb.asm.Opcodes.ACC_FINAL;
 import static org.objectweb.asm.Opcodes.ACC_PRIVATE;
@@ -279,9 +280,13 @@ public class RelocateClassCombinedImmediateHandler
             relocateAllMembers(relocatedClassData, classInfo, context);
         }
 
-        if ((relocatedClassData.getInputClassNode().access & ACC_ENUM) != 0) {
+        var access = relocatedClassData.getInputClassNode().access;
+
+        if ((access & ACC_ENUM) != 0) {
+            // relocate `values()`:
             context.queue(new RelocateMethod(classInternalName, methodKeyOf("values", "()")));
 
+            // relocate static fields:
             relocatedClassData.getInputClassNode().fields.stream()
                 .filter(fieldNode -> (fieldNode.access & ACC_STATIC) != 0)
                 .map(fieldNode -> fieldNode.name)
@@ -289,7 +294,10 @@ public class RelocateClassCombinedImmediateHandler
                 .forEach(fieldName -> context.queue(new RelocateField(classInternalName, fieldName)));
         }
 
-        if ((relocatedClassData.getInputClassNode().access & ACC_RECORD) != 0) {
+        if ((access & ACC_ANNOTATION) != 0
+            || (access & ACC_RECORD) != 0
+        ) {
+            // relocate all instance methods:
             relocatedClassData.getInputClassNode().methods.stream()
                 .filter(methodNode -> (methodNode.access & ACC_STATIC) == 0)
                 .map(MethodKey::methodKeyOf)
