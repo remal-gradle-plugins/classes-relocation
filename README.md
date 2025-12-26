@@ -52,6 +52,7 @@ These class members are **always** relocated:
 * Static initializer
   * It means that all initialized static fields will always be kept
   * See issue [#37](https://github.com/remal-gradle-plugins/classes-relocation/issues/37)
+* Methods of used annotation classes 
 
 Serialization-related members are relocated if any instance member is relocated:
 
