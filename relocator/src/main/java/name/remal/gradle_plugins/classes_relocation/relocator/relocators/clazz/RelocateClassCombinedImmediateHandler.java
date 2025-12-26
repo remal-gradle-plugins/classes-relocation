@@ -609,9 +609,9 @@ public class RelocateClassCombinedImmediateHandler
             )
             .map(MethodKey::methodKeyOf)
             .filter(not(relocatedClassData::hasProcessedMethod))
-            .forEach(otherMethodKey ->
-                context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), otherMethodKey))
-            );
+            .forEach(otherMethodKey -> {
+                context.queue(new RelocateMethod(relocatedClassData.getInputClassInternalName(), otherMethodKey));
+            });
 
 
         // relocate overridden methods in parent classes:

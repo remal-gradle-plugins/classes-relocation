@@ -31,6 +31,7 @@ public abstract class AbstractClassesRelocationJsonSetMetadata<Element>
 
     @Nullable
     @Override
+    @SuppressWarnings("java:S2638")
     protected Set<Object> deserializeStorage(Resource resource) {
         var jsonArray = parseJsonArray(resource);
         return jsonArray != null ? new LinkedHashSet<>(jsonArray) : null;

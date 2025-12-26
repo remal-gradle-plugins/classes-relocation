@@ -15,6 +15,7 @@ public abstract class AbstractClassesRelocationJsonMapMetadata<Type>
 
     @Nullable
     @Override
+    @SuppressWarnings("java:S2638")
     protected Map<String, ?> deserializeStorage(Resource resource) {
         return parseJsonObject(resource);
     }
