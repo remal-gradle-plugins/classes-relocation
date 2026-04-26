@@ -1,7 +1,6 @@
 package name.remal.gradle_plugins.classes_relocation;
 
 import static name.remal.gradle_plugins.toolkit.BuildFeaturesUtils.areIsolatedProjectsRequested;
-import static name.remal.gradle_plugins.toolkit.FileCollectionUtils.finalizeFileCollectionValueOnRead;
 
 import java.util.Collection;
 import java.util.List;
@@ -10,7 +9,6 @@ import org.gradle.api.Action;
 import org.gradle.api.NamedDomainObjectProvider;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.file.FileCollection;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.TaskProvider;
@@ -46,27 +44,20 @@ abstract class TaskClasspathConfigurer<T extends Task> {
         var providers = project.getProviders();
         var objects = project.getObjects();
 
-        var sourceSetOutput = objects.fileCollection()
-            .from(sourceSetProvider.map(SourceSet::getOutput));
-        finalizeFileCollectionValueOnRead(sourceSetOutput);
-
-        var jarFile = objects.fileProperty().value(jarProvider.flatMap(Jar::getArchiveFile));
-        jarFile.finalizeValueOnRead();
-
         Action<Project> configureProject = currentProject -> {
             currentProject.getTasks()
                 .withType(taskType)
                 .matching(taskPredicate)
                 .configureEach(task -> {
                     task.dependsOn(providers.provider(() ->
-                        calculateDependsOn(task, sourceSetOutput, jarProvider)
+                        calculateDependsOn(task, sourceSetProvider, jarProvider)
                     ));
 
                     currentProject.getLogger().debug("Registering relocation classpath updater for task {}", task);
                     var classpathUpdater = objects.newInstance(TaskClasspathUpdater.class);
                     classpathUpdater.getGetter().set((TaskClasspathGetter) getter);
-                    classpathUpdater.getSourceSetOutput().from(sourceSetOutput);
-                    classpathUpdater.getJarFile().set(jarFile);
+                    classpathUpdater.getSourceSetOutput().from(sourceSetProvider.map(SourceSet::getOutput));
+                    classpathUpdater.getJarFile().set(jarProvider.flatMap(Jar::getArchiveFile));
                     classpathUpdater.getSetter().set((TaskClasspathSetter) setter);
                     task.onlyIf(classpathUpdater);
                 });
@@ -81,7 +72,7 @@ abstract class TaskClasspathConfigurer<T extends Task> {
     @SneakyThrows
     private Collection<Object> calculateDependsOn(
         T task,
-        FileCollection sourceSetOutput,
+        NamedDomainObjectProvider<SourceSet> sourceSetProvider,
         TaskProvider<Jar> jarProvider
     ) {
         var classpath = getter.getClasspath(task);
@@ -94,7 +85,7 @@ abstract class TaskClasspathConfigurer<T extends Task> {
             return List.of();
         }
 
-        var sourceSetOutputFiles = sourceSetOutput.getFiles();
+        var sourceSetOutputFiles = sourceSetProvider.get().getOutput().getFiles();
         var hasSourceSetOutputFiles = classpathFiles.stream()
             .anyMatch(sourceSetOutputFiles::contains);
         if (hasSourceSetOutputFiles) {
