@@ -274,7 +274,7 @@ class ClassesRelocationPluginFunctionalTest {
 
             child.getBuildFile().line("evaluationDependsOn(':')");
             child.getBuildFile().block("dependencies", dependencies -> {
-                dependencies.line("implementation files(project(':').sourceSets.main.output)");
+                dependencies.line("implementation files(rootProject.sourceSets.main.output)");
             });
 
             child.writeTextFile("src/main/java/pkg/child/LogicExecutor.java", join("\n", new String[]{
