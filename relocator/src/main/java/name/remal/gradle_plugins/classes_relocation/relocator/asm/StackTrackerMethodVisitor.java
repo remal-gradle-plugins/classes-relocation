@@ -48,7 +48,7 @@ public class StackTrackerMethodVisitor extends MethodVisitor implements Opcodes 
 
     @Nullable
     @Unmodifiable
-    @SuppressWarnings("FuseStreamOperations")
+    @SuppressWarnings({"FuseStreamOperations", "ReferenceEquality"})
     public List<Object> getStack() {
         if (isBroken) {
             return null;
@@ -91,6 +91,7 @@ public class StackTrackerMethodVisitor extends MethodVisitor implements Opcodes 
     }
 
     @Nullable
+    @SuppressWarnings("ReferenceEquality")
     private Object pop() {
         var removedValue = popOneSlot();
 
