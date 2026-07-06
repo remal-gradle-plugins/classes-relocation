@@ -26,7 +26,7 @@ class ClasspathPaths extends ClasspathBase {
         this(null, paths);
     }
 
-    @SuppressWarnings("java:S3776")
+    @SuppressWarnings({"java:S3776", "ReferenceEquality"})
     public ClasspathPaths(@Nullable FileSystem fileSystem, List<Path> paths) {
         if (fileSystem != null) {
             for (var path : paths) {

@@ -297,7 +297,7 @@ public class ClassesRelocator extends ClassesRelocatorParams implements Closeabl
 
         @Override
         @SneakyThrows
-        @SuppressWarnings("Slf4jFormatShouldBeConst")
+        @SuppressWarnings({"Slf4jFormatShouldBeConst", "ReferenceEquality"})
         public void writeToOutput(Resource resource) {
             markResourceAsProcessed(resource);
 

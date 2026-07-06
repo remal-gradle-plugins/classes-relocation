@@ -135,7 +135,7 @@ public abstract class JsonUtils {
 
     @Contract("null->true")
     private static boolean isNullJsonValue(@Nullable Object value) {
-        return value == null || value == JSONObject.NULL;
+        return value == null || value.equals(JSONObject.NULL);
     }
 
 }
