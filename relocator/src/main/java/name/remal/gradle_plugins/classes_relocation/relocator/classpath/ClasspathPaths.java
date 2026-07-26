@@ -4,8 +4,9 @@ import static java.lang.String.format;
 import static java.nio.file.Files.readAttributes;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyListProxy;
-import static name.remal.gradle_plugins.toolkit.SneakyThrowUtils.sneakyThrowsFunction;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.FileSystem;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -46,12 +47,14 @@ class ClasspathPaths extends ClasspathBase {
             paths.stream()
                 .filter(Objects::nonNull)
                 .distinct()
-                .map(sneakyThrowsFunction(path -> {
+                .map(path -> {
                     final BasicFileAttributes attrs;
                     try {
                         attrs = readAttributes(path, BasicFileAttributes.class);
                     } catch (NoSuchFileException e) {
                         return null;
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
                     }
 
                     if (attrs.isDirectory()) {
@@ -69,7 +72,7 @@ class ClasspathPaths extends ClasspathBase {
                             path
                         ));
                     }
-                }))
+                })
                 .filter(Objects::nonNull)
                 .collect(toUnmodifiableList())
         ));
