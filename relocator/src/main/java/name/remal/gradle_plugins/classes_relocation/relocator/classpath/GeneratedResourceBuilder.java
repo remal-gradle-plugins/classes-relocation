@@ -1,6 +1,7 @@
 package name.remal.gradle_plugins.classes_relocation.relocator.classpath;
 
 import static java.lang.System.currentTimeMillis;
+import static java.util.Objects.requireNonNull;
 import static java.util.stream.Collectors.toList;
 import static lombok.AccessLevel.PACKAGE;
 import static name.remal.gradle_plugins.toolkit.LazyValue.lazyValue;
@@ -165,7 +166,7 @@ public final class GeneratedResourceBuilder {
 
         return new GeneratedResource(
             sourceResources,
-            name,
+            requireNonNull(name),
             multiReleaseVersion,
             lastModifiedMillis,
             content

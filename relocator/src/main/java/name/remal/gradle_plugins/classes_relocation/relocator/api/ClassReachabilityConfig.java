@@ -82,7 +82,7 @@ public class ClassReachabilityConfig implements Serializable {
     }
 
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings({"unused", "NullAway"})
     public static class ClassReachabilityConfigBuilder {
 
         @Tolerate
@@ -123,6 +123,7 @@ public class ClassReachabilityConfig implements Serializable {
 
         private static final long serialVersionUID = 1;
 
+        @Nullable
         private Map<?, ?> map;
 
         private void writeObject(ObjectOutputStream out) throws IOException {

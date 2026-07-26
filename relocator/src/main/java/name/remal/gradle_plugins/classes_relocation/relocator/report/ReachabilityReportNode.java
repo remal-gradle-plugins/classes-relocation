@@ -4,11 +4,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
+import org.jspecify.annotations.Nullable;
 
 @RequiredArgsConstructor
 class ReachabilityReportNode {
 
-    protected final Map<Object, @org.jetbrains.annotations.Nullable ReachabilityReportNode> children
+    protected final Map<Object, @Nullable ReachabilityReportNode> children
         = new LinkedHashMap<>();
 
 
@@ -25,7 +26,7 @@ class ReachabilityReportNode {
     }
 
     @SneakyThrows
-    private void renderTo(Map<Object, ReachabilityReportNode> map, Appendable appendable, int depth) {
+    private void renderTo(Map<Object, @Nullable ReachabilityReportNode> map, Appendable appendable, int depth) {
         var indent = INDENT.repeat(depth);
 
         for (var entry : map.entrySet()) {

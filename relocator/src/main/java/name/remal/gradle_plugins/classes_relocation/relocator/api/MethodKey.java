@@ -105,8 +105,10 @@ public class MethodKey implements Comparable<MethodKey>, Serializable {
 
         private static final long serialVersionUID = 1;
 
+        @Nullable
         private String name;
 
+        @Nullable
         private String paramsDescriptor;
 
         private void writeObject(ObjectOutputStream out) throws IOException {

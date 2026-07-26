@@ -5,8 +5,9 @@ import static java.nio.file.Files.readAttributes;
 import static java.util.Arrays.stream;
 import static java.util.stream.Collectors.toList;
 import static name.remal.gradle_plugins.toolkit.LazyProxy.asLazyListProxy;
-import static name.remal.gradle_plugins.toolkit.SneakyThrowUtils.sneakyThrowsFunction;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -27,12 +28,14 @@ public interface ResourceContainer extends WithResources {
 
         var containers = asLazyListProxy(() ->
             combinedPaths.stream()
-                .map(sneakyThrowsFunction(path -> {
+                .map(path -> {
                     final BasicFileAttributes attrs;
                     try {
                         attrs = readAttributes(path, BasicFileAttributes.class);
                     } catch (NoSuchFileException e) {
                         return null;
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
                     }
 
                     if (attrs.isDirectory()) {
@@ -40,7 +43,7 @@ public interface ResourceContainer extends WithResources {
                     } else {
                         return new ResourceContainerZip(path);
                     }
-                }))
+                })
                 .filter(Objects::nonNull)
                 .collect(toList())
         );
