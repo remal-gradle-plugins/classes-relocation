@@ -25,9 +25,9 @@ import java.util.Map;
 import javax.inject.Inject;
 import lombok.CustomLog;
 import name.remal.gradle_plugins.classes_relocation.relocator.ClassesRelocationException;
+import name.remal.gradle_plugins.toolkit.AbstractSettingsAwarePlugin;
 import name.remal.gradle_plugins.toolkit.JvmLanguageCompilationUtils;
 import org.gradle.api.NamedDomainObjectProvider;
-import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
@@ -49,7 +49,7 @@ import org.gradle.api.tasks.TaskContainer;
 import org.gradle.jvm.tasks.Jar;
 
 @CustomLog
-public abstract class ClassesRelocationPlugin implements Plugin<Project> {
+public abstract class ClassesRelocationPlugin extends AbstractSettingsAwarePlugin {
 
     public static final String CLASSES_RELOCATION_EXTENSION_NAME = doNotInline("classesRelocation");
 
@@ -77,7 +77,7 @@ public abstract class ClassesRelocationPlugin implements Plugin<Project> {
 
     @Override
     @SuppressWarnings("Slf4jFormatShouldBeConst")
-    public void apply(Project project) {
+    protected void applyToProject(Project project) {
         var extension = project.getExtensions().create(
             CLASSES_RELOCATION_EXTENSION_NAME,
             ClassesRelocationExtension.class
