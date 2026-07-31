@@ -58,6 +58,11 @@ gradlePlugin {
             id = 'name.remal.classes-relocation'
             implementationClass = 'name.remal.gradle_plugins.classes_relocation.ClassesRelocationPlugin'
             displayName = 'Classes relocation'
+            compatibility {
+                features {
+                    configurationCache = true
+                }
+            }
         }
     }
 }
