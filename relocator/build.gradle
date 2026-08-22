@@ -78,7 +78,7 @@ dependencies {
     componentTestImplementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
     componentTestImplementation 'joda-time:joda-time:2.14.3'
     componentTestImplementation 'net.sf.saxon:Saxon-HE:12.10'
-    componentTestImplementation 'io.github.classgraph:classgraph:4.8.191'
+    componentTestImplementation 'io.github.classgraph:classgraph:4.8.192'
 }
 
 if (!tasks.names.contains(componentTestSourceSet.jarTaskName)) {
